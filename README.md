@@ -6,6 +6,20 @@
 
 A powerful, flexible, and customizable DataTable component for Laravel Livewire applications with built-in features like sorting, searching, and pagination.
 
+## Requirements
+
+-   PHP ^8.2
+-   Laravel ^12.0
+-   Livewire ^3.0
+-   Tailwind CSS ^3.0
+
+### Browser Support
+
+-   Chrome (latest)
+-   Firefox (latest)
+-   Safari (latest)
+-   Edge (latest)
+
 ![Laravel Livewire DataTable](./datatable.png)
 
 ### Light and Dark Mode Support
@@ -33,6 +47,43 @@ You can install the package via composer:
 
 ```bash
 composer require developerawam/livewire-datatable
+```
+
+### Setup Requirements
+
+1. Make sure you have Livewire installed and configured:
+
+```bash
+php artisan livewire:publish --config
+```
+
+2. Ensure Tailwind CSS is installed and configured in your Laravel application.
+   Add the package's views to your Tailwind content configuration in `tailwind.config.js`:
+
+```js
+module.exports = {
+    content: [
+        // ...
+        "./vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php",
+    ],
+    // ...
+};
+```
+
+3. Add Alpine.js to your layout (if not already included with Livewire):
+
+```html
+<!-- Add to your layout file if not using Livewire's default installation -->
+@livewireScripts
+```
+
+4. Optional: For dark mode support, add the dark mode class to your HTML tag:
+
+```html
+<html class="dark">
+    <!-- or dynamically -->
+    <html class="{{ request()->cookie('darkMode') ? 'dark' : '' }}"></html>
+</html>
 ```
 
 ## Configuration
