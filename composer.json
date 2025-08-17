@@ -1,0 +1,57 @@
+{
+    "name": "developerawam/livewire-datatable",
+    "description": "Laravel Livewire DataTable adalah package open-source yang membantu kamu membangun tabel dinamis di Laravel tanpa ribet. Semua sudah terintegrasi dengan Livewire, sehingga kamu bisa mendapatkan fitur pencarian, filter, sorting, dan pagination out-of-the-box tanpa JavaScript tambahan.",
+    "keywords": [
+        "developerawam",
+        "livewire-datatable"
+    ],
+    "homepage": "https://github.com/developerawam/livewire-datatable",
+    "license": "MIT",
+    "type": "library",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Developer Awam",
+            "email": "info@developerawam.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^12.0",
+        "livewire/livewire": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Developerawam\\LivewireDatatable\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Developerawam\\LivewireDatatable\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Developerawam\\LivewireDatatable\\LivewireDatatableServiceProvider"
+            ],
+            "aliases": {
+                "LivewireDatatable": "Developerawam\\LivewireDatatable\\LivewireDatatableFacade"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
