@@ -198,7 +198,9 @@ You can override both general and column-specific styles for individual instance
 />
 ```
 
-The column-specific classes (`td_columnname`) are applied in addition to the default `td` classes, giving you fine-grained control while maintaining consistent base styling.## Dark Mode Support
+The column-specific classes (`td_columnname`) are applied in addition to the default `td` classes, giving you fine-grained control while maintaining consistent base styling.
+
+## Dark Mode Support
 
 The package automatically supports dark mode when your application uses Tailwind's dark mode. No additional configuration needed!
 
