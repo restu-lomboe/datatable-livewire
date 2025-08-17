@@ -155,23 +155,50 @@ return [
 ];
 ```
 
+### Column-Specific Styling
+
+You can customize the styling of specific columns using the column key as a suffix:
+
+```php
+// config/livewire-datatable.php
+return [
+    'theme' => [
+        // Default cell styling
+        'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
+
+        // Column-specific styling
+        'td_id' => 'font-mono text-gray-500 dark:text-gray-400',
+        'td_status' => 'text-center font-semibold',
+        'td_created_at' => 'text-xs',
+        'td_email' => 'font-medium',
+        'td_actions' => 'text-right space-x-2',
+    ]
+];
+```
+
 ### Per-Instance Customization
 
-You can override the theme for specific instances:
+You can override both general and column-specific styles for individual instances:
 
 ```blade
 <livewire:data-table
     :model="$model"
     :columns="$columns"
     :theme="[
+        // General styling
         'table' => 'custom-table-class',
         'tr' => 'custom-row-class hover:bg-blue-50',
-        'td' => 'custom-cell-class'
+        'td' => 'custom-cell-class',
+
+        // Column-specific styling
+        'td_id' => 'bg-gray-50 font-mono',
+        'td_email' => 'font-medium text-blue-600',
+        'td_status' => 'text-center uppercase'
     ]"
 />
 ```
 
-## Dark Mode Support
+The column-specific classes (`td_columnname`) are applied in addition to the default `td` classes, giving you fine-grained control while maintaining consistent base styling.## Dark Mode Support
 
 The package automatically supports dark mode when your application uses Tailwind's dark mode. No additional configuration needed!
 
