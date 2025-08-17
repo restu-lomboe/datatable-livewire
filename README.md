@@ -2,7 +2,6 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/developerawam/livewire-datatable.svg?style=flat-square)](https://packagist.org/packages/developerawam/livewire-datatable)
 [![Total Downloads](https://img.shields.io/packagist/dt/developerawam/livewire-datatable.svg?style=flat-square)](https://packagist.org/packages/developerawam/livewire-datatable)
-![GitHub Actions](https://github.com/developerawam/livewire-datatable/actions/workflows/main.yml/badge.svg)
 [![Donate on Saweria](https://img.shields.io/badge/Donate-Saweria-orange)](https://saweria.co/developerawam)
 
 A powerful, flexible, and customizable DataTable component for Laravel Livewire applications with built-in features like sorting, searching, and pagination.
