@@ -193,11 +193,11 @@ public function render()
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
 
 ````blade
-{{-- The view receives $item (the model instance) and $value (the column value) --}}
+// The view receives $item (the model instance) and $value (the column value)
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
 
 ```blade
-{{-- The view receives $item (the model instance) and $value (the column value) --}}
+// The view receives $item (the model instance) and $value (the column value)
 <div class="flex space-x-2">
     <button wire:click="$dispatch('user-edit', { id: {{ $item->id }} })" class="text-blue-600 hover:text-blue-800">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -220,17 +220,17 @@ use Livewire\Attributes\On;
 class UsersTable extends Component
 {
     #[On('user-edit')]
-    public function editUser($data)
+    public function editUser($id)
     {
-        // $data['id'] contains the user ID
+        // $id contains the user ID
         // Add your edit logic here
     }
 
     #[On('user-delete')]
-    public function deleteUser($data)
+    public function deleteUser($id)
     {
         // Add your delete logic here
-        $user = User::find($data['id']);
+        $user = User::find($id);
         if ($user) {
             $user->delete();
             // Optionally dispatch another event
@@ -269,10 +269,6 @@ Key points for action buttons:
 3. Event handlers receive the data as an array with the ID
 4. Remember to mark action columns as unsortable
 5. You can dispatch additional events after actions complete
-
-```
-
-```
 
 ## Theming
 
