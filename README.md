@@ -8,17 +8,17 @@ A powerful, flexible, and customizable DataTable component for Laravel Livewire 
 
 ## Requirements
 
--   PHP ^8.2
--   Laravel ^12.0
--   Livewire ^3.0
--   Tailwind CSS ^3.0
+- PHP ^8.2
+- Laravel ^12.0
+- Livewire ^3.0
+- Tailwind CSS ^3.0
 
 ### Browser Support
 
--   Chrome (latest)
--   Firefox (latest)
--   Safari (latest)
--   Edge (latest)
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
 
 ![Laravel Livewire DataTable](./datatable.png)
 
@@ -32,14 +32,14 @@ A powerful, flexible, and customizable DataTable component for Laravel Livewire 
 
 ## Features
 
--   🔍 Live Search
--   🔄 Column Sorting
--   📄 Pagination
--   🎨 Fully Customizable Theming
--   🌓 Dark Mode Support
--   📱 Responsive Design
--   🔗 Relationship Support
--   ⚡ Real-time Updates
+- 🔍 Live Search
+- 🔄 Column Sorting
+- 📄 Pagination
+- 🎨 Fully Customizable Theming
+- 🌓 Dark Mode Support
+- 📱 Responsive Design
+- 🔗 Relationship Support
+- ⚡ Real-time Updates
 
 ## Installation
 
@@ -62,11 +62,11 @@ php artisan livewire:publish --config
 
 ```js
 module.exports = {
-    content: [
-        // ...
-        "./vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php",
-    ],
+  content: [
     // ...
+    "./vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php",
+  ],
+  // ...
 };
 ```
 
@@ -81,8 +81,8 @@ module.exports = {
 
 ```html
 <html class="dark">
-    <!-- or dynamically -->
-    <html class="{{ request()->cookie('darkMode') ? 'dark' : '' }}"></html>
+  <!-- or dynamically -->
+  <html class="{{ request()->cookie('darkMode') ? 'dark' : '' }}"></html>
 </html>
 ```
 
@@ -121,7 +121,7 @@ class UsersTable extends Component
 In your Blade view:
 
 ```blade
-<livewire:data-table
+<livewire:livewire-datatable
     :model="$model"
     :columns="$columns"
     :searchable="['name', 'email']"
@@ -160,7 +160,7 @@ return [
 You can specify which columns should not be sortable:
 
 ```blade
-<livewire:data-table
+<livewire:livewire-datatable
     :model="$model"
     :columns="$columns"
     :unsortable="['actions']"
@@ -232,7 +232,7 @@ return [
 You can override both general and column-specific styles for individual instances:
 
 ```blade
-<livewire:data-table
+<livewire:livewire-datatable
     :model="$model"
     :columns="$columns"
     :theme="[
@@ -259,18 +259,18 @@ The package automatically supports dark mode when your application uses Tailwind
 
 The DataTable component emits several events you can listen to:
 
--   `sorting-updated` - When a column's sort direction changes
--   `search-updated` - When the search query changes
--   `page-updated` - When the current page changes
--   `per-page-updated` - When the items per page changes
+- `sorting-updated` - When a column's sort direction changes
+- `search-updated` - When the search query changes
+- `page-updated` - When the current page changes
+- `per-page-updated` - When the items per page changes
 
 ## Methods
 
 You can extend the DataTable component and override these methods:
 
--   `formatValue($value, $column)` - Format column values
--   `getQuery()` - Customize the base query
--   `mount()` - Add custom initialization logic
+- `formatValue($value, $column)` - Format column values
+- `getQuery()` - Customize the base query
+- `mount()` - Add custom initialization logic
 
 ## Examples
 
@@ -318,8 +318,8 @@ If you discover any security related issues, please email info@developerawam.com
 
 ## Credits
 
--   [Restu](https://github.com/restu-lomboe)
--   [Developer Awam](https://github.com/developerawam)
+- [Restu](https://github.com/restu-lomboe)
+- [Developer Awam](https://github.com/developerawam)
 
 ## License
 

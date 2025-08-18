@@ -14,7 +14,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Theme Configuration
+    | CSS Classes
     |--------------------------------------------------------------------------
     |
     | Here you can modify the CSS classes for various elements of the datatable.
@@ -22,18 +22,17 @@ return [
     |
     */
     'theme' => [
-        // Wrapper
         'wrapper' => 'w-full',
         'search_wrapper' => 'mb-4 flex flex-col sm:flex-row items-center justify-between gap-4',
-        'controls_wrapper' => 'flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto',
+        'controls_wrapper' => 'flex justify-between sm:flex-row items-center gap-4 w-full justify-between',
 
         // Per page select
         'per_page_wrapper' => 'w-full sm:w-36',
-        'per_page_select' => 'w-full sm:w-auto rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
+        'per_page_select' => 'w-full sm:w-auto rounded-lg border p-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
 
         // Search input
         'search_input_wrapper' => 'w-full sm:w-auto relative',
-        'search_input' => 'w-full sm:w-auto pl-10 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
+        'search_input' => 'w-full sm:w-auto pl-10 rounded-lg border p-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
 
         // Table
         'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow',
@@ -69,4 +68,25 @@ return [
         // Pagination
         'pagination_wrapper' => 'mt-4',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Sort Direction
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default sort direction for all columns
+    | in the datatable.
+    |
+    */
+    'default_sort_direction' => 'asc',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Debounce Time (ms)
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the debounce time for the search input in milliseconds.
+    |
+    */
+    'search_debounce' => 300,
 ];

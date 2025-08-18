@@ -24,7 +24,7 @@ return [
     'theme' => [
         'wrapper' => 'w-full',
         'search_wrapper' => 'mb-4 flex flex-col sm:flex-row items-center justify-between gap-4',
-        'controls_wrapper' => 'flex justify-between sm:flex-row items-center gap-4 w-full',
+        'controls_wrapper' => 'flex justify-between sm:flex-row items-center gap-4 w-full justify-between',
 
         // Per page select
         'per_page_wrapper' => 'w-full sm:w-36',
