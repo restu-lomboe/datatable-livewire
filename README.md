@@ -4,9 +4,35 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/developerawam/livewire-datatable.svg?style=flat-square)](https://packagist.org/packages/developerawam/livewire-datatable)
 [![Donate on Saweria](https://img.shields.io/badge/Donate-Saweria-orange)](https://saweria.co/developerawam)
 
-A powerful, flexible, and customizable DataTable component for Laravel Livewire applications with built-in features like sorting, searching, and pagination.
+A powerful, flexible DataTable component for Laravel Livewire applications with built-in sorting, searching, and pagination.
 
-## Requirements
+![Laravel Livewire DataTable](./datatable.png)
+
+## 📚 Table of Contents
+
+1. [Features](#-features)
+2. [Requirements](#-requirements)
+3. [Installation](#-installation)
+4. [Quick Start](#-quick-start)
+5. [Advanced Usage](#-advanced-usage)
+6. [Customization](#-customization)
+7. [Examples](#-examples)
+8. [Support](#-support)
+
+## ✨ Features
+
+- 🔍 Live Search with debouncing
+- 🔄 Column Sorting (with relationship support)
+- 📄 Dynamic Pagination
+- 🎨 Fully Customizable Theming
+- 🌓 Dark Mode Support
+- 📱 Responsive Design
+- 🔗 Relationship Column Support
+- ⚡ Real-time Updates
+- 🎯 Custom Cell Templates
+- 🛠 Event-driven Architecture
+
+## 🔧 Requirements
 
 - PHP ^8.2
 - Laravel ^12.0
@@ -15,159 +41,126 @@ A powerful, flexible, and customizable DataTable component for Laravel Livewire 
 
 ### Browser Support
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+- Chrome, Firefox, Safari, Edge (latest versions)
 
-![Laravel Livewire DataTable](./datatable.png)
+## 📦 Installation
 
-### Light and Dark Mode Support
-
-The datatable automatically adapts to your application's theme:
-
-## Laravel Livewire DataTable
-
-A powerful, flexible, and customizable DataTable component for Laravel Livewire applications with built-in features like sorting, searching, and pagination.
-
-## Features
-
-- 🔍 Live Search
-- 🔄 Column Sorting
-- 📄 Pagination
-- 🎨 Fully Customizable Theming
-- 🌓 Dark Mode Support
-- 📱 Responsive Design
-- 🔗 Relationship Support
-- ⚡ Real-time Updates
-
-## Installation
-
-You can install the package via composer:
+1. Install via Composer:
 
 ```bash
 composer require developerawam/livewire-datatable
 ```
 
-### Setup Requirements
-
-1. Make sure you have Livewire installed and configured:
-
-```bash
-php artisan livewire:publish --config
-```
-
-2. Ensure Tailwind CSS is installed and configured in your Laravel application.
-   Add the package's views to your Tailwind content configuration in `tailwind.config.js`:
+2. Add to Tailwind content in `tailwind.config.js`:
 
 ```js
 module.exports = {
   content: [
-    // ...
     "./vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php",
   ],
-  // ...
 };
 ```
 
-3. Add Alpine.js to your layout (if not already included with Livewire):
-
-```html
-<!-- Add to your layout file if not using Livewire's default installation -->
-@livewireScripts
-```
-
-4. Optional: For dark mode support, add the dark mode class to your HTML tag:
-
-```html
-<html class="dark">
-  <!-- or dynamically -->
-  <html class="{{ request()->cookie('darkMode') ? 'dark' : '' }}"></html>
-</html>
-```
-
-## Configuration
-
-Publish the configuration file:
+3. Optional: Publish configuration:
 
 ```bash
 php artisan vendor:publish --tag="livewire-datatable-config"
 ```
 
-This will create a `config/livewire-datatable.php` file where you can modify the default settings.
-
-## Basic Usage
+## 🚀 Quick Start
 
 ```php
 use App\Models\User;
+use Livewire\Component;
 
 class UsersTable extends Component
 {
     public function render()
     {
         return view('livewire.users-table', [
-            'model' => User::class
+            'model' => User::class,
             'columns' => [
-                'id' => 'ID',
+                'id' => '#',
                 'name' => 'Name',
                 'email' => 'Email',
                 'created_at' => 'Created At'
-            ]
+            ],
+            'searchable' => ['name', 'email']
         ]);
     }
 }
 ```
 
-In your Blade view:
+2. Create the blade view:
 
 ```blade
-<livewire:livewire-datatable
+ <livewire:livewire-datatable
     :model="$model"
     :columns="$columns"
-    :searchable="['name', 'email']"
-/>
+    :searchable="$searchable" />
 ```
 
-## Advanced Usage
+That's it! You now have a fully functional DataTable with search and sorting.
 
-### Relationship Columns
+## 🔥 Advanced Usage
 
-You can display and sort by relationship fields:
+### 🔗 Relationship Columns
+
+Display and sort by relationship fields:
 
 ```php
 'columns' => [
-    'id' => 'ID',
+    'id' => '#',
     'name' => 'Name',
-    'email' => 'Email',
-    'roles.name' => 'Role',  // Relationship column
-    'created_at' => 'Created At'
+    'department.name' => 'Department',  // Relationship column
+    'roles.name' => 'Role',            // Another relationship
 ]
 ```
 
-### Customizing Per Page Options
+### 🎯 Custom Cell Templates
 
-In your config/livewire-datatable.php:
+1. Define custom column views:
 
 ```php
-return [
-    'per_page_options' => [10, 25, 50, 100],
-    // ... other config
-];
+public function render()
+{
+    return view('livewire.users-table', [
+        'columns' => [
+            'id' => '#',
+            'name' => 'Name',
+            'actions' => 'Actions'
+        ],
+        'customColumns' => [
+            'actions' => 'components.table.actions'
+        ]
+    ]);
+}
 ```
 
-### Excluding Columns from Sorting
-
-You can specify which columns should not be sortable:
+2. Create the template (`resources/views/components/table/actions.blade.php`):
 
 ```blade
-<livewire:livewire-datatable
-    :model="$model"
-    :columns="$columns"
-    :unsortable="['actions']"
-/>
+<div class="flex space-x-2">
+    <button wire:click="$dispatch('user-edit', { id: {{ $item->id }} })"
+            class="text-blue-600 hover:text-blue-800">
+        <x-heroicon-s-pencil class="h-5 w-5" />
+    </button>
+</div>
 ```
 
-### Custom Cell Elements
+3. Handle events in your component:
+
+````php
+use Livewire\Attributes\On;
+
+class UsersTable extends Component
+{
+    #[On('user-edit')]
+    public function editUser($id)
+    {
+        // Handle edit action
+    }
+}
 
 You can render custom HTML elements (like buttons, links, or any other custom content) in table cells using custom views:
 
@@ -188,7 +181,7 @@ public function render()
         ]
     ]);
 }
-```
+````
 
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
 
@@ -248,6 +241,7 @@ class UsersTable extends Component
                 'email' => 'Email',
                 'actions' => 'Actions'
             ],
+            'searchable' => ['name', 'email'],
             'customColumns' => [
                 'actions' => 'components.table.action-buttons'
             ],
@@ -256,6 +250,21 @@ class UsersTable extends Component
     }
 }
 ```
+
+```blade
+ <livewire:livewire-datatable
+    :model="$model"
+    :columns="$columns"
+    :searchable="$searchable"
+    :unsortable="$unsortable"
+    :custom-columns="$customColumns"
+    :theme="[
+        'td_description' => 'w-[32rem] !whitespace-normal cell-description',
+        'td_actions' => 'text-right',
+    ]" />
+```
+
+The column-specific classes (`td_columnname`) are applied in addition to the default `td` classes, giving you fine-grained control while maintaining consistent base styling.
 
 The custom view receives two variables:
 
@@ -309,121 +318,55 @@ return [
 ];
 ```
 
-### Column-Specific Styling
+## 🎨 Customization
 
-You can customize the styling of specific columns using the column key as a suffix:
+### 🌈 Theme Configuration
+
+Customize the appearance in `config/livewire-datatable.php`:
 
 ```php
-// config/livewire-datatable.php
 return [
     'theme' => [
-        // Default cell styling
-        'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
+        // Base styling
+        'table' => 'min-w-full divide-y divide-gray-200',
+        'tr' => 'hover:bg-gray-50',
 
         // Column-specific styling
-        'td_id' => 'font-mono text-gray-500 dark:text-gray-400',
-        'td_status' => 'text-center font-semibold',
-        'td_created_at' => 'text-xs',
-        'td_email' => 'font-medium',
+        'td_id' => 'font-mono text-gray-500',
         'td_actions' => 'text-right space-x-2',
     ]
 ];
 ```
 
-### Per-Instance Customization
+### 🌓 Dark Mode
 
-You can override both general and column-specific styles for individual instances:
+The package automatically supports dark mode when your app uses Tailwind's dark mode:
 
-```blade
-<livewire:livewire-datatable
-    :model="$model"
-    :columns="$columns"
-    :theme="[
-        // General styling
-        'table' => 'custom-table-class',
-        'tr' => 'custom-row-class hover:bg-blue-50',
-        'td' => 'custom-cell-class',
-
-        // Column-specific styling
-        'td_id' => 'bg-gray-50 font-mono',
-        'td_email' => 'font-medium text-blue-600',
-        'td_status' => 'text-center uppercase'
-    ]"
-/>
+```html
+<html class="dark">
+  <!-- Your content -->
+</html>
 ```
-
-The column-specific classes (`td_columnname`) are applied in addition to the default `td` classes, giving you fine-grained control while maintaining consistent base styling.
 
 ## Dark Mode Support
 
 The package automatically supports dark mode when your application uses Tailwind's dark mode. No additional configuration needed!
 
-## Events
+## 💪 Support
 
-The DataTable component emits several events you can listen to:
-
-- `sorting-updated` - When a column's sort direction changes
-- `search-updated` - When the search query changes
-- `page-updated` - When the current page changes
-- `per-page-updated` - When the items per page changes
-
-## Methods
-
-You can extend the DataTable component and override these methods:
-
-- `formatValue($value, $column)` - Format column values
-- `getQuery()` - Customize the base query
-- `mount()` - Add custom initialization logic
-
-## Examples
-
-### Custom Column Formatting
-
-```php
-class UsersTable extends DataTable
-{
-    public function formatValue($value, $column)
-    {
-        if ($column === 'created_at') {
-            return Carbon::parse($value)->format('M d, Y');
-        }
-
-        return parent::formatValue($value, $column);
-    }
-}
-```
-
-### Custom Query
-
-```php
-class UsersTable extends DataTable
-{
-    protected function getQuery(): Builder
-    {
-        return parent::getQuery()
-            ->withCount('posts')
-            ->with('roles');
-    }
-}
-```
-
-## Support the Development
-
-If you find this package helpful and would like to support its development, consider making a donation:
+Found this package helpful? Consider supporting its development:
 
 [![Donate on Saweria](https://img.shields.io/badge/Donate-Saweria-orange)](https://saweria.co/developerawam)
 
-Your support helps maintain and improve this package! 🙏
+### 🔒 Security
 
-### Security
+Please report security issues to info@developerawam.com instead of using the issue tracker.
 
-If you discover any security related issues, please email info@developerawam.com instead of using the issue tracker.
-
-## Credits
+## 👥 Credits
 
 - [Restu](https://github.com/restu-lomboe)
 - [Developer Awam](https://github.com/developerawam)
 
-## License
+## 📄 License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). See [License File](LICENSE.md) for more information.
