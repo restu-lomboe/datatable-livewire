@@ -22,6 +22,7 @@ class DataTable extends Component
     public $sortDirection = 'asc';
     public $pageOptions;
     public $theme = [];
+    public $customColumns = [];
 
     protected function queryString()
     {
@@ -33,12 +34,13 @@ class DataTable extends Component
         ];
     }
 
-    public function mount($model, $columns = [], $searchable = [], $unsortable = [], $theme = [])
+    public function mount($model, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
     {
         $this->model = $model;
         $this->columns = $columns;
         $this->searchable = $searchable;
         $this->unsortable = $unsortable;
+        $this->customColumns = $customColumns;
         // By default, all columns are sortable except those in unsortable array
         $this->sortable = array_diff(array_keys($columns), $unsortable);
 

@@ -167,6 +167,113 @@ You can specify which columns should not be sortable:
 />
 ```
 
+### Custom Cell Elements
+
+You can render custom HTML elements (like buttons, links, or any other custom content) in table cells using custom views:
+
+```php
+// In your Livewire component
+public function render()
+{
+    return view('livewire.users-table', [
+        'model' => User::class,
+        'columns' => [
+            'id' => 'ID',
+            'name' => 'Name',
+            'email' => 'Email',
+            'actions' => 'Actions'  // This column will use a custom view
+        ],
+        'customColumns' => [
+            'actions' => 'components.table.action-buttons'  // Path to your custom view
+        ]
+    ]);
+}
+```
+
+Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
+
+````blade
+{{-- The view receives $item (the model instance) and $value (the column value) --}}
+Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
+
+```blade
+{{-- The view receives $item (the model instance) and $value (the column value) --}}
+<div class="flex space-x-2">
+    <button wire:click="$dispatch('user-edit', { id: {{ $item->id }} })" class="text-blue-600 hover:text-blue-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+        </svg>
+    </button>
+    <button wire:click="$dispatch('user-delete', { id: {{ $item->id }} })" class="text-red-600 hover:text-red-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+    </button>
+</div>
+````
+
+Then in your Livewire component, add event listeners for the actions:
+
+```php
+use Livewire\Attributes\On;
+
+class UsersTable extends Component
+{
+    #[On('user-edit')]
+    public function editUser($data)
+    {
+        // $data['id'] contains the user ID
+        // Add your edit logic here
+    }
+
+    #[On('user-delete')]
+    public function deleteUser($data)
+    {
+        // Add your delete logic here
+        $user = User::find($data['id']);
+        if ($user) {
+            $user->delete();
+            // Optionally dispatch another event
+            $this->dispatch('user-deleted');
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.users-table', [
+            'model' => User::class,
+            'columns' => [
+                'id' => 'ID',
+                'name' => 'Name',
+                'email' => 'Email',
+                'actions' => 'Actions'
+            ],
+            'customColumns' => [
+                'actions' => 'components.table.action-buttons'
+            ],
+            'unsortable' => ['actions'] // Make sure action column is not sortable
+        ]);
+    }
+}
+```
+
+The custom view receives two variables:
+
+- `$item`: The current model instance (e.g., User model)
+- `$value`: The value of the current column (useful for formatting existing data)
+
+Key points for action buttons:
+
+1. Use `wire:click="$dispatch('event-name', { id: {{ $item->id }} })"` to trigger events
+2. Events are caught using the `#[On('event-name')]` attribute in your component
+3. Event handlers receive the data as an array with the ID
+4. Remember to mark action columns as unsortable
+5. You can dispatch additional events after actions complete
+
+```
+
+```
+
 ## Theming
 
 The package comes with a beautiful default theme using Tailwind CSS, but you can fully customize it.

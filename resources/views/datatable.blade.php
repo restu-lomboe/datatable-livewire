@@ -78,7 +78,14 @@
                                 $this->getClass('td'),
                                 $this->getClass("td_{$key}"), // Column-specific class
                             ]) wire:key="cell-{{ $key }}">
-                                {{ data_get($item, $key) }}
+                                @if (isset($customColumns[$key]))
+                                    @include($customColumns[$key], [
+                                        'item' => $item,
+                                        'value' => data_get($item, $key),
+                                    ])
+                                @else
+                                    {{ data_get($item, $key) }}
+                                @endif
                             </td>
                         @endforeach
                     </tr>
