@@ -143,6 +143,15 @@ public function render()
 }
 ```
 
+```blade
+ <livewire:livewire-datatable
+    :model="$model"
+    :columns="$columns"
+    :searchable=""
+    :unsortable=""
+    :custom-columns="$customColumns" />
+```
+
 2. Create the template (`resources/views/components/table/actions.blade.php`):
 
 ```blade
@@ -167,28 +176,9 @@ class UsersTable extends Component
         // Handle edit action
     }
 }
+```
 
 You can render custom HTML elements (like buttons, links, or any other custom content) in table cells using custom views:
-
-```php
-// In your Livewire component
-public function render()
-{
-    return view('livewire.users-table', [
-        'model' => User::class,
-        'columns' => [
-            'id' => 'ID',
-            'name' => 'Name',
-            'email' => 'Email',
-            'actions' => 'Actions'  // This column will use a custom view
-        ],
-        'customColumns' => [
-            'actions' => 'components.table.action-buttons'  // Path to your custom view
-        ]
-    ]);
-}
-````
-
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
 
 ````blade
