@@ -3,9 +3,10 @@
 namespace Developerawam\LivewireDatatable\Components;
 
 use Livewire\Component;
+use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DataTable extends Component
 {
@@ -49,10 +50,7 @@ class DataTable extends Component
         $this->perPage = $this->pageOptions[0] ?? 10;
 
         // Load theme from config and merge with any custom theme passed
-        $this->theme = array_merge(
-            config('livewire-datatable.theme', []),
-            $theme
-        );
+        $this->theme = array_merge(config('livewire-datatable.theme', []), $theme);
     }
 
     public function getClass($element)
@@ -102,7 +100,41 @@ class DataTable extends Component
         }
 
         if ($this->sortField && in_array($this->sortField, $this->sortable)) {
-            $query->orderBy($this->sortField, $this->sortDirection);
+
+            $selects = [$this->model::getModel()->getTable() . '.*']; // start with all user columns
+
+            if (str_contains($this->sortField, '.')) {
+                $parts = explode('.', $this->sortField);
+                $column = array_pop($parts);
+
+                $modelInstance = new $this->model();
+
+                foreach ($parts as $relationName) {
+                    $relationInstance = $modelInstance->$relationName();
+                    $relatedTable = $relationInstance->getRelated()->getTable();
+
+                    if ($relationInstance instanceof BelongsTo) {
+                        $foreign = $relationInstance->getForeignKeyName();
+                        $ownerKey = $relationInstance->getOwnerKeyName();
+                        $query->leftJoin($relatedTable, $modelInstance->getTable() . '.' . $foreign, '=', $relatedTable . '.' . $ownerKey);
+                    } else {
+                        $foreign = $relationInstance->getQualifiedForeignKeyName();
+                        $local = $relationInstance->getQualifiedParentKeyName();
+                        $query->leftJoin($relatedTable, $foreign, '=', $local);
+                    }
+
+                    // alias all columns from related table to avoid collision
+                    foreach ($relationInstance->getRelated()->getFillable() as $field) {
+                        $selects[] = $relatedTable . '.' . $field . ' as ' . $relatedTable . '_' . $field;
+                    }
+
+                    $modelInstance = $relationInstance->getRelated();
+                }
+
+                $query->select($selects)->orderBy($relatedTable . '.' . $column, $this->sortDirection);
+            } else {
+                $query->orderBy($this->sortField, $this->sortDirection);
+            }
         }
 
         return $query;
