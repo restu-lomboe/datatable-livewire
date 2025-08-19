@@ -176,7 +176,7 @@ class UsersTable extends Component
         // Handle edit action
     }
 }
-```
+````
 
 You can render custom HTML elements (like buttons, links, or any other custom content) in table cells using custom views:
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
@@ -184,9 +184,9 @@ Create a blade view for your custom cell content (e.g., `resources/views/compone
 ````blade
 // The view receives $item (the model instance) and $value (the column value)
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
-```
+````
 
-```blade
+````blade
 // The view receives $item (the model instance) and $value (the column value)
 <div class="flex space-x-2">
     <button wire:click="$dispatch('user-edit', { id: {{ $item->id }} })" class="text-blue-600 hover:text-blue-800">
