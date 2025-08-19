@@ -106,6 +106,12 @@ That's it! You now have a fully functional DataTable with search and sorting.
 
 ### 🔗 Relationship Columns
 
+Add protected with in model to include relationship on the model::class
+
+```php
+protected $with = ['department', 'roles'];
+```
+
 Display and sort by relationship fields:
 
 ```php
