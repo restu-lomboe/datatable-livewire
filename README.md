@@ -184,6 +184,7 @@ Create a blade view for your custom cell content (e.g., `resources/views/compone
 ````blade
 // The view receives $item (the model instance) and $value (the column value)
 Create a blade view for your custom cell content (e.g., `resources/views/components/table/action-buttons.blade.php`):
+```
 
 ```blade
 // The view receives $item (the model instance) and $value (the column value)
