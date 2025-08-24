@@ -71,6 +71,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Pagination Options
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default pagination links that are shown
+    | in the datatable. You can modify these to any values you want.
+    | default use paginate, you can change to simplePagination
+    |
+    */
+    'default_pagination' => 'paginate',
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Sort Direction
     |--------------------------------------------------------------------------
     |

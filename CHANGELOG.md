@@ -9,12 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### 🚀 Planned for v1.1.0
-
-- **Custom Query Support** — allow defining a custom `query()` method
-- **Custom Methods** — extend component with reusable logic
-- **Performance Improvements** — reduce Livewire re-renders and optimize search/sorting queries
-
 ### 🚀 Planned for v1.2.0
 
 - Column Filtering (dropdown, select, date range)
@@ -53,3 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Responsive design
 - Custom cell templates
 - Event-driven architecture
+
+### [v1.1.0] - 2025-08-24
+
+- Serverside rendering
+- Improvement performance with Computed Properties Livewire
+- Dynamic pagination (add method simplePagination)
+- make colomn no, and can sorting by number column
