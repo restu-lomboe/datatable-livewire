@@ -5,9 +5,12 @@ namespace Developerawam\LivewireDatatable\Components;
 use Livewire\Component;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Computed;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Lazy]
 class DataTable extends Component
 {
     use WithPagination;
@@ -19,25 +22,17 @@ class DataTable extends Component
     public $unsortable = [];
     public $search = '';
     public $perPage;
-    public $sortField = 'id';
-    public $sortDirection = 'asc';
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
     public $pageOptions;
     public $theme = [];
     public $customColumns = [];
+    public $scope;
 
-    protected function queryString()
-    {
-        return [
-            'search' => ['except' => ''],
-            'sortField' => ['except' => 'id'],
-            'sortDirection' => ['except' => 'asc'],
-            'perPage' => ['except' => $this->pageOptions[0] ?? 10],
-        ];
-    }
-
-    public function mount($model, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
+    public function mount($model, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
     {
         $this->model = $model;
+        $this->scope = $scope;
         $this->columns = $columns;
         $this->searchable = $searchable;
         $this->unsortable = $unsortable;
@@ -79,10 +74,17 @@ class DataTable extends Component
         $this->resetPage();
     }
 
-    protected function getQuery(): Builder
+    #[Computed]
+    protected function getQuery()
     {
         $query = $this->model::query();
 
+        // check if custom query is set
+        if ($this->scope) {
+            $query = $query->{$this->scope}();
+        }
+
+        // Apply search if provided
         if ($this->search && !empty($this->searchable)) {
             $query->where(function ($query) {
                 foreach ($this->searchable as $field) {
@@ -100,6 +102,11 @@ class DataTable extends Component
         }
 
         if ($this->sortField && in_array($this->sortField, $this->sortable)) {
+            // remove order from query if already set
+            $hasOrder = !empty($query->getQuery()->orders);
+            if ($hasOrder) {
+                $query->getQuery()->orders = null;
+            }
 
             $selects = [$this->model::getModel()->getTable() . '.*']; // start with all user columns
 
@@ -108,7 +115,6 @@ class DataTable extends Component
                 $column = array_pop($parts);
 
                 $modelInstance = new $this->model();
-
                 foreach ($parts as $relationName) {
                     $relationInstance = $modelInstance->$relationName();
                     $relatedTable = $relationInstance->getRelated()->getTable();
@@ -130,27 +136,30 @@ class DataTable extends Component
 
                     $modelInstance = $relationInstance->getRelated();
                 }
-
                 $query->select($selects)->orderBy($relatedTable . '.' . $column, $this->sortDirection);
             } else {
-                $query->orderBy($this->sortField, $this->sortDirection);
+                // check when order by no
+                if ($this->sortField == 'no') {
+                    $this->sortField = 'no';
+                    $this->sortDirection = $this->sortDirection;
+
+                    $query->orderBy('created_at', $this->sortDirection);
+                } else {
+                    $query->orderBy($this->sortField, $this->sortDirection);
+                }
             }
         }
 
-        return $query;
+        return $query->{config('livewire-datatable.default_pagination')}($this->perPage);
     }
 
-    public function formatValue($value, $column)
+    public function placeholder()
     {
-        return $value;
+        return view('livewire-datatable::placeholders.datatable');
     }
 
     public function render()
     {
-        $items = $this->getQuery()->paginate($this->perPage);
-
-        return view('livewire-datatable::datatable', [
-            'items' => $items,
-        ]);
+        return view('livewire-datatable::datatable');
     }
 }
