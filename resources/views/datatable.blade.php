@@ -93,9 +93,12 @@
                                             @if ($sortDirection === 'desc')
                                                 {{ $loop->parent->iteration + ($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() }}
                                             @elseif ($sortDirection === 'asc')
-                                                {{ $this->getQuery->total() -
-                                                    (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) +
-                                                    1 }}
+                                                <!-- check config('livewire-datatable.default_pagination') == 'simplePaginate' -->
+                                                @if (config('livewire-datatable.default_pagination') == 'simplePaginate')
+                                                    {{ $this->totals - (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) + 1 }}
+                                                @else
+                                                    {{ $this->getQuery->total() - (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) + 1 }}
+                                                @endif
                                             @endif
                                         @else
                                             {{ data_get($item, $key) }}

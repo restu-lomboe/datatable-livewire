@@ -28,6 +28,7 @@ class DataTable extends Component
     public $theme = [];
     public $customColumns = [];
     public $scope;
+    public $totals;
 
     public function mount($model, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
     {
@@ -148,6 +149,11 @@ class DataTable extends Component
                     $query->orderBy($this->sortField, $this->sortDirection);
                 }
             }
+        }
+
+        // check if config('livewire-datatable.default_pagination') is simplePaginate
+        if (config('livewire-datatable.default_pagination') == 'simplePaginate') {
+            $this->totals = $query->count();
         }
 
         return $query->{config('livewire-datatable.default_pagination')}($this->perPage);
