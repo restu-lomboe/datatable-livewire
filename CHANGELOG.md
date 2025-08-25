@@ -53,4 +53,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Serverside rendering
 - Improvement performance with Computed Properties Livewire
 - Dynamic pagination (add method simplePagination)
-- make colomn no, and can sorting by number column
+- make column no, and can sorting by number column

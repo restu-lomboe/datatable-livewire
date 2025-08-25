@@ -62,7 +62,7 @@ composer require developerawam/livewire-datatable
 
 ### Step 2: Configure Tailwind CSS
 
-Add the package's views to your Tailwind configuration to ensure all styles are included if use Tailwind v3 below:
+Add the package's views to your Tailwind configuration to ensure all styles are included if you are using Tailwind v3:
 
 ```js
 // tailwind.config.js
