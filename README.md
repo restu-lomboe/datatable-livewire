@@ -370,7 +370,7 @@ class UsersTable extends Component
 
         // Redirect to edit page or open modal
         $this->redirect(route('users.edit', $user));
-        $this->dispatch('reset-table'); // Refresh table to after edit
+        $this->dispatch('reset-table'); // Refresh table after edit
 
         // Or dispatch another event to open a modal
         // $this->dispatch('open-edit-modal', userId: $id);
@@ -386,7 +386,7 @@ class UsersTable extends Component
             // Show success message
             session()->flash('message', 'User deleted successfully!');
 
-            $this->dispatch('reset-table'); // Refresh table to after deletion
+            $this->dispatch('reset-table'); // Refresh table after deletion
         } catch (\Exception $e) {
             // Show error message
             session()->flash('error', 'Failed to delete user.');
@@ -419,7 +419,7 @@ class UsersTable extends Component
 
 - `$item`: The current model instance (e.g., User object)
 - `$value`: The value of the current column
-- `$this->dispatch('reset-table')`: Refresh (auto refresh) table to after action done
+- `$this->dispatch('reset-table')`: Refresh (auto refresh) table after action done
 
 ## 🎨 Customization
 
