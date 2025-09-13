@@ -4,6 +4,7 @@ namespace Developerawam\LivewireDatatable\Components;
 
 use Livewire\Component;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\WithPagination;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Computed;
@@ -71,6 +72,12 @@ class DataTable extends Component
     }
 
     public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
+    #[On('reset-table')]
+    public function resetTable()
     {
         $this->resetPage();
     }
