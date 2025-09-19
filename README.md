@@ -145,6 +145,184 @@ class UsersTable extends Component
 
 ## 📖 Basic Usage
 
+### Value Formatting
+
+The DataTable supports powerful value formatting options through the `formatters` and `formatterOptions` parameters. This allows you to format dates, numbers, text, and more in a variety of ways.
+
+#### Simple Formatters
+
+```php
+class UsersTable extends Component
+{
+    public function render()
+    {
+        return view('livewire.users-table', [
+            'columns' => [
+                'name' => 'Name',
+                'created_at' => 'Created At',
+                'updated_at' => 'Updated At',
+                'balance' => 'Balance',
+                'is_active' => 'Status',
+            ],
+            'formatters' => [
+                'created_at' => 'datetime',    // Format as datetime
+                'updated_at' => 'date',        // Format as date
+                'balance' => 'currency',       // Format as currency
+                'is_active' => 'boolean',      // Format as Yes/No
+            ],
+            // Customize format options
+            'formatterOptions' => [
+                'created_at' => [
+                    'format' => 'd M Y H:i:s'  // Example: 19 Sep 2025 14:30:00
+                ],
+                'updated_at' => [
+                    'format' => 'd/m/Y'        // Example: 19/09/2025
+                ],
+                'balance' => [
+                    'symbol' => '$',           // Currency symbol
+                    'decimals' => 2            // Decimal places
+                ],
+                'is_active' => [
+                    'true' => 'Active',        // Custom boolean labels
+                    'false' => 'Inactive'
+                ]
+            ]
+        ]);
+    }
+}
+```
+
+#### Advanced Formatters
+
+For more complex formatting needs, use the array syntax with type and options:
+
+```php
+'formatters' => [
+    'description' => [
+        'type' => 'words',
+        'options' => [
+            'words' => 10,
+            'end' => '...'
+        ]
+    ],
+    'title' => [
+        'type' => 'limit',
+        'options' => [
+            'length' => 50,
+            'end' => '...'
+        ]
+    ],
+    'price' => [
+        'type' => 'money',
+        'options' => [
+            'symbol' => '€',
+            'decimals' => 2,
+            'decimal_point' => '.',
+            'thousand_sep' => ','
+        ]
+    ],
+]
+```
+
+#### Available Formatters
+
+1. Simple Formatters (string):
+
+   - `date` - Format as date (Y-m-d)
+   - `datetime` - Format as datetime (Y-m-d H:i:s)
+   - `time` - Format as time (H:i:s)
+   - `number` - Format with thousands separator
+   - `currency` - Format as currency with prefix
+   - `boolean` - Convert to Yes/No
+   - `uppercase` - Convert to uppercase
+   - `lowercase` - Convert to lowercase
+
+2. Complex Formatters (array):
+   - `limit` - Limit string length
+     ```php
+     [
+         'type' => 'limit',
+         'options' => [
+             'length' => 50,    // Max characters
+             'end' => '...'     // Ending
+         ]
+     ]
+     ```
+   - `words` - Limit by word count
+     ```php
+     [
+         'type' => 'words',
+         'options' => [
+             'words' => 10,     // Max words
+             'end' => '...'     // Ending
+         ]
+     ]
+     ```
+   - `markdown` - Convert markdown to HTML
+     ```php
+     [
+         'type' => 'markdown'
+     ]
+     ```
+   - `money` - Advanced currency formatting
+     ```php
+     [
+         'type' => 'money',
+         'options' => [
+             'symbol' => '$',
+             'decimals' => 2,
+             'decimal_point' => '.',
+             'thousand_sep' => ','
+         ]
+     ]
+     ```
+   - `date` - Custom date formatting
+     ```php
+     [
+         'type' => 'date',
+         'options' => [
+             'format' => 'l, F j, Y'  // Any PHP date format
+         ]
+     ]
+     ```
+
+#### Formatter Options
+
+Each formatter type supports specific options:
+
+1. Date Formatters (`date`, `datetime`, `time`):
+
+   ```php
+   'formatterOptions' => [
+       'created_at' => [
+           'format' => 'Y-m-d H:i:s'  // Any PHP date format string
+       ]
+   ]
+   ```
+
+2. Number/Currency Formatters:
+
+   ```php
+   'formatterOptions' => [
+       'price' => [
+           'symbol' => '$',           // Currency symbol
+           'decimals' => 2,           // Decimal places
+           'decimal_point' => '.',    // Decimal separator
+           'thousand_sep' => ','      // Thousands separator
+       ]
+   ]
+   ```
+
+3. Boolean Formatter:
+   ```php
+   'formatterOptions' => [
+       'is_active' => [
+           'true' => 'Yes',          // Custom true label
+           'false' => 'No'           // Custom false label
+       ]
+   ]
+   ```
+
 ### Understanding Columns
 
 The `columns` array defines what data to display and how to label it:
@@ -520,8 +698,8 @@ class UsersTable extends Component
         $user = User::find($id);
 
         // Redirect to edit page or open modal
-        $this->redirect(route('users.edit', $user));
         $this->dispatch('reset-table'); // Refresh table after edit
+        $this->redirect(route('users.edit', $user));
 
         // Or dispatch another event to open a modal
         // $this->dispatch('open-edit-modal', userId: $id);

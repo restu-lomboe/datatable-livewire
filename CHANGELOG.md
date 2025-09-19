@@ -7,9 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [v1.2.0] - 2025-09-19
+
+### ✨ New Features
+
+- Added advanced value formatting system:
+
+  - Simple formatters (date, datetime, currency, boolean, etc.)
+  - Complex formatters with customizable options
+  - Custom date format patterns support
+  - Flexible number and currency formatting
+  - Text manipulation (limit, words, markdown)
+  - Support for both Model and API data sources
+
+- Improved pagination system:
+
+  - Support for both default and simple pagination
+  - Total count display in simple pagination mode
+  - Consistent behavior across data sources
+  - Query parameter preservation in pagination links
+
+- Enhanced API integration:
+  - Flexible response mapping
+  - Customizable query parameters
+  - Robust error handling
+  - Support for nested API responses
+
+### 🔧 Improvements
+
+- Refactored formatting logic into WithFormatters trait
+- Added support for custom formatter options
+- Improved type declarations and PHP 8.2 compatibility
+- Better error handling for API responses
+
+### 🏗 Architecture
+
+- Introduced WithFormatters trait for better code organization
+- Improved separation of concerns in data handling
+- Enhanced type safety across components
+- Better abstraction for data sources
+
+### 📚 Documentation
+
+- Added comprehensive formatter documentation
+- Improved API integration examples
+- Added date format pattern examples
+- Updated configuration examples
+
 ## [Unreleased]
 
-### 🚀 Planned for v1.2.0
+### 🚀 Planned for v1.3.0
 
 - Column Filtering (dropdown, select, date range)
 - Export to CSV/Excel/PDF

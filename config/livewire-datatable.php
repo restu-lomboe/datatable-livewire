@@ -79,7 +79,7 @@ return [
     | default use paginate, you can change to simplePaginate
     |
     */
-    'default_pagination' => 'simplePaginate',
+    'default_pagination' => 'paginate',
 
     /*
     |--------------------------------------------------------------------------

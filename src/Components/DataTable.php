@@ -11,11 +11,12 @@ use Livewire\Attributes\Computed;
 use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
 use Developerawam\LivewireDatatable\DataSources\DataSourceInterface;
+use Developerawam\LivewireDatatable\Traits\WithFormatters;
 
 #[Lazy]
 class DataTable extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFormatters;
 
     public $model;
     public $apiConfig;
@@ -30,6 +31,8 @@ class DataTable extends Component
     public $pageOptions;
     public $theme = [];
     public $customColumns = [];
+    public $formatters = [];
+    public $formatterOptions = [];
     public $scope;
     public $totals;
     public $page = 1;
@@ -43,7 +46,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [])
     {
         if (!$model && !$apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -56,6 +59,8 @@ class DataTable extends Component
         $this->searchable = $searchable;
         $this->unsortable = $unsortable;
         $this->customColumns = $customColumns;
+        $this->formatters = $formatters;
+        $this->formatterOptions = $formatterOptions;
         // By default, all columns are sortable except those in unsortable array
         $this->sortable = array_diff(array_keys($columns), $unsortable);
 

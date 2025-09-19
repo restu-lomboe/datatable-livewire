@@ -101,7 +101,7 @@
                                                 @endif
                                             @endif
                                         @else
-                                            {{ data_get($item, $key) }}
+                                            {!! $this->formatValue($key, data_get($item, $key)) !!}
                                         @endif
                                     @endif
                                 </td>
