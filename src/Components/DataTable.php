@@ -8,8 +8,9 @@ use Livewire\Attributes\On;
 use Livewire\WithPagination;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Computed;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
+use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
+use Developerawam\LivewireDatatable\DataSources\DataSourceInterface;
 
 #[Lazy]
 class DataTable extends Component
@@ -17,6 +18,7 @@ class DataTable extends Component
     use WithPagination;
 
     public $model;
+    public $apiConfig;
     public $columns = [];
     public $searchable = [];
     public $sortable = [];
@@ -30,10 +32,25 @@ class DataTable extends Component
     public $customColumns = [];
     public $scope;
     public $totals;
+    public $page = 1;
+    protected $dataSource;
 
-    public function mount($model, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
+
+    protected function ensureDataSourceInitialized(): void
     {
+        if (!$this->dataSource) {
+            $this->initializeDataSource();
+        }
+    }
+
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [])
+    {
+        if (!$model && !$apiConfig) {
+            throw new \InvalidArgumentException('Either model or apiConfig must be provided');
+        }
+
         $this->model = $model;
+        $this->apiConfig = $apiConfig;
         $this->scope = $scope;
         $this->columns = $columns;
         $this->searchable = $searchable;
@@ -48,6 +65,9 @@ class DataTable extends Component
 
         // Load theme from config and merge with any custom theme passed
         $this->theme = array_merge(config('livewire-datatable.theme', []), $theme);
+
+        // Initialize the appropriate data source
+        $this->initializeDataSource();
     }
 
     public function getClass($element)
@@ -57,6 +77,8 @@ class DataTable extends Component
 
     public function sortBy($field)
     {
+        $this->ensureDataSourceInitialized();
+
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -68,12 +90,19 @@ class DataTable extends Component
 
     public function updatingSearch()
     {
+        $this->ensureDataSourceInitialized();
         $this->resetPage();
     }
 
     public function updatingPerPage()
     {
+        $this->ensureDataSourceInitialized();
         $this->resetPage();
+    }
+
+    public function updatingPage($page)
+    {
+        $this->page = $page;
     }
 
     #[On('reset-table')]
@@ -82,88 +111,34 @@ class DataTable extends Component
         $this->resetPage();
     }
 
+    protected function initializeDataSource(): void
+    {
+        if ($this->model) {
+            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->searchable, $this->sortable, $this->perPage);
+        } else {
+            $this->dataSource = new ApiDataSource($this->apiConfig);
+        }
+    }
+
     #[Computed]
     protected function getQuery()
     {
-        $query = $this->model::query();
+        $this->ensureDataSourceInitialized();
 
-        // check if custom query is set
-        if ($this->scope) {
-            $query = $query->{$this->scope}();
+        $result = $this->dataSource->getData([
+            'search' => $this->search,
+            'sort_field' => $this->sortField,
+            'sort_direction' => $this->sortDirection,
+            'per_page' => $this->perPage,
+            'page' => $this->page,
+        ]);
+
+        // For simple pagination, store the total in the component
+        if (config('livewire-datatable.default_pagination') === 'simplePaginate') {
+            $this->totals = $result->total ?? $result->total();
         }
 
-        // Apply search if provided
-        if ($this->search && !empty($this->searchable)) {
-            $query->where(function ($query) {
-                foreach ($this->searchable as $field) {
-                    if (Str::contains($field, '.')) {
-                        // Handle relationship search
-                        [$relation, $relationField] = explode('.', $field);
-                        $query->orWhereHas($relation, function ($query) use ($relationField) {
-                            $query->where($relationField, 'like', '%' . $this->search . '%');
-                        });
-                    } else {
-                        $query->orWhere($field, 'like', '%' . $this->search . '%');
-                    }
-                }
-            });
-        }
-
-        if ($this->sortField && in_array($this->sortField, $this->sortable)) {
-            // remove order from query if already set
-            $hasOrder = !empty($query->getQuery()->orders);
-            if ($hasOrder) {
-                $query->getQuery()->orders = null;
-            }
-
-            $selects = [$this->model::getModel()->getTable() . '.*']; // start with all user columns
-
-            if (str_contains($this->sortField, '.')) {
-                $parts = explode('.', $this->sortField);
-                $column = array_pop($parts);
-
-                $modelInstance = new $this->model();
-                foreach ($parts as $relationName) {
-                    $relationInstance = $modelInstance->$relationName();
-                    $relatedTable = $relationInstance->getRelated()->getTable();
-
-                    if ($relationInstance instanceof BelongsTo) {
-                        $foreign = $relationInstance->getForeignKeyName();
-                        $ownerKey = $relationInstance->getOwnerKeyName();
-                        $query->leftJoin($relatedTable, $modelInstance->getTable() . '.' . $foreign, '=', $relatedTable . '.' . $ownerKey);
-                    } else {
-                        $foreign = $relationInstance->getQualifiedForeignKeyName();
-                        $local = $relationInstance->getQualifiedParentKeyName();
-                        $query->leftJoin($relatedTable, $foreign, '=', $local);
-                    }
-
-                    // alias all columns from related table to avoid collision
-                    foreach ($relationInstance->getRelated()->getFillable() as $field) {
-                        $selects[] = $relatedTable . '.' . $field . ' as ' . $relatedTable . '_' . $field;
-                    }
-
-                    $modelInstance = $relationInstance->getRelated();
-                }
-                $query->select($selects)->orderBy($relatedTable . '.' . $column, $this->sortDirection);
-            } else {
-                // check when order by no
-                if ($this->sortField == 'no') {
-                    $this->sortField = 'no';
-                    $this->sortDirection = $this->sortDirection;
-
-                    $query->orderBy('created_at', $this->sortDirection);
-                } else {
-                    $query->orderBy($this->sortField, $this->sortDirection);
-                }
-            }
-        }
-
-        // check if config('livewire-datatable.default_pagination') is simplePaginate
-        if (config('livewire-datatable.default_pagination') == 'simplePaginate') {
-            $this->totals = $query->count();
-        }
-
-        return $query->{config('livewire-datatable.default_pagination')}($this->perPage);
+        return $result;
     }
 
     public function placeholder()

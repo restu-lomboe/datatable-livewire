@@ -176,6 +176,157 @@ By default, all columns are sortable. To prevent sorting on specific columns:
 'unsortable' => ['actions', 'avatar']
 ```
 
+## 🌐 API Integration
+
+### Using with API Data Source
+
+The DataTable can work with both Eloquent models and API endpoints. Here's how to set up an API-powered DataTable:
+
+### 1. Create a Livewire Component for API
+
+```php
+<?php
+
+namespace App\Livewire;
+
+use Livewire\Component;
+
+class TodoTableApi extends Component
+{
+    public function render()
+    {
+        $apiConfig = [
+            'url' => url('/api/todos'),
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+            'response_key' => null,      // Use if response is nested, e.g., 'data.todos'
+            'data_key' => 'data',        // Where to find items in response
+            'total_key' => 'total',      // Where to find total count
+            'per_page_key' => 'per_page',
+            'current_page_key' => 'current_page',
+            'search_param' => 'search',   // Query parameter for search
+            'sort_param' => 'sort',       // Query parameter for sort field
+            'sort_direction_param' => 'direction', // Query parameter for sort direction
+            'per_page_param' => 'per_page', // Query parameter for items per page
+            'page_param' => 'page',       // Query parameter for current page
+        ];
+
+        $columns = [
+            'id' => 'ID',
+            'title' => 'Title',
+            'description' => 'Description',
+            'created_at' => 'Created At',
+        ];
+
+        return view('livewire.todo-table-api', [
+            'apiConfig' => $apiConfig,    // Pass apiConfig instead of model
+            'columns' => $columns,
+            'searchable' => ['title', 'description'],
+            'unsortable' => ['description'],
+        ]);
+    }
+}
+```
+
+### 2. Create the View
+
+```blade
+{{-- resources/views/livewire/todo-table-api.blade.php --}}
+<div>
+    <livewire:livewire-datatable
+        :api-config="$apiConfig"
+        :columns="$columns"
+        :searchable="$searchable"
+        :unsortable="$unsortable" />
+</div>
+```
+
+### 3. Required API Response Format
+
+Your API endpoint must return responses in this format:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "Complete task",
+      "description": "Need to complete this task",
+      "created_at": "2025-09-19T10:00:00.000000Z"
+    }
+  ],
+  "total": 100, // Total number of records (for pagination)
+  "per_page": 10, // Items per page
+  "current_page": 1, // Current page number
+  "last_page": 10, // Total number of pages
+  "from": 1, // Starting record number
+  "to": 10 // Ending record number
+}
+```
+
+### 4. API Query Parameters
+
+The DataTable will send these query parameters to your API:
+
+```
+/api/todos?search=keyword&sort=title&direction=asc&per_page=10&page=1
+```
+
+- `search`: Search term entered by user
+- `sort`: Column to sort by
+- `direction`: Sort direction (asc/desc)
+- `per_page`: Items per page
+- `page`: Current page number
+
+### 5. Custom API Configuration
+
+You can customize the API behavior:
+
+```php
+$apiConfig = [
+    'url' => url('/api/todos'),
+    'method' => 'GET',           // HTTP method (default: GET)
+    'headers' => [              // Custom headers
+        'Authorization' => 'Bearer ' . $token,
+        'Accept' => 'application/json',
+    ],
+    'query_params' => [         // Additional query parameters
+        'status' => 'active',
+        'type' => 'task',
+    ],
+    // Custom parameter names
+    'search_param' => 'q',      // Changes ?search= to ?q=
+    'sort_param' => 'orderBy',  // Changes ?sort= to ?orderBy=
+];
+```
+
+### 6. Nested Response Data
+
+If your API response is nested, use `response_key`:
+
+```json
+{
+    "status": "success",
+    "data": {
+        "todos": {
+            "data": [...],
+            "total": 100
+        }
+    }
+}
+```
+
+Configure with:
+
+```php
+$apiConfig = [
+    'response_key' => 'data.todos',
+    'data_key' => 'data',
+    'total_key' => 'total',
+];
+```
+
 ## 🔥 Advanced Features
 
 ### Working with Relationships

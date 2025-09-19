@@ -75,8 +75,8 @@
                 </thead>
                 <tbody wire:loading.class="blur" @class([$this->getClass('tbody')])>
                     @forelse($this->getQuery as $index => $item)
-                        <tr @class([$this->getClass('tr')]) wire:key="row-{{ $item->getKey() }}"
-                            id="row-{{ $item->getKey() }}">
+                        <tr @class([$this->getClass('tr')]) wire:key="row-{{ $item->id ?? $index }}"
+                            id="row-{{ $item->id ?? $index }}">
                             @foreach ($columns as $key => $column)
                                 <td @class([
                                     $this->getClass('td'),
