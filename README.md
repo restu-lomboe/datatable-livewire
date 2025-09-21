@@ -170,23 +170,6 @@ class UsersTable extends Component
                 'balance' => 'currency',       // Format as currency
                 'is_active' => 'boolean',      // Format as Yes/No
             ],
-            // Customize format options
-            'formatterOptions' => [
-                'created_at' => [
-                    'format' => 'd M Y H:i:s'  // Example: 19 Sep 2025 14:30:00
-                ],
-                'updated_at' => [
-                    'format' => 'd/m/Y'        // Example: 19/09/2025
-                ],
-                'balance' => [
-                    'symbol' => '$',           // Currency symbol
-                    'decimals' => 2            // Decimal places
-                ],
-                'is_active' => [
-                    'true' => 'Active',        // Custom boolean labels
-                    'false' => 'Inactive'
-                ]
-            ]
         ]);
     }
 }
