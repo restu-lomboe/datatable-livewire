@@ -45,6 +45,20 @@ class ModelDataSource implements DataSourceInterface
         $perPage = $params['per_page'] ?? $this->perPage;
         $page = $params['page'] ?? 1;
 
+        // Handle 'all' option by getting total count
+        if ($perPage === 'all' || $perPage === -1) {
+            // For export or show all cases, get total count for pagination
+            $total = $query->count();
+
+            if ($paginationType === 'simplePaginate') {
+                $paginator = $query->simplePaginate($total, ['*'], 'page', 1);
+                $paginator->total = $total;
+                return $paginator;
+            }
+
+            return $query->paginate($total, ['*'], 'page', 1);
+        }
+
         if ($paginationType === 'simplePaginate') {
             // Get total count before pagination
             $total = $query->count();

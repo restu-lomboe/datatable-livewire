@@ -2,24 +2,68 @@
     <div @class([$this->getClass('wrapper')])>
         <div @class([$this->getClass('search_wrapper')])>
             <div @class([$this->getClass('controls_wrapper')])>
-                <div @class([$this->getClass('per_page_wrapper')])>
-                    <select name="perPage" wire:model.live="perPage" @class([$this->getClass('per_page_select')])>
-                        @foreach ($pageOptions as $option)
-                            <option value="{{ $option }}">{{ $option }} per page </option>
-                        @endforeach
-                    </select>
+                <div class="flex items-center gap-4">
+                    <div @class([$this->getClass('per_page_wrapper')])>
+                        <select name="perPage" wire:model.live="perPage" @class([$this->getClass('per_page_select')])>
+                            @foreach ($pageOptions as $option)
+                                <option value="{{ $option }}">
+                                    @if ($option === 'all')
+                                        Show all records
+                                    @else
+                                        {{ $option }} per page
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    @if ($enableExport && in_array(config('livewire-datatable.export.dropdown.position', 'top'), ['top', 'both']))
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" @keydown.escape.window="open = false"
+                                @click.outside="open = false" type="button"
+                                class="{{ config('livewire-datatable.export.dropdown.trigger_class') }}">
+                                <span>{!! config('livewire-datatable.export.dropdown.trigger_text', 'Export') !!}</span>
+                                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95"
+                                class="{{ config('livewire-datatable.export.dropdown.menu_class') }}"
+                                style="display: none;">
+                                <div class="py-1" role="menu">
+                                    @foreach ($exportTypes as $type)
+                                        <button wire:click="export('{{ $type }}')" @click="open = false"
+                                            type="button"
+                                            class="{{ config('livewire-datatable.export.dropdown.item_class') }}"
+                                            role="menuitem">
+                                            {!! config('livewire-datatable.export.dropdown.' . $type . '_text', 'Export ' . ucfirst($type)) !!}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
                 <div @class([$this->getClass('search_input_wrapper')])>
-                    <label class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <label>
+                        <span @class([$this->getClass('search_icon_wrapper')])>
+                            <svg @class([$this->getClass('search_icon')]) xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
-                        <input type="search" wire:model.live.debounce.300ms="search" placeholder="Search..."
-                            @class([$this->getClass('search_input')])>
+                        <input type="search" name="search" wire:model.live.debounce.300ms="search"
+                            placeholder="Search..." @class([$this->getClass('search_input')])>
                     </label>
                 </div>
             </div>

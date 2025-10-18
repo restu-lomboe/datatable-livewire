@@ -8,15 +8,16 @@ use Livewire\Attributes\On;
 use Livewire\WithPagination;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Computed;
+use Developerawam\LivewireDatatable\Traits\WithFormatters;
+use Developerawam\LivewireDatatable\Traits\WithExport;
 use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
 use Developerawam\LivewireDatatable\DataSources\DataSourceInterface;
-use Developerawam\LivewireDatatable\Traits\WithFormatters;
 
 #[Lazy]
 class DataTable extends Component
 {
-    use WithPagination, WithFormatters;
+    use WithPagination, WithFormatters, WithExport;
 
     public $model;
     public $apiConfig;
@@ -36,6 +37,8 @@ class DataTable extends Component
     public $scope;
     public $totals;
     public $page = 1;
+    public $enableExport;
+    public $exportTypes = [];
     protected $dataSource;
 
 
@@ -70,6 +73,10 @@ class DataTable extends Component
 
         // Load theme from config and merge with any custom theme passed
         $this->theme = array_merge(config('livewire-datatable.theme', []), $theme);
+
+        // Initialize export settings from config
+        $this->enableExport = config('livewire-datatable.export.enabled', true);
+        $this->exportTypes = config('livewire-datatable.export.types', ['excel', 'pdf']);
 
         // Initialize the appropriate data source
         $this->initializeDataSource();

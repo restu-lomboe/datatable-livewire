@@ -54,14 +54,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Added date format pattern examples
 - Updated configuration examples
 
+## [v1.3.0] - 2025-10-18
+
+### ✨ New Features
+
+- Added comprehensive export functionality:
+
+  - Export to Excel and PDF formats
+  - Support for exporting all data regardless of pagination
+  - Configurable export buttons with dropdown interface
+  - Custom filename generation with search context
+  - Proper formatting in exported files
+  - Exclude action columns from exports
+  - Support for all data types and relationships
+
+- Enhanced pagination system:
+  - Added "Show All" records option
+  - Dynamic handling of large datasets
+  - Improved performance with optimized queries
+  - Maintains search and sort functionality
+  - Smooth transition between page sizes
+
+### 🔧 Improvements
+
+- Optimized data export for large datasets
+- Better handling of formatters in exports
+- Improved memory efficiency for large exports
+- Enhanced search functionality with export integration
+- Added export button position configuration
+
+### 🏗 Architecture
+
+- Introduced WithExport trait for export functionality
+- Added DataTableExport class for Excel exports
+- Improved PDF template system
+- Better handling of data transformations
+
+### 📚 Documentation
+
+- Added export configuration documentation
+- Updated pagination examples
+- Added formatter integration examples
+- New examples for customizing exports
+
 ## [Unreleased]
 
-### 🚀 Planned for v1.3.0
+### 🚀 Planned for v1.4.0
 
 - Column Filtering (dropdown, select, date range)
-- Export to CSV/Excel/PDF
 - Server-side Caching for heavy datasets
-- Column Formatting (date, currency, custom display)
+- Advanced Column Formatting
+- Bulk Actions Support
 
 ### ⚡ Improvements
 
