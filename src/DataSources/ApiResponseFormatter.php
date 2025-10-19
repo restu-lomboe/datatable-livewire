@@ -64,13 +64,23 @@ class ApiResponseFormatter
 
         // Extract pagination information
         $meta['total'] = (int) Arr::get($response, $this->config['total_key'], 0);
-        $meta['per_page'] = (int) Arr::get($response, $this->config['per_page_key'], 10);
+        $meta['per_page'] = Arr::get($response, $this->config['per_page_key']);
         $meta['current_page'] = (int) Arr::get($response, $this->config['current_page_key'], 1);
 
-        // Calculate additional pagination metadata
-        $meta['last_page'] = (int) ceil($meta['total'] / $meta['per_page']);
-        $meta['from'] = ($meta['current_page'] - 1) * $meta['per_page'] + 1;
-        $meta['to'] = min($meta['current_page'] * $meta['per_page'], $meta['total']);
+        // Handle "all" or null per_page (show all records case)
+        if ($meta['per_page'] === null || $meta['per_page'] === 'all') {
+            $meta['per_page'] = $meta['total'];
+            $meta['current_page'] = 1;
+            $meta['last_page'] = 1;
+            $meta['from'] = 1;
+            $meta['to'] = $meta['total'];
+        } else {
+            $meta['per_page'] = (int) $meta['per_page'];
+            // Calculate additional pagination metadata
+            $meta['last_page'] = (int) ceil($meta['total'] / $meta['per_page']);
+            $meta['from'] = ($meta['current_page'] - 1) * $meta['per_page'] + 1;
+            $meta['to'] = min($meta['current_page'] * $meta['per_page'], $meta['total']);
+        }
 
         return $meta;
     }

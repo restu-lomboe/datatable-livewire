@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Query parameter preservation in pagination links
 
 - Enhanced API integration:
+
+  - Support for "Show All" pagination in API data sources
+  - Consistent API response formatting for all data modes
+  - Smart handling of per_page=all or null for full dataset retrieval
+  - Two-step process for efficient all-records fetching
   - Flexible response mapping
   - Customizable query parameters
   - Robust error handling
