@@ -35,6 +35,7 @@ class DataTable extends Component
     public $formatters = [];
     public $formatterOptions = [];
     public $scope;
+    public $scopeParams = [];
     public $totals;
     public $page = 1;
     public $enableExport;
@@ -49,7 +50,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [])
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [])
     {
         if (!$model && !$apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -58,6 +59,7 @@ class DataTable extends Component
         $this->model = $model;
         $this->apiConfig = $apiConfig;
         $this->scope = $scope;
+        $this->scopeParams = $scopeParams;
         $this->columns = $columns;
         $this->searchable = $searchable;
         $this->unsortable = $unsortable;
@@ -126,7 +128,7 @@ class DataTable extends Component
     protected function initializeDataSource(): void
     {
         if ($this->model) {
-            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->searchable, $this->sortable, $this->perPage);
+            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->scopeParams, $this->searchable, $this->sortable, $this->perPage);
         } else {
             $this->dataSource = new ApiDataSource($this->apiConfig);
         }

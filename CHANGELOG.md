@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Improved memory efficiency for large exports
 - Enhanced search functionality with export integration
 - Added export button position configuration
+- support custom params for scopr
 
 ### 🏗 Architecture
 

@@ -12,14 +12,16 @@ class ModelDataSource implements DataSourceInterface
 {
     protected $model;
     protected $scope;
+    protected $scopeParams;
     protected $searchable;
     protected $sortable;
     protected $perPage;
 
-    public function __construct(string $model, ?string $scope = null, array $searchable = [], array $sortable = [], int $perPage = 10)
+    public function __construct(string $model, ?string $scope = null, array $scopeParams = [], array $searchable = [], array $sortable = [], int $perPage = 10)
     {
         $this->model = $model;
         $this->scope = $scope;
+        $this->scopeParams = $scopeParams;
         $this->searchable = $searchable;
         $this->sortable = $sortable;
         $this->perPage = $perPage;
@@ -29,7 +31,9 @@ class ModelDataSource implements DataSourceInterface
     {
         $query = $this->model::query();
 
-        if ($this->scope) {
+        if(!empty($this->scopeParams)) {
+            $query = $query->{$this->scope}(...$this->scopeParams);
+        } else {
             $query = $query->{$this->scope}();
         }
 
