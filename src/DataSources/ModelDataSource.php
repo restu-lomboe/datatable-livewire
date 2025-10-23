@@ -17,7 +17,7 @@ class ModelDataSource implements DataSourceInterface
     protected $sortable;
     protected $perPage;
 
-    public function __construct(string $model, ?string $scope = null, array $scopeParams = [], array $searchable = [], array $sortable = [], int $perPage = 10)
+    public function __construct(string $model, ?string $scope = null, array $scopeParams = [], array $searchable = [], array $sortable = [], $perPage = 10)
     {
         $this->model = $model;
         $this->scope = $scope;
