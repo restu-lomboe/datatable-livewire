@@ -34,7 +34,9 @@ class ModelDataSource implements DataSourceInterface
         if(!empty($this->scopeParams)) {
             $query = $query->{$this->scope}(...$this->scopeParams);
         } else {
-            $query = $query->{$this->scope}();
+            if ($this->scope) {
+                $query = $query->{$this->scope}();
+            }
         }
 
         if (!empty($params['search']) && !empty($this->searchable)) {
