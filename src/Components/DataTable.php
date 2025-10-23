@@ -8,15 +8,16 @@ use Livewire\Attributes\On;
 use Livewire\WithPagination;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Computed;
+use Developerawam\LivewireDatatable\Traits\WithFormatters;
+use Developerawam\LivewireDatatable\Traits\WithExport;
 use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
 use Developerawam\LivewireDatatable\DataSources\DataSourceInterface;
-use Developerawam\LivewireDatatable\Traits\WithFormatters;
 
 #[Lazy]
 class DataTable extends Component
 {
-    use WithPagination, WithFormatters;
+    use WithPagination, WithFormatters, WithExport;
 
     public $model;
     public $apiConfig;
@@ -34,8 +35,11 @@ class DataTable extends Component
     public $formatters = [];
     public $formatterOptions = [];
     public $scope;
+    public $scopeParams = [];
     public $totals;
     public $page = 1;
+    public $enableExport;
+    public $exportTypes = [];
     protected $dataSource;
 
 
@@ -46,7 +50,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [])
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [])
     {
         if (!$model && !$apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -55,6 +59,7 @@ class DataTable extends Component
         $this->model = $model;
         $this->apiConfig = $apiConfig;
         $this->scope = $scope;
+        $this->scopeParams = $scopeParams;
         $this->columns = $columns;
         $this->searchable = $searchable;
         $this->unsortable = $unsortable;
@@ -70,6 +75,10 @@ class DataTable extends Component
 
         // Load theme from config and merge with any custom theme passed
         $this->theme = array_merge(config('livewire-datatable.theme', []), $theme);
+
+        // Initialize export settings from config
+        $this->enableExport = config('livewire-datatable.export.enabled', true);
+        $this->exportTypes = config('livewire-datatable.export.types', ['excel', 'pdf']);
 
         // Initialize the appropriate data source
         $this->initializeDataSource();
@@ -119,7 +128,7 @@ class DataTable extends Component
     protected function initializeDataSource(): void
     {
         if ($this->model) {
-            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->searchable, $this->sortable, $this->perPage);
+            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->scopeParams, $this->searchable, $this->sortable, $this->perPage);
         } else {
             $this->dataSource = new ApiDataSource($this->apiConfig);
         }

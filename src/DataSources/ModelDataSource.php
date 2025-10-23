@@ -12,14 +12,16 @@ class ModelDataSource implements DataSourceInterface
 {
     protected $model;
     protected $scope;
+    protected $scopeParams;
     protected $searchable;
     protected $sortable;
     protected $perPage;
 
-    public function __construct(string $model, ?string $scope = null, array $searchable = [], array $sortable = [], int $perPage = 10)
+    public function __construct(string $model, ?string $scope = null, array $scopeParams = [], array $searchable = [], array $sortable = [], int $perPage = 10)
     {
         $this->model = $model;
         $this->scope = $scope;
+        $this->scopeParams = $scopeParams;
         $this->searchable = $searchable;
         $this->sortable = $sortable;
         $this->perPage = $perPage;
@@ -29,7 +31,9 @@ class ModelDataSource implements DataSourceInterface
     {
         $query = $this->model::query();
 
-        if ($this->scope) {
+        if(!empty($this->scopeParams)) {
+            $query = $query->{$this->scope}(...$this->scopeParams);
+        } else {
             $query = $query->{$this->scope}();
         }
 
@@ -44,6 +48,20 @@ class ModelDataSource implements DataSourceInterface
         $paginationType = config('livewire-datatable.default_pagination', 'paginate');
         $perPage = $params['per_page'] ?? $this->perPage;
         $page = $params['page'] ?? 1;
+
+        // Handle 'all' option by getting total count
+        if ($perPage === 'all' || $perPage === -1) {
+            // For export or show all cases, get total count for pagination
+            $total = $query->count();
+
+            if ($paginationType === 'simplePaginate') {
+                $paginator = $query->simplePaginate($total, ['*'], 'page', 1);
+                $paginator->total = $total;
+                return $paginator;
+            }
+
+            return $query->paginate($total, ['*'], 'page', 1);
+        }
 
         if ($paginationType === 'simplePaginate') {
             // Get total count before pagination

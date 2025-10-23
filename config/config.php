@@ -8,9 +8,34 @@ return [
     |
     | This option controls the default pagination options that are shown
     | in the datatable. You can modify these to any values you want.
+    | Use 'all' to represent "All" records.
     |
     */
-    'per_page_options' => [10, 25, 50, 100],
+    'per_page_options' => [10, 25, 50, 100, 'all'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export Options
+    |--------------------------------------------------------------------------
+    |
+    | Configure the export functionality of the datatable here.
+    |
+    */
+    'export' => [
+        'enabled' => true,
+        'types' => ['excel', 'pdf'], // supported types: 'excel', 'pdf'
+        'orientation' => 'portrait', // portrait or landscape
+        'paper_size' => 'a4',
+        'dropdown' => [
+            'position' => 'top', // top, bottom, both
+            'trigger_class' => 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700',
+            'menu_class' => 'absolute left-0 z-10 mt-2 w-35 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-900/5 ring-opacity-5 focus:outline-none',
+            'item_class' => 'block w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left',
+            'trigger_text' => 'Export',
+            'excel_text' => 'Excel',
+            'pdf_text' => 'PDF',
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -33,6 +58,8 @@ return [
         // Search input
         'search_input_wrapper' => 'w-full sm:w-auto relative',
         'search_input' => 'w-full sm:w-auto pl-10 rounded-lg border p-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
+        'search_icon_wrapper' => 'absolute inset-y-0 left-0 flex items-center pl-3',
+        'search_icon' => 'h-5 w-5 text-gray-400 dark:text-gray-500',
 
         // Table
         'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow',

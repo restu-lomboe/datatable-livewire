@@ -46,21 +46,61 @@ class ApiDataSource implements DataSourceInterface
         $this->currentPageParam = $config['current_page_param'] ?? 'current_page';
     }
 
+    protected function makeRequest(array $queryParams = []): array
+    {
+        $response = $this->http
+            ->withHeaders($this->headers)
+            ->{strtolower($this->method)}($this->url, $queryParams);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('API request failed: ' . $response->body());
+        }
+
+        $data = $response->json();
+
+        if ($this->responseKey) {
+            $data = Arr::get($data, $this->responseKey);
+        }
+
+        return $data;
+    }
+
     public function getData(array $params = []): LengthAwarePaginator|Paginator
     {
+        $perPage = $params['per_page'] ?? $this->perPage;
+        $isAllRecords = $perPage === 'all' || $perPage === null || $perPage === -1;
+        $page = $params['page'] ?? $this->currentPage;
 
-        $queryParams = array_merge($this->queryParams, [
+        // Base query parameters
+        $baseParams = [
             $this->searchParam => $params['search'] ?? '',
             $this->sortParam => $params['sort_field'] ?? '',
             $this->sortDirectionParam => $params['sort_direction'] ?? '',
-            $this->perPageParam => $params['per_page'] ?? $this->perPage,
-            $this->pageParam => $params['page'] ?? $this->currentPage,
-        ]);
+        ];
 
-        $response = $this->http
-            ->withHeaders($this->headers)
-            ->get($this->url, $queryParams)
-            ->json();
+        if ($isAllRecords) {
+            // First, get total count if requesting all records
+            $countParams = array_merge($this->queryParams, $baseParams, [
+                $this->perPageParam => 1,
+                $this->pageParam => 1,
+            ]);
+
+            $countData = $this->makeRequest($countParams);
+            $total = Arr::get($countData, $this->totalKey, 0);
+
+            // Now get all records in a single request
+            $queryParams = array_merge($this->queryParams, $baseParams, [
+                $this->perPageParam => $total > 0 ? $total : 1,
+                $this->pageParam => 1,
+            ]);
+        } else {
+            $queryParams = array_merge($this->queryParams, $baseParams, [
+                $this->perPageParam => $perPage,
+                $this->pageParam => $page,
+            ]);
+        }
+
+        $response = $this->makeRequest($queryParams);
 
         $formatter = new ApiResponseFormatter([
             'data_key' => $this->dataKey,
@@ -128,16 +168,9 @@ class ApiDataSource implements DataSourceInterface
             $this->perPageParam => $this->perPage,
         ]);
 
-        $response = $this->http
-            ->withHeaders($this->headers)
-            ->get($this->url, $params)
-            ->json();
+        $response = $this->makeRequest($params);
 
-        $data = $this->responseKey ?
-            Arr::get($response, $this->responseKey . '.' . $this->dataKey, []) :
-            Arr::get($response, $this->dataKey, []);
-
-        return collect($data);
+        return collect(Arr::get($response, $this->dataKey, []));
     }
 
     public function sort(string $field, string $direction): Collection
@@ -148,16 +181,9 @@ class ApiDataSource implements DataSourceInterface
             $this->perPageParam => $this->perPage,
         ]);
 
-        $response = $this->http
-            ->withHeaders($this->headers)
-            ->get($this->url, $params)
-            ->json();
+        $response = $this->makeRequest($params);
 
-        $data = $this->responseKey ?
-            Arr::get($response, $this->responseKey . '.' . $this->dataKey, []) :
-            Arr::get($response, $this->dataKey, []);
-
-        return collect($data);
+        return collect(Arr::get($response, $this->dataKey, []));
     }
 
     public static function make(array $config): self

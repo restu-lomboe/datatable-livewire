@@ -23,16 +23,18 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 4. [Quick Start](#-quick-start)
 5. [Basic Usage](#-basic-usage)
 6. [Advanced Features](#-advanced-features)
-7. [Customization](#-customization)
-8. [Examples](#-examples)
-9. [Support](#-support)
+7. [Export Features](#-export-features)
+8. [Customization](#-customization)
+9. [Examples](#-examples)
+10. [Support](#-support)
 
 ## ✨ Features
 
 - ⚡ **Server-side Rendering** - Handle thousands of records efficiently
 - 🔍 **Smart Search** - Live search with intelligent debouncing
 - 📊 **Column Sorting** - Sort by any column, including relationships
-- 📄 **Dynamic Pagination** - Customizable pagination with multiple options
+- 📄 **Dynamic Pagination** - Customizable pagination with "Show All" option
+- 📤 **Data Export** - Export to Excel and PDF with proper formatting
 - 🎨 **Theming System** - Fully customizable with Tailwind CSS
 - 🌙 **Dark Mode** - Automatic dark mode support
 - 📱 **Responsive Design** - Perfect on all screen sizes
@@ -732,6 +734,68 @@ class UsersTable extends Component
 - `$item`: The current model instance (e.g., User object)
 - `$value`: The value of the current column
 - `$this->dispatch('reset-table')`: Refresh (auto refresh) table after action done
+
+## 📤 Export Features
+
+### Export Features
+
+- 📊 **Multiple Formats**: Export to Excel and PDF
+- 🔄 **All Data Export**: Exports all records, not just current page
+- 🔍 **Search Integration**: Exports respect current search filters
+- 📝 **Smart Formatting**: Maintains data formatting in exports
+- 🎯 **Action Column Handling**: Automatically excludes action columns
+- 📋 **Custom Filenames**: Includes search context in filenames
+- 🎨 **PDF Styling**: Clean, professional PDF layouts
+- 📱 **Responsive UI**: Export buttons adapt to screen size
+
+### Export Options
+
+1. **Format Selection**
+
+   - Excel: `.xlsx` format with proper data types
+   - PDF: Clean, formatted PDF documents
+
+2. **Data Scope**
+
+   - All records are exported regardless of pagination
+   - Search filters are respected in exports
+   - Sort order is maintained
+
+3. **Formatting**
+
+   - Dates are properly formatted
+   - Numbers and currency maintain formatting
+   - Boolean values use configured labels
+   - Relationships are properly resolved
+
+4. **UI Options**
+
+   - Configurable button position
+   - Dropdown or separate buttons
+   - Customizable button text and styling
+   - Dark mode support
+
+### Export Configuration
+
+Configure export options in your `config/livewire-datatable.php`:
+
+```php
+'export' => [
+    'enabled' => true,
+    'types' => ['excel', 'pdf'],
+    'orientation' => 'portrait',
+    'paper_size' => 'a4',
+    'dropdown' => [
+        'position' => 'top', // top, bottom, both
+        'trigger_class' => 'inline-flex items-center ...',
+        'menu_class' => 'absolute left-0 z-10 mt-2 ...',
+        'item_class' => 'block w-full p...',
+        'trigger_text' => 'Export',
+        'excel_text' => 'Export Excel',
+        'pdf_text' => 'Export PDF',
+    ],
+],
+```
 
 ## 🎨 Customization
 
