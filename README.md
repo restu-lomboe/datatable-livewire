@@ -564,6 +564,12 @@ class User extends Model
             $q->where('name', $department);
         });
     }
+
+    public function scopeStatus(Builder $query, string $status, bool $isCompleted) : Builder
+    {
+        return $query->where('status', $status)
+                     ->where('is_completed', $isCompleted);
+    }
 }
 ```
 
@@ -585,12 +591,32 @@ public function render()
 }
 ```
 
-#### 3. Use in Your View
+#### 3. Apply the Scope with Params
+
+```php
+public function render()
+{
+    return view('livewire.users-table', [
+        'model' => User::class,
+        'scope' => 'status',  // Apply the 'active' scope
+        'scopeParams' ['compeleted', true] // apply params
+        'columns' => [
+            'no' => '#',
+            'name' => 'Name',
+            'email' => 'Email',
+            'status' => 'Status'
+        ]
+    ]);
+}
+```
+
+#### 4. Use in Your View
 
 ```blade
 <livewire:livewire-datatable
     :model="$model"
     :scope="$scope"
+    :scopeParams="$scopeParams"
     :columns="$columns" />
 ```
 
@@ -989,6 +1015,13 @@ Here's a quick reference of all available features and how they work together:
 
   ```php
   'scope' => 'active' // Uses User::scopeActive()
+
+  ```
+
+- **`scopeParams`** → Apply custom query with params constraints using model scopes
+
+  ```php
+  'scopeParams' => ['completed'] // Uses User::scopeStatus('completed')
   ```
 
 - **`columns`** → Define which fields to display and their labels
@@ -1035,7 +1068,8 @@ Here's a quick reference of all available features and how they work together:
 ```php
 <livewire:livewire-datatable
     :model="User::class"
-    scope="active"
+    :scope="active"
+    :scopeParams="['...', '....']"
     :columns="[
         'no' => '#',
         'name' => 'Name',
