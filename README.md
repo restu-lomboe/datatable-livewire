@@ -599,7 +599,7 @@ public function render()
     return view('livewire.users-table', [
         'model' => User::class,
         'scope' => 'status',  // Apply the 'active' scope
-        'scopeParams' ['compeleted', true] // apply params
+        'scopeParams' => ['compeleted', true] // apply params
         'columns' => [
             'no' => '#',
             'name' => 'Name',
