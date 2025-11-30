@@ -83,11 +83,11 @@ return [
         'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
 
         // Column-specific cell styling
-        'td_id' => 'font-mono text-gray-500 dark:text-gray-400', // Example: ID column styling
-        'td_created_at' => 'text-xs', // Example: Date column styling
-        'td_status' => 'text-center', // Example: Status column styling
-        'td_email' => 'font-medium', // Example: Email column styling
-        'td_actions' => 'text-right space-x-2', // Example: Actions column styling
+        // 'td_id' => 'font-mono text-gray-500 dark:text-gray-400', // Example: ID column styling
+        // 'td_created_at' => 'text-xs', // Example: Date column styling
+        // 'td_status' => 'text-center', // Example: Status column styling
+        // 'td_email' => 'font-medium', // Example: Email column styling
+        // 'td_actions' => 'text-right space-x-2', // Example: Actions column styling
 
         // Empty state
         'empty_wrapper' => 'px-6 py-8 text-center',
