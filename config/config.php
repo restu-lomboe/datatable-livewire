@@ -60,6 +60,9 @@ return [
         'search_input' => 'w-full sm:w-auto pl-10 rounded-lg border p-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
         'search_icon_wrapper' => 'absolute inset-y-0 left-0 flex items-center pl-3',
         'search_icon' => 'h-5 w-5 text-gray-400 dark:text-gray-500',
+        'export_wrapper' => 'flex gap-2 items-center',
+        'export_button' => 'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800',
+        'export_icon' => 'w-4 h-4 mr-2',
 
         // Table
         'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow',
@@ -80,11 +83,11 @@ return [
         'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
 
         // Column-specific cell styling
-        'td_id' => 'font-mono text-gray-500 dark:text-gray-400',  // Example: ID column styling
-        'td_created_at' => 'text-xs',  // Example: Date column styling
-        'td_status' => 'text-center',  // Example: Status column styling
-        'td_email' => 'font-medium',   // Example: Email column styling
-        'td_actions' => 'text-right space-x-2',  // Example: Actions column styling
+        // 'td_id' => 'font-mono text-gray-500 dark:text-gray-400', // Example: ID column styling
+        // 'td_created_at' => 'text-xs', // Example: Date column styling
+        // 'td_status' => 'text-center', // Example: Status column styling
+        // 'td_email' => 'font-medium', // Example: Email column styling
+        // 'td_actions' => 'text-right space-x-2', // Example: Actions column styling
 
         // Empty state
         'empty_wrapper' => 'px-6 py-8 text-center',

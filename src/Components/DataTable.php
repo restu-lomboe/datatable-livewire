@@ -29,6 +29,8 @@ class DataTable extends Component
     public $perPage;
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
+    public $defaultSortField = 'created_at';
+    public $defaultSortDirection = 'desc';
     public $pageOptions;
     public $theme = [];
     public $customColumns = [];
@@ -50,7 +52,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [])
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc')
     {
         if (!$model && !$apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -66,8 +68,12 @@ class DataTable extends Component
         $this->customColumns = $customColumns;
         $this->formatters = $formatters;
         $this->formatterOptions = $formatterOptions;
+        $this->defaultSortField = $defaultSortField;
+        $this->defaultSortDirection = $defaultSortDirection;
+        $this->sortField = $defaultSortField;
+        $this->sortDirection = $defaultSortDirection;
         // By default, all columns are sortable except those in unsortable array
-        $this->sortable = array_diff(array_keys($columns), $unsortable);
+        $this->sortable = array_values(array_diff(array_keys($columns), $unsortable));
 
         // Initialize pagination options from config
         $this->pageOptions = config('livewire-datatable.per_page_options', [10, 25, 50, 100]);
@@ -128,7 +134,7 @@ class DataTable extends Component
     protected function initializeDataSource(): void
     {
         if ($this->model) {
-            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->scopeParams, $this->searchable, $this->sortable, $this->perPage);
+            $this->dataSource = new ModelDataSource($this->model, $this->scope, $this->scopeParams, $this->searchable, $this->sortable, $this->perPage, $this->defaultSortField, $this->defaultSortDirection);
         } else {
             $this->dataSource = new ApiDataSource($this->apiConfig);
         }

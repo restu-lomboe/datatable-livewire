@@ -122,32 +122,37 @@
                         <tr @class([$this->getClass('tr')]) wire:key="row-{{ $item->id ?? $index }}"
                             id="row-{{ $item->id ?? $index }}">
                             @foreach ($columns as $key => $column)
-                                <td @class([
-                                    $this->getClass('td'),
-                                    $this->getClass("td_{$key}"), // Column-specific class
-                                ]) wire:key="cell-{{ $key }}">
-                                    @if (isset($customColumns[$key]))
-                                        @include($customColumns[$key], [
-                                            'item' => $item,
-                                            'value' => data_get($item, $key),
-                                        ])
-                                    @else
-                                        @if ($key === 'no')
-                                            <!-- check sortDirection -->
-                                            @if ($sortDirection === 'desc')
-                                                {{ $loop->parent->iteration + ($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() }}
-                                            @elseif ($sortDirection === 'asc')
-                                                <!-- check config('livewire-datatable.default_pagination') == 'simplePaginate' -->
-                                                @if (config('livewire-datatable.default_pagination') == 'simplePaginate')
-                                                    {{ $this->totals - (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) + 1 }}
-                                                @else
-                                                    {{ $this->getQuery->total() - (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) + 1 }}
-                                                @endif
-                                            @endif
+                                <td @class([$this->getClass('td')]) wire:key="cell-{{ $key }}">
+                                    <div @class([$this->getClass("td_{$key}")])>
+                                        @if (isset($customColumns[$key]))
+                                            @include($customColumns[$key], [
+                                                'item' => $item,
+                                                'value' => data_get($item, $key),
+                                            ])
                                         @else
-                                            {!! $this->formatValue($key, data_get($item, $key)) !!}
+                                            @if ($key === 'no')
+                                                @if ($sortField === 'no')
+                                                    <!-- When sorting by "no" column, show reversed numbering based on sort direction -->
+                                                    @if ($sortDirection === 'desc')
+                                                        <!-- Show from highest to lowest (descending) -->
+                                                        @if (config('livewire-datatable.default_pagination') == 'simplePaginate')
+                                                            {{ $this->totals - (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) + 1 }}
+                                                        @else
+                                                            {{ $this->getQuery->total() - (($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() + $loop->parent->iteration) + 1 }}
+                                                        @endif
+                                                    @else
+                                                        <!-- Show from lowest to highest (ascending) -->
+                                                        {{ $loop->parent->iteration + ($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() }}
+                                                    @endif
+                                                @else
+                                                    <!-- When not sorting by "no", always show sequential numbering -->
+                                                    {{ $loop->parent->iteration + ($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() }}
+                                                @endif
+                                            @else
+                                                {!! $this->formatValue($key, data_get($item, $key)) !!}
+                                            @endif
                                         @endif
-                                    @endif
+                                    </div>
                                 </td>
                             @endforeach
                         </tr>
