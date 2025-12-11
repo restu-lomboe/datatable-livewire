@@ -113,6 +113,7 @@ class DataTable extends Component
         }
 
         $this->sortField = $field;
+        $this->resetPage();
     }
 
     public function updatingSearch()
@@ -225,6 +226,8 @@ class DataTable extends Component
     {
         $this->filterDataSearch = true;
         $this->reset('search');
+        $this->sortField = $this->defaultSortField;
+        $this->sortDirection = $this->defaultSortDirection;
         $this->resetPage();
     }
 
@@ -306,6 +309,13 @@ class DataTable extends Component
                 else {
                     $query->where($column, 'LIKE', "%{$value}%");
                 }
+            }
+
+            // Apply sorting when filtering is active
+            if (!empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
+                $query->orderBy($this->sortField, $this->sortDirection);
+            } elseif ($this->defaultSortField) {
+                $query->orderBy($this->defaultSortField, $this->defaultSortDirection);
             }
 
             $result = $query->paginate($this->perPage, ['*'], 'page', $this->page);
