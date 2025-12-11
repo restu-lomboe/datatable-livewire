@@ -28,8 +28,8 @@ return [
         'paper_size' => 'a4',
         'dropdown' => [
             'position' => 'top', // top, bottom, both
-            'trigger_class' => 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700',
-            'menu_class' => 'absolute left-0 z-10 mt-2 w-35 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-900/5 ring-opacity-5 focus:outline-none',
+            'trigger_class' => 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-sm hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700',
+            'menu_class' => 'absolute left-0 z-10 mt-2 w-35 origin-top-right rounded-sm bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-900/5 ring-opacity-5 focus:outline-none',
             'item_class' => 'block w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left',
             'trigger_text' => 'Export',
             'excel_text' => 'Excel',
@@ -47,25 +47,25 @@ return [
     |
     */
     'theme' => [
-        'wrapper' => 'w-full',
+        'wrapper' => 'w-full border border-gray-200 rounded-sm dark:border-gray-700',
         'search_wrapper' => 'mb-4 flex flex-col sm:flex-row items-center justify-between gap-4',
-        'controls_wrapper' => 'flex justify-between sm:flex-row items-center gap-4 w-full justify-between',
+        'controls_wrapper' => 'flex justify-between sm:flex-row items-center gap-4 w-full justify-between pt-3 px-3',
 
         // Per page select
-        'per_page_wrapper' => 'w-full sm:w-36',
-        'per_page_select' => 'w-full sm:w-auto rounded-lg border p-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
+        'per_page_wrapper' => 'flex items-center gap-2',
+        'per_page_select' => 'w-20 py-2.5 px-4 block border border-gray-300 rounded-sm text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200',
 
         // Search input
         'search_input_wrapper' => 'w-full sm:w-auto relative',
-        'search_input' => 'w-full sm:w-auto pl-10 rounded-lg border p-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm',
+        'search_input' => 'w-full sm:w-auto pl-10 rounded-sm border px-2 py-1.5 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-50',
         'search_icon_wrapper' => 'absolute inset-y-0 left-0 flex items-center pl-3',
         'search_icon' => 'h-5 w-5 text-gray-400 dark:text-gray-500',
         'export_wrapper' => 'flex gap-2 items-center',
-        'export_button' => 'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800',
+        'export_button' => 'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800',
         'export_icon' => 'w-4 h-4 mr-2',
 
         // Table
-        'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow',
+        'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow',
         'table' => 'min-w-full divide-y divide-gray-200 dark:divide-gray-700',
 
         // Table head
@@ -96,7 +96,7 @@ return [
         'empty_text' => 'text-gray-500 dark:text-gray-400 text-sm font-medium',
 
         // Pagination
-        'pagination_wrapper' => 'mt-4',
+        'pagination_wrapper' => 'p-4',
     ],
 
     /*

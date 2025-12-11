@@ -8,8 +8,9 @@ use Livewire\Attributes\On;
 use Livewire\WithPagination;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Computed;
-use Developerawam\LivewireDatatable\Traits\WithFormatters;
+use Illuminate\Support\Facades\Schema;
 use Developerawam\LivewireDatatable\Traits\WithExport;
+use Developerawam\LivewireDatatable\Traits\WithFormatters;
 use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
 use Developerawam\LivewireDatatable\DataSources\DataSourceInterface;
@@ -43,6 +44,12 @@ class DataTable extends Component
     public $enableExport;
     public $exportTypes = [];
     protected $dataSource;
+
+    public $filter = false;
+    public $filterDataSearch = false;
+    public $filterBy = [];
+    public $query = [];
+    public $disabledAddFilterButton = false;
 
 
     protected function ensureDataSourceInitialized(): void
@@ -131,6 +138,137 @@ class DataTable extends Component
         $this->resetPage();
     }
 
+    #[Computed]
+    protected function filterByColumn()
+    {
+        $model = new $this->model;
+        $table = $model->getTable();
+
+        // MAIN TABLE COLUMNS
+        $columns = collect(Schema::getColumnListing($table))
+            ->reject(fn ($c) => in_array($c, ['id', 'created_at', 'updated_at']))
+            ->mapWithKeys(fn ($c) => [$c => Str::headline($c)])
+            ->toArray();
+
+        // GET RELATIONS FROM `$with`
+        foreach (array_keys($model->getEagerLoads()) as $relationPath) {
+
+            $relationColumns = $this->getRelationColumns($model, $relationPath);
+
+            foreach ($relationColumns as $key => $label) {
+                $columns[$key] = $label;
+            }
+        }
+
+        return $columns;
+    }
+
+    protected function getRelationColumns($model, $relationPath)
+    {
+        $parts = explode('.', $relationPath);
+        $relationName = array_shift($parts);
+
+        if (!method_exists($model, $relationName)) {
+            return [];
+        }
+
+        $relation = $model->{$relationName}();
+        $relatedModel = $relation->getRelated();
+        $relatedTable = $relatedModel->getTable();
+
+        // Get columns for this table
+        $columns = collect(Schema::getColumnListing($relatedTable))
+            ->reject(fn ($c) => in_array($c, ['id', 'password', 'email_verified_at', 'remember_token', 'created_at', 'updated_at']));
+
+        $result = [];
+
+        // Level 1 fields (e.g. user.name, user.email)
+        foreach ($columns as $col) {
+            $key = "{$relationPath}.{$col}";
+            $label = Str::headline(str_replace('.', ' ', "{$relationPath} {$col}"));
+            $result[$key] = $label;
+        }
+
+        // If nested → recurse
+        if (!empty($parts)) {
+            $nestedPath = implode('.', $parts);
+            $nestedFields = $this->getRelationColumns($relatedModel, $nestedPath);
+
+            foreach ($nestedFields as $nestedKey => $nestedLabel) {
+                $result["{$relationName}.{$nestedKey}"] = $nestedLabel;
+            }
+        }
+
+        return $result;
+    }
+
+    public function showFilter()
+    {
+        $this->filter = true;
+
+        // check if filterBy not empty
+        if(count($this->filterBy) == 0) {
+            $this->filterBy[] = '';
+            $this->query[] = '';
+        }
+
+    }
+
+    public function closeFilter()
+    {
+        $this->filter = false;
+        $this->filterDataSearch = false;
+        $this->resetPage();
+    }
+
+    public function filterData()
+    {
+        $this->filterDataSearch = true;
+        $this->reset('search');
+        $this->resetPage();
+    }
+
+    public function addFilter()
+    {
+        // check if filterByColumn count == filterBy count
+        // button should be disabled
+
+        $this->filterBy[] = '';
+        $this->query[] = '';
+
+        if (count($this->filterByColumn) == count($this->query)) {
+            $this->disabledAddFilterButton = true;
+        }
+    }
+
+    public function resetFilter()
+    {
+        // reset filterBy and query
+        // just add one filterBy for default
+        // reset disabledAddFilterButton
+
+        $this->resetPage();
+        $this->filterBy = [''];
+        $this->query = [''];
+        $this->disabledAddFilterButton = false;
+        $this->filterDataSearch = false;
+    }
+
+    public function deleteFilter($index)
+    {
+        if (isset($this->filterBy[$index])) {
+            unset($this->filterBy[$index]);
+        }
+
+        if (isset($this->query[$index])) {
+            unset($this->query[$index]);
+        }
+
+        // Re-index array to avoid gaps
+        $this->filterBy = array_values($this->filterBy);
+        $this->query = array_values($this->query);
+    }
+
     protected function initializeDataSource(): void
     {
         if ($this->model) {
@@ -143,15 +281,46 @@ class DataTable extends Component
     #[Computed]
     protected function getQuery()
     {
-        $this->ensureDataSourceInitialized();
+        // check if filterBy not empty
+        if($this->filterDataSearch) {
+            $query = $this->model::query();
+            foreach ($this->filterBy as $i => $column) {
 
-        $result = $this->dataSource->getData([
-            'search' => $this->search,
-            'sort_field' => $this->sortField,
-            'sort_direction' => $this->sortDirection,
-            'per_page' => $this->perPage,
-            'page' => $this->page,
-        ]);
+                $value = trim($this->query[$i]) ?? null;
+                $this->query[$i] = $value;
+                if (!$value) continue;
+
+                // RELATION FILTER: user.name / user.profile.country.name
+                if (str_contains($column, '.')) {
+
+                    $parts = explode('.', $column);
+                    $field = array_pop($parts);   // last part = column name
+                    $relationPath = implode('.', $parts);
+
+                    $query->whereHas($relationPath, function ($q) use ($field, $value) {
+                        $q->where($field, 'LIKE', "%{$value}%");
+                    });
+
+                }
+                // NORMAL COLUMN FILTER
+                else {
+                    $query->where($column, 'LIKE', "%{$value}%");
+                }
+            }
+
+            $result = $query->paginate($this->perPage, ['*'], 'page', $this->page);
+        } else {
+
+            $this->ensureDataSourceInitialized();
+            $this->search = trim($this->search);
+            $result = $this->dataSource->getData([
+                'search' => $this->search,
+                'sort_field' => $this->sortField,
+                'sort_direction' => $this->sortDirection,
+                'per_page' => $this->perPage,
+                'page' => $this->page,
+            ]);
+        }
 
         // For simple pagination, store the total in the component
         if (config('livewire-datatable.default_pagination') === 'simplePaginate') {
