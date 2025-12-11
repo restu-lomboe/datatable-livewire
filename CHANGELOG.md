@@ -7,7 +7,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [v1.2.0] - 2025-09-19
+## [v1.4.0] - 2025-12-11
+
+### ✨ New Features
+
+- **Advanced Dynamic Filter System**:
+
+  - Multiple column filtering with configurable UI
+  - Filter by multiple conditions on same table
+  - Real-time filter application with visual feedback
+  - Filter state management (add, delete, reset)
+  - Works seamlessly with sorting and pagination
+  - Support for text input and dropdown filters
+  - Enable/disable filters via configuration
+  - Advanced filter panel with collapsible interface
+
+- **Default Sort Configuration**:
+
+  - Custom default sort field per table
+  - Custom default sort direction (asc/desc)
+  - Maintains default sort on page load
+  - Flexible sort reset with filtering
+  - Supports sorting by relationships
+
+- **Fully Dynamic CSS Classes**:
+
+  - All CSS classes moved to configuration file
+  - Dynamic class binding for all UI elements
+  - Data attributes for debugging and inspection
+  - Complete theme customization without template changes
+  - Icon styling configuration (SVG classes)
+  - Layout wrapper configuration
+  - Text styling configuration
+
+- **Enhanced Export with Filtering**:
+
+  - Export respects active filters and search
+  - Export with applied sorting
+  - Filtered exports with proper naming convention
+  - Support for searched data export
+
+### 🔧 Improvements
+
+- Improved sorting behavior when filtering is active
+- Better pagination handling with active filters
+- Reset sort field when filtering data
+- Dynamic class extraction via `getClass()` method
+- All SVG icon classes configurable
+- All layout wrapper classes configurable
+- Per-page text styling configurable
+- Column header text styling configurable
+
+### 🏗 Architecture
+
+- Implemented `filterData()` method for filtering logic
+- Enhanced `getQuery()` computed property for filtered queries
+- Improved sort reset mechanism
+- Dynamic theme loading from configuration
+- Trait-based approach maintained for extensibility
+
+### 🎨 UI/UX
+
+- Professional filter panel with icons
+- Smooth animations and transitions
+- Responsive filter controls
+- Dark mode support for all new elements
+- Better visual hierarchy in filter UI
+- Collapsible filter sections
+- Visual feedback for active filters
+
+### 🔐 Security
+
+- Filter validation with model scope
+- Safe query parameter handling
+- Protection against unauthorized filtering
+
+### 📚 Documentation
+
+- Added advanced filtering documentation
+- Filter configuration examples
+- Default sort configuration guide
+- Theme customization guide
+- Dynamic class configuration reference
+- CSS class reference with data-class attributes
+
+## [v1.3.4] - 2025-12-10
+
+### 🔧 Improvements
+
+- Fixed UI filter adjustments
+- Enhanced filter configuration options
+
+## [v1.3.0] - 2025-10-18
 
 ### ✨ New Features
 
