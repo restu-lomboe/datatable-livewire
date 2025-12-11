@@ -23,7 +23,7 @@
                                     <div data-class="filter_input_wrapper" @class([$this->getClass('filter_input_wrapper')])>
                                         <input type="text" id="hs-inline-leading-select-label" name="inline-add-on"
                                             wire:model="query.{{ $key }}" data-class="filter_input"
-                                            @class([$this->getClass('filter_input')]) placeholder="search">
+                                            @class([$this->getClass('filter_input')]) placeholder="Search...">
                                         <div data-class="filter_select_wrapper" @class([$this->getClass('filter_select_wrapper')])>
                                             <label for="hs-inline-leading-select-country"
                                                 data-class="filter_select_label"
@@ -118,7 +118,7 @@
 
                 </div>
                 <div data-class="controls_layout_bottom" @class([$this->getClass('controls_layout_bottom')])>
-                    @if ($model !== null)
+                    @if ($model !== null && $showFiterButton)
                         <button type="button" wire:click="showFilter" data-class="filter_button"
                             @class([$this->getClass('filter_button')]) title="filter">
                             <svg data-class="filter_button_icon" @class([$this->getClass('filter_button_icon')])

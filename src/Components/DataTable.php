@@ -46,6 +46,7 @@ class DataTable extends Component
     protected $dataSource;
 
     public $filter = false;
+    public $showFiterButton = false;
     public $filterDataSearch = false;
     public $filterBy = [];
     public $query = [];
@@ -92,6 +93,9 @@ class DataTable extends Component
         // Initialize export settings from config
         $this->enableExport = config('livewire-datatable.export.enabled', true);
         $this->exportTypes = config('livewire-datatable.export.types', ['excel', 'pdf']);
+
+        // show filter button
+        $this->showFiterButton = config('livewire-datatable.advanced_filter', true);
 
         // Initialize the appropriate data source
         $this->initializeDataSource();
@@ -259,6 +263,10 @@ class DataTable extends Component
 
     public function deleteFilter($index)
     {
+        if (count($this->filterByColumn) == count($this->query)) {
+            $this->disabledAddFilterButton = false;
+        }
+
         if (isset($this->filterBy[$index])) {
             unset($this->filterBy[$index]);
         }

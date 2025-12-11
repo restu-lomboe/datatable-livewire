@@ -50,7 +50,7 @@ return [
         'wrapper' => 'w-full border border-gray-200 rounded-sm dark:border-gray-700 grid grid-cols-4',
 
         // Filter panel
-        'filter_panel' => 'transition duration-300 ease-in-out p-4 border-r border-gray-200 dark:border-gray-700',
+        'filter_panel' => 'transition duration-300 ease-in-out p-4 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
         'filter_header' => 'flex justify-between items-center',
         'filter_header_title' => 'text-sm text-gray-600 dark:text-gray-400',
         'filter_close_button' => 'inline-flex items-center text-sm font-medium text-gray-800 disabled:pointer-events-none dark:text-white cursor-pointer hover:text-gray-500 dark:hover:text-gray-300',
@@ -61,28 +61,28 @@ return [
         'filter_items' => 'max-w-sm space-y-3',
         'filter_item' => 'flex gap-2 items-center justify-between',
         'filter_input_wrapper' => 'relative',
-        'filter_input' => 'py-2.5 sm:py-3 px-4 ps-33 block w-full border-gray-200 rounded-lg sm:text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400 dark:placeholder-gray-500 dark:focus:ring-gray-600',
+        'filter_input' => 'py-2.5 sm:py-3 px-4 ps-33 block w-full border-gray-200 rounded-sm sm:text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400 dark:placeholder-gray-500 dark:focus:ring-gray-600',
         'filter_select_wrapper' => 'absolute inset-y-0 start-0 flex items-center text-gray-500',
-        'filter_select' => 'text-sm block w-30 border-l border-gray-200 dark:border-gray-700 rounded dark:text-gray-500 dark:bg-gray-900 py-3',
+        'filter_select' => 'text-sm block w-30 border-l border-gray-200 dark:border-gray-700 rounded-l dark:text-gray-500 dark:bg-gray-900 py-3',
         'filter_select_label' => 'sr-only',
         'filter_delete_button' => 'inline-flex items-center text-xs font-medium text-gray-800 disabled:pointer-events-none dark:text-white cursor-pointer hover:text-red-500 dark:hover:text-red-300',
         'filter_delete_button_wrapper' => '',
         'filter_delete_button_icon' => 'shrink-0 size-5',
         'filter_actions' => 'flex items-center justify-between',
-        'filter_add_button' => 'py-2 pl-2 pr-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50',
+        'filter_add_button' => 'py-2 pl-2 pr-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-sm border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50',
         'filter_add_button_icon' => 'shrink-0 size-5',
-        'filter_reset_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-yellow-200 bg-white text-yellow-800 shadow-2xs hover:bg-yellow-50 focus:outline-hidden focus:bg-yellow-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:text-yellow-400 dark:hover:bg-gray-700 dark:focus:bg-gray-700',
+        'filter_reset_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-sm border border-yellow-200 bg-white text-yellow-800 shadow-2xs hover:bg-yellow-50 focus:outline-hidden focus:bg-yellow-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:text-yellow-400 dark:hover:bg-gray-700 dark:focus:bg-gray-700',
         'filter_reset_button_icon' => 'shrink-0 size-5',
-        'filter_apply_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-green-200 bg-white text-green-800 shadow-2xs hover:bg-green-50 focus:outline-hidden focus:bg-green-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:text-green-400 dark:hover:bg-gray-700 dark:focus:bg-gray-700',
+        'filter_apply_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-sm border border-green-200 bg-white text-green-800 shadow-2xs hover:bg-green-50 focus:outline-hidden focus:bg-green-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:text-green-400 dark:hover:bg-gray-700 dark:focus:bg-gray-700',
         'filter_apply_button_icon' => 'shrink-0 size-5',
-        'filter_button' => 'py-2 px-2 inline-flex items-center gap-x-2 text-sm font-medium rounded-sm border border-gray-200 text-gray-800 hover:border-gray-500 hover:text-gray-500 focus:outline-hidden focus:border-gray-500 focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none dark:border-gray-700 dark:text-white dark:hover:text-gray-300 dark:hover:border-gray-300',
+        'filter_button' => 'py-2 px-2 inline-flex items-center gap-x-2 text-sm font-medium rounded-sm border border-gray-200 text-gray-800 hover:text-blue-500 hover:bg-gray-50 focus:outline-hidden focus:border-gray-500 focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none dark:border-gray-700 dark:text-white dark:hover:text-gray-300 dark:hover:border-gray-300 bg-white dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:bg-gray-700',
         'filter_button_icon' => 'shrink-0 size-5',
         'filter_main_content_span' => '$filter ? "col-span-3" : "col-span-4"',
 
         'main_wrapper' => 'col-span-4',
         'main_wrapper_with_filter' => 'col-span-3',
 
-        'search_wrapper' => 'mb-4 px-3 pt-3 flex flex-col sm:flex-row items-center justify-between gap-4',
+        'search_wrapper' => 'pb-4 px-3 pt-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800',
         'controls_wrapper' => 'flex justify-between sm:flex-row items-center gap-4 w-full justify-between pt-3 px-3',
 
         // Per page select
@@ -94,7 +94,7 @@ return [
 
         // Search input
         'search_input_wrapper' => 'w-full sm:w-auto relative',
-        'search_input' => 'w-full sm:w-auto pl-10 rounded-sm border px-2 py-1.5 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-50',
+        'search_input' => 'w-full sm:w-auto pl-10 rounded-sm border px-2 py-1.5 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-50',
         'search_icon_wrapper' => 'absolute inset-y-0 left-0 flex items-center pl-3',
         'search_icon' => 'h-5 w-5 text-gray-400 dark:text-gray-500',
         'export_wrapper' => 'flex gap-2 items-center',
@@ -136,7 +136,7 @@ return [
         'empty_text' => 'text-gray-500 dark:text-gray-400 text-sm font-medium',
 
         // Pagination
-        'pagination_wrapper' => 'p-4',
+        'pagination_wrapper' => 'p-4 bg-white dark:bg-gray-800',
     ],
 
     /*
@@ -171,4 +171,14 @@ return [
     |
     */
     'search_debounce' => 300,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Advanced Filter
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the visibility of the advanced filter.
+    |
+    */
+    'advanced_filter' => true,
 ];
