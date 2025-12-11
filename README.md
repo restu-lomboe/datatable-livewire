@@ -23,8 +23,12 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 4. [Quick Start](#-quick-start)
 5. [Basic Usage](#-basic-usage)
 6. [Advanced Features](#-advanced-features)
+   - [Default Sort Configuration](#default-sort-configuration)
+   - [Advanced Dynamic Filtering](#advanced-dynamic-filtering)
 7. [Export Features](#-export-features)
 8. [Customization](#-customization)
+   - [Theme Configuration](#theme-configuration)
+   - [Dynamic CSS Classes](#dynamic-css-classes)
 9. [Examples](#-examples)
 10. [Support](#-support)
 
@@ -33,9 +37,11 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 - ⚡ **Server-side Rendering** - Handle thousands of records efficiently
 - 🔍 **Smart Search** - Live search with intelligent debouncing
 - 📊 **Column Sorting** - Sort by any column, including relationships
+- 🔤 **Advanced Filtering** - Multi-column filtering with dynamic UI
+- 🎯 **Default Sorting** - Customize default sort field and direction
 - 📄 **Dynamic Pagination** - Customizable pagination with "Show All" option
 - 📤 **Data Export** - Export to Excel and PDF with proper formatting
-- 🎨 **Theming System** - Fully customizable with Tailwind CSS
+- 🎨 **Fully Dynamic Styling** - All CSS classes configurable from config
 - 🌙 **Dark Mode** - Automatic dark mode support
 - 📱 **Responsive Design** - Perfect on all screen sizes
 - 🔗 **Relationships** - Display and sort by related model data
@@ -337,6 +343,140 @@ By default, all columns are sortable. To prevent sorting on specific columns:
 
 ```php
 'unsortable' => ['actions', 'avatar']
+```
+
+## 🚀 Advanced Features
+
+### Default Sort Configuration
+
+Customize the default sort field and direction for your datatable:
+
+```php
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="[
+        'id' => 'ID',
+        'name' => 'Name',
+        'email' => 'Email',
+        'created_at' => 'Created At'
+    ]"
+    defaultSortField="created_at"
+    defaultSortDirection="desc" />
+```
+
+#### Features:
+
+- **defaultSortField**: Column key to sort by initially (default: 'created_at')
+- **defaultSortDirection**: 'asc' or 'desc' (default: 'desc')
+- Applies automatically on component load
+- Can be overridden by user sorting
+- Works with relationships using dot notation
+
+#### Example with Relationships:
+
+```php
+<livewire:livewire-datatable
+    :model="Order::class"
+    :columns="[
+        'id' => 'Order ID',
+        'customer.name' => 'Customer',
+        'total' => 'Total',
+        'created_at' => 'Date'
+    ]"
+    defaultSortField="created_at"
+    defaultSortDirection="desc" />
+```
+
+### Advanced Dynamic Filtering
+
+Filter data across multiple columns with a powerful, user-friendly interface:
+
+#### Enable/Disable Filtering
+
+Control filter availability in your configuration:
+
+```php
+// config/livewire-datatable.php
+return [
+    'advanced_filter' => true, // Enable advanced filtering (default: true)
+];
+```
+
+#### How It Works:
+
+The datatable provides a collapsible filter panel where users can:
+
+1. **Add Filters** - Click "Filter.." to add new filter conditions
+2. **Filter by Column** - Select which column to filter
+3. **Enter Value** - Input search/filter value
+4. **Multiple Conditions** - Add multiple filters (AND logic)
+5. **Reset** - Clear all filters at once
+6. **Apply** - Apply filters to the table
+
+#### Filter Features:
+
+- **Multi-Column Filtering**: Filter by multiple columns simultaneously
+- **Real-time Application**: Filters apply instantly with visual feedback
+- **Sort Integration**: Sorting works seamlessly with active filters
+- **Export Integration**: Exports respect active filters
+- **Filter State**: Filter state persists during pagination
+- **Reset Functionality**: Reset all filters or individual filters
+
+#### Example Usage in Blade:
+
+```blade
+<livewire:users-table
+    :model="User::class"
+    :columns="[
+        'id' => 'ID',
+        'name' => 'Name',
+        'email' => 'Email',
+        'status' => 'Status'
+    ]"
+    :searchable="['name', 'email']" />
+```
+
+The filter button automatically appears in the controls, allowing users to filter data.
+
+#### Filter Panel UI Elements:
+
+The filter panel includes:
+
+- **Filter Toggle Button** - Visible when model is set
+- **Filter Header** - Shows "View" label with close button
+- **Filter Items** - List of active filters
+  - Text input for filter value
+  - Dropdown for column selection
+  - Delete button for individual filters
+- **Action Buttons**:
+  - **Filter..** - Add new filter condition
+  - **Reset** - Clear all filters
+  - **Filter** - Apply filters to table
+
+#### CSS Classes for Customization:
+
+All filter elements have configurable CSS classes in `config/livewire-datatable.php`:
+
+```php
+'theme' => [
+    // Filter panel
+    'filter_panel' => 'transition duration-300 ease-in-out p-4 border-r border-gray-200 dark:border-gray-700',
+    'filter_header' => 'flex justify-between items-center',
+    'filter_content' => 'flex flex-col mt-4 space-y-4',
+
+    // Filter items
+    'filter_items' => 'max-w-sm space-y-3',
+    'filter_item' => 'flex gap-2 items-center justify-between',
+
+    // Filter inputs
+    'filter_input' => 'py-2.5 px-4 block w-full border-gray-200 rounded-lg',
+    'filter_select' => 'text-sm block w-30 border-l border-gray-200 rounded',
+
+    // Action buttons
+    'filter_add_button' => 'py-2 pl-2 pr-3 inline-flex items-center gap-x-1 text-sm font-medium',
+    'filter_reset_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium',
+    'filter_apply_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium',
+]
 ```
 
 ## 🌐 API Integration
@@ -899,6 +1039,54 @@ Use in your view:
     :theme="$theme" />
 ```
 
+### Dynamic CSS Classes
+
+#### Overview
+
+Every single element in the datatable view is fully configurable from the configuration file. No need to modify the Blade templates to customize styling - all CSS classes are defined in `config/livewire-datatable.php`.
+
+#### How It Works
+
+1. **Configuration-Driven**: All CSS classes are stored in `config/livewire-datatable.php`
+2. **Dynamic Binding**: Classes are applied using Laravel Livewire's `@class` directive
+3. **Data Attributes**: Each element has a `data-class` attribute matching its config key
+4. **Easy Debugging**: Inspect elements to see which config key controls the styling
+
+#### Using Data Attributes for Debugging
+
+Each element has a `data-class` attribute that matches its config key. Inspect elements in your browser to see which configuration keys control specific styling:
+
+```blade
+<!-- Example: Filter panel with data-class attribute -->
+<div data-class="filter_panel" @class([$this->getClass('filter_panel')])>
+    <div data-class="filter_header" @class([$this->getClass('filter_header')])>
+        <!-- Content -->
+    </div>
+</div>
+```
+
+This makes it easy to:
+
+1. Identify which config key controls a specific element
+2. Customize styling without touching templates
+3. Build theme packages
+4. Debug styling issues
+
+#### Column-Specific Styling
+
+Style individual columns using column keys:
+
+```php
+'theme' => [
+    'td_id' => 'font-mono text-gray-500 text-xs',
+    'td_email' => 'font-medium text-blue-600',
+    'td_status' => 'text-center font-semibold',
+    'td_actions' => 'text-right space-x-2',
+]
+```
+
+See the [complete theme configuration reference](#complete-theme-configuration-reference) for all available class keys.
+
 ### Pagination Options
 
 Configure pagination behavior:
@@ -933,6 +1121,108 @@ Or use dynamic dark mode switching:
 ```js
 // Toggle dark mode
 document.documentElement.classList.toggle("dark");
+```
+
+#### Complete Theme Configuration Reference
+
+Here's the complete reference of all available CSS class configuration keys:
+
+```php
+// config/livewire-datatable.php
+return [
+    'theme' => [
+        // Main wrapper and layouts
+        'wrapper' => 'w-full border border-gray-200 rounded-sm dark:border-gray-700 grid grid-cols-4',
+        'main_wrapper' => 'col-span-4',
+        'main_wrapper_with_filter' => 'col-span-3',
+
+        // Filter panel elements
+        'filter_panel' => 'transition duration-300 ease-in-out p-4 border-r border-gray-200 dark:border-gray-700',
+        'filter_header' => 'flex justify-between items-center',
+        'filter_header_title' => 'text-sm text-gray-600 dark:text-gray-400',
+        'filter_close_button' => 'inline-flex items-center text-sm font-medium text-gray-800 dark:text-white cursor-pointer hover:text-gray-500 dark:hover:text-gray-300',
+        'filter_close_button_icon' => 'shrink-0 size-5',
+        'filter_content' => 'flex flex-col mt-4 space-y-4',
+        'filter_label' => 'text-sm text-gray-600 dark:text-gray-400',
+        'filter_list' => 'list-filter',
+        'filter_items' => 'max-w-sm space-y-3',
+        'filter_item' => 'flex gap-2 items-center justify-between',
+        'filter_input_wrapper' => 'relative',
+        'filter_input' => 'py-2.5 sm:py-3 px-4 ps-33 block w-full border-gray-200 rounded-lg sm:text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400',
+        'filter_select_wrapper' => 'absolute inset-y-0 start-0 flex items-center text-gray-500',
+        'filter_select' => 'text-sm block w-30 border-l border-gray-200 dark:border-gray-700 rounded dark:text-gray-500 dark:bg-gray-900 py-3',
+        'filter_select_label' => 'sr-only',
+        'filter_delete_button' => 'inline-flex items-center text-xs font-medium text-gray-800 dark:text-white cursor-pointer hover:text-red-500 dark:hover:text-red-300',
+        'filter_delete_button_wrapper' => '',
+        'filter_delete_button_icon' => 'shrink-0 size-5',
+        'filter_actions' => 'flex items-center justify-between',
+        'filter_add_button' => 'py-2 pl-2 pr-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700',
+        'filter_add_button_icon' => 'shrink-0 size-5',
+        'filter_reset_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-yellow-200 bg-white text-yellow-800 shadow-2xs hover:bg-yellow-50 focus:outline-hidden focus:bg-yellow-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-yellow-400 dark:hover:bg-gray-700',
+        'filter_reset_button_icon' => 'shrink-0 size-5',
+        'filter_apply_button' => 'py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-green-200 bg-white text-green-800 shadow-2xs hover:bg-green-50 focus:outline-hidden focus:bg-green-50 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-green-400 dark:hover:bg-gray-700',
+        'filter_apply_button_icon' => 'shrink-0 size-5',
+        'filter_button' => 'py-2 px-2 inline-flex items-center gap-x-2 text-sm font-medium rounded-sm border border-gray-200 text-gray-800 hover:border-gray-500 hover:text-gray-500 focus:outline-hidden focus:border-gray-500 focus:text-gray-500 disabled:opacity-50 dark:border-gray-700 dark:text-white dark:hover:text-gray-300 dark:hover:border-gray-300',
+        'filter_button_icon' => 'shrink-0 size-5',
+
+        // Search and controls
+        'search_wrapper' => 'mb-4 flex flex-col sm:flex-row items-center justify-between gap-4',
+        'controls_wrapper' => 'flex justify-between items-center gap-4 w-full pt-3 px-3',
+        'controls_layout_top' => 'flex items-center justify-between gap-4',
+        'controls_layout_bottom' => 'flex items-center justify-between gap-2',
+
+        // Per page controls
+        'per_page_wrapper' => 'flex items-center gap-2',
+        'per_page_select' => 'w-20 py-2.5 px-4 block border border-gray-300 rounded-sm text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200',
+        'per_page_text' => 'text-sm text-gray-400 dark:text-gray-500',
+
+        // Search input
+        'search_input_wrapper' => 'w-full sm:w-auto relative',
+        'search_input' => 'w-full sm:w-auto pl-10 rounded-sm border px-2 py-1.5 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-50',
+        'search_icon_wrapper' => 'absolute inset-y-0 left-0 flex items-center pl-3',
+        'search_icon' => 'h-5 w-5 text-gray-400 dark:text-gray-500',
+
+        // Export controls
+        'export_wrapper' => 'flex gap-2 items-center',
+        'export_dropdown_wrapper' => 'relative',
+        'export_dropdown_arrow' => '-mr-1 ml-2 h-5 w-5',
+        'export_button' => 'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800',
+
+        // Table structure
+        'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow',
+        'table' => 'min-w-full divide-y divide-gray-200 dark:divide-gray-700',
+
+        // Table headers
+        'thead' => '',
+        'thead_row' => '',
+        'th' => 'px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
+        'th_sort_button' => 'group inline-flex items-center gap-x-2 hover:text-gray-700 dark:hover:text-gray-200',
+        'th_sort_icon_wrapper' => 'inline-flex rounded p-1 transition',
+        'th_sort_icon_active' => 'size-4 text-blue-500',
+        'th_sort_icon_inactive' => 'size-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-200',
+        'th_text' => 'text-gray-700 dark:text-gray-200 capitalize',
+
+        // Table body
+        'tbody' => 'divide-y divide-gray-200 dark:divide-gray-700',
+        'tr' => 'hover:bg-gray-50 dark:hover:bg-gray-700/25 transition',
+        'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
+
+        // Empty state
+        'empty_wrapper' => 'px-6 py-8 text-center',
+        'empty_content' => 'flex flex-col items-center justify-center',
+        'empty_icon' => 'size-16 text-gray-400 dark:text-gray-500 mb-2',
+        'empty_text' => 'text-gray-500 dark:text-gray-400 text-sm font-medium',
+
+        // Pagination
+        'pagination_wrapper' => 'p-4',
+
+        // Column-specific styling (optional)
+        // 'td_id' => 'font-mono text-gray-500 text-xs',
+        // 'td_email' => 'font-medium text-blue-600',
+        // 'td_status' => 'text-center font-semibold',
+        // 'td_actions' => 'text-right space-x-2',
+    ]
+];
 ```
 
 ## 📝 Complete Example

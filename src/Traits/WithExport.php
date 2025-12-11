@@ -19,25 +19,59 @@ trait WithExport
     {
         $this->ensureDataSourceInitialized();
 
-        // Store current per page value
-        $currentPerPage = $this->perPage;
+        // Get all data based on whether filtering is active
+        if ($this->filterDataSearch) {
+            // Export filtered data
+            $query = $this->model::query();
+            foreach ($this->filterBy as $i => $column) {
+                $value = trim($this->query[$i]) ?? null;
+                if (!$value) continue;
 
-        // Get the total count for all records
-        $params = [
-            'search' => $this->search,
-            'sort_field' => $this->sortField,
-            'sort_direction' => $this->sortDirection,
-            'per_page' => 'all' // This will get all records
-        ];
+                // RELATION FILTER: user.name / user.profile.country.name
+                if (str_contains($column, '.')) {
+                    $parts = explode('.', $column);
+                    $field = array_pop($parts);   // last part = column name
+                    $relationPath = implode('.', $parts);
 
-        // Get all data
-        $data = $this->dataSource->getData($params)->items();
+                    $query->whereHas($relationPath, function ($q) use ($field, $value) {
+                        $q->where($field, 'LIKE', "%{$value}%");
+                    });
+                }
+                // NORMAL COLUMN FILTER
+                else {
+                    $query->where($column, 'LIKE', "%{$value}%");
+                }
+            }
 
-        $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
-        if (!empty($this->search)) {
-            $filename .= '-search-' . Str::slug($this->search);
+            // Apply sorting when filtering is active
+            if (!empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
+                $query->orderBy($this->sortField, $this->sortDirection);
+            } elseif ($this->defaultSortField) {
+                $query->orderBy($this->defaultSortField, $this->defaultSortDirection);
+            }
+
+            $data = $query->get();
+
+            $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
+            $filename .= '-filtered-' . now()->format('Y-m-d-H-i-s');
+        } else {
+            // Export searched data
+            $params = [
+                'search' => $this->search,
+                'sort_field' => $this->sortField,
+                'sort_direction' => $this->sortDirection,
+                'per_page' => 'all' // This will get all records
+            ];
+
+            // Get all data
+            $data = $this->dataSource->getData($params)->items();
+
+            $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
+            if (!empty($this->search)) {
+                $filename .= '-search-' . Str::slug($this->search);
+            }
+            $filename .= '-' . now()->format('Y-m-d-H-i-s');
         }
-        $filename .= '-' . now()->format('Y-m-d-H-i-s');
 
         switch ($type) {
             case 'excel':
