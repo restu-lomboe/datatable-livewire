@@ -19,8 +19,16 @@ class ModelDataSource implements DataSourceInterface
     protected $defaultSortField;
     protected $defaultSortDirection;
 
-    public function __construct(string $model, ?string $scope = null, array $scopeParams = [], array $searchable = [], array $sortable = [], $perPage = 10, ?string $defaultSortField = null, ?string $defaultSortDirection = 'asc')
-    {
+    public function __construct(
+        string $model,
+        ?string $scope = null,
+        array $scopeParams = [],
+        array $searchable = [],
+        array $sortable = [],
+        $perPage = 10,
+        ?string $defaultSortField = null,
+        ?string $defaultSortDirection = 'asc'
+    ) {
         $this->model = $model;
         $this->scope = $scope;
         $this->scopeParams = $scopeParams;
@@ -134,7 +142,7 @@ class ModelDataSource implements DataSourceInterface
         });
     }
 
-    protected function applyNestedRelation($query, array $relations, string $field, string $searchTerm)
+    protected function applyNestedRelation($query, array $relations, string $field, string $searchTerm): void
     {
         if (empty($relations)) {
             $query->where($field, 'like', '%' . $searchTerm . '%');

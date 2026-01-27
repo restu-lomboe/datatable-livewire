@@ -60,7 +60,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc')
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc'): void
     {
         if (!$model && !$apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -101,12 +101,12 @@ class DataTable extends Component
         $this->initializeDataSource();
     }
 
-    public function getClass($element)
+    public function getClass(string $element): string
     {
         return $this->theme[$element] ?? '';
     }
 
-    public function sortBy($field)
+    public function sortBy(string $field): void
     {
         $this->ensureDataSourceInitialized();
 
@@ -120,31 +120,31 @@ class DataTable extends Component
         $this->resetPage();
     }
 
-    public function updatingSearch()
+    public function updatingSearch(): void
     {
         $this->ensureDataSourceInitialized();
         $this->resetPage();
     }
 
-    public function updatingPerPage()
+    public function updatingPerPage(): void
     {
         $this->ensureDataSourceInitialized();
         $this->resetPage();
     }
 
-    public function updatingPage($page)
+    public function updatingPage($page): void
     {
         $this->page = $page;
     }
 
     #[On('reset-table')]
-    public function resetTable()
+    public function resetTable(): void
     {
         $this->resetPage();
     }
 
     #[Computed]
-    protected function filterByColumn()
+    protected function filterByColumn(): array
     {
         $model = new $this->model;
         $table = $model->getTable();
@@ -168,7 +168,7 @@ class DataTable extends Component
         return $columns;
     }
 
-    protected function getRelationColumns($model, $relationPath)
+    protected function getRelationColumns($model, string $relationPath): array
     {
         $parts = explode('.', $relationPath);
         $relationName = array_shift($parts);
@@ -207,7 +207,7 @@ class DataTable extends Component
         return $result;
     }
 
-    public function showFilter()
+    public function showFilter(): void
     {
         $this->filter = true;
 
@@ -219,14 +219,14 @@ class DataTable extends Component
 
     }
 
-    public function closeFilter()
+    public function closeFilter(): void
     {
         $this->filter = false;
         $this->filterDataSearch = false;
         $this->resetPage();
     }
 
-    public function filterData()
+    public function filterData(): void
     {
         $this->filterDataSearch = true;
         $this->reset('search');
@@ -235,7 +235,7 @@ class DataTable extends Component
         $this->resetPage();
     }
 
-    public function addFilter()
+    public function addFilter(): void
     {
         // check if filterByColumn count == filterBy count
         // button should be disabled
@@ -248,7 +248,7 @@ class DataTable extends Component
         }
     }
 
-    public function resetFilter()
+    public function resetFilter(): void
     {
         // reset filterBy and query
         // just add one filterBy for default
@@ -261,7 +261,7 @@ class DataTable extends Component
         $this->filterDataSearch = false;
     }
 
-    public function deleteFilter($index)
+    public function deleteFilter(int $index): void
     {
         if (count($this->filterByColumn) == count($this->query)) {
             $this->disabledAddFilterButton = false;

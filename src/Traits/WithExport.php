@@ -9,13 +9,13 @@ use Developerawam\LivewireDatatable\Exports\DataTableExport;
 
 trait WithExport
 {
-    public function bootWithExport()
+    public function bootWithExport(): void
     {
         $this->enableExport = config('livewire-datatable.export.enabled', true);
         $this->exportTypes = config('livewire-datatable.export.types', ['excel', 'pdf']);
     }
 
-    public function export($type)
+    public function export(string $type)
     {
         $this->ensureDataSourceInitialized();
 
@@ -83,7 +83,7 @@ trait WithExport
         }
     }
 
-    protected function exportToExcel($data, $filename)
+    protected function exportToExcel(array|object $data, string $filename)
     {
         return Excel::download(
             new DataTableExport(
@@ -96,7 +96,7 @@ trait WithExport
         );
     }
 
-    protected function exportToPdf($data, $filename)
+    protected function exportToPdf(array|object $data, string $filename)
     {
         $html = view('livewire-datatable::exports.pdf', [
             'data' => $data,

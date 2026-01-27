@@ -5,13 +5,14 @@ namespace Developerawam\LivewireDatatable;
 use Illuminate\Support\ServiceProvider;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use Barryvdh\DomPDF\ServiceProvider as PDFServiceProvider;
+use Livewire\Livewire;
 
 class LivewireDatatableServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
      */
-    public function boot()
+    public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'livewire-datatable');
 
@@ -29,13 +30,14 @@ class LivewireDatatableServiceProvider extends ServiceProvider
         $this->app->alias('Excel', \Maatwebsite\Excel\Facades\Excel::class);
         $this->app->alias('PDF', \Barryvdh\DomPDF\Facade\Pdf::class);
 
-        \Livewire\Livewire::component('livewire-datatable', \Developerawam\LivewireDatatable\Components\DataTable::class);
+        // Register Livewire component
+        Livewire::component('livewire-datatable', \Developerawam\LivewireDatatable\Components\DataTable::class);
     }
 
     /**
      * Register the application services.
      */
-    public function register()
+    public function register(): void
     {
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'livewire-datatable');
