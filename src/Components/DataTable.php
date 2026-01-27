@@ -295,6 +295,16 @@ class DataTable extends Component
         // check if filterBy not empty
         if($this->filterDataSearch) {
             $query = $this->model::query();
+
+            // Apply scope if it exists
+            if (!empty($this->scopeParams)) {
+                $query = $query->{$this->scope}(...$this->scopeParams);
+            } else {
+                if ($this->scope) {
+                    $query = $query->{$this->scope}();
+                }
+            }
+
             foreach ($this->filterBy as $i => $column) {
 
                 $value = trim($this->query[$i]) ?? null;
