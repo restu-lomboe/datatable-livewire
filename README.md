@@ -458,9 +458,25 @@ class UsersTable extends Component
     {
         try {
             User::findOrFail($id)->delete();
-            session()->flash('message', 'User deleted!');
+            session()->flash('message', 'User deleted successfully!');
+            // Refresh table after deletion
+            $this->dispatch('reset-table');
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to delete user.');
+        }
+    }
+
+    #[On('user-update-status')]
+    public function updateUserStatus($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->update(['status' => $user->status === 'active' ? 'inactive' : 'active']);
+            session()->flash('message', 'User status updated!');
+            // Refresh table after status update
+            $this->dispatch('reset-table');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to update user status.');
         }
     }
 
@@ -479,6 +495,13 @@ class UsersTable extends Component
 
 - `$item` - Current model instance
 - `$value` - Current column value
+
+**Refresh Table After Actions:**
+
+```php
+// Dispatch event to refresh the table after modifications
+$this->dispatch('reset-table');
+```
 
 ### Default Sort Configuration
 
