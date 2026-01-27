@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 trait WithFormatters
 {
-    protected function formatSimpleValue($value, string $formatter, array $options = [])
+    protected function formatSimpleValue($value, string $formatter, array $options = []): string|int|float|bool
     {
         switch ($formatter) {
             case 'date':
@@ -41,7 +41,7 @@ trait WithFormatters
         }
     }
 
-    protected function formatComplexValue($value, array $formatter)
+    protected function formatComplexValue($value, array $formatter): string|int|float|bool
     {
         $type = $formatter['type'] ?? null;
         $options = $formatter['options'] ?? [];
@@ -67,7 +67,7 @@ trait WithFormatters
         }
     }
 
-    protected function formatDate($value, string $format)
+    protected function formatDate($value, string $format): string
     {
         if (!$value) {
             return '';
@@ -80,7 +80,7 @@ trait WithFormatters
         }
     }
 
-    public function formatValue($key, $value)
+    public function formatValue($key, $value): string|int|float|bool
     {
         if (!isset($this->formatters[$key])) {
             return $value;
@@ -101,7 +101,7 @@ trait WithFormatters
         return $value;
     }
 
-    protected function getFormatterOptions($key)
+    protected function getFormatterOptions($key): array
     {
         return $this->formatterOptions[$key] ?? [];
     }

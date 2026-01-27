@@ -60,7 +60,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc')
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc'): void
     {
         if (!$model && !$apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -87,8 +87,10 @@ class DataTable extends Component
         $this->pageOptions = config('livewire-datatable.per_page_options', [10, 25, 50, 100]);
         $this->perPage = $this->pageOptions[0] ?? 10;
 
-        // Load theme from config and merge with any custom theme passed
-        $this->theme = array_merge(config('livewire-datatable.theme', []), $theme);
+        // Load theme from config based on template and merge with any custom theme passed
+        $template = config('livewire-datatable.template', 'tailwind');
+        $themeKey = $template === 'bootstrap' ? 'bootstrap_theme' : 'theme';
+        $this->theme = array_merge(config("livewire-datatable.{$themeKey}", []), $theme);
 
         // Initialize export settings from config
         $this->enableExport = config('livewire-datatable.export.enabled', true);
@@ -101,12 +103,12 @@ class DataTable extends Component
         $this->initializeDataSource();
     }
 
-    public function getClass($element)
+    public function getClass(string $element): string
     {
         return $this->theme[$element] ?? '';
     }
 
-    public function sortBy($field)
+    public function sortBy(string $field): void
     {
         $this->ensureDataSourceInitialized();
 
@@ -120,31 +122,31 @@ class DataTable extends Component
         $this->resetPage();
     }
 
-    public function updatingSearch()
+    public function updatingSearch(): void
     {
         $this->ensureDataSourceInitialized();
         $this->resetPage();
     }
 
-    public function updatingPerPage()
+    public function updatingPerPage(): void
     {
         $this->ensureDataSourceInitialized();
         $this->resetPage();
     }
 
-    public function updatingPage($page)
+    public function updatingPage($page): void
     {
         $this->page = $page;
     }
 
     #[On('reset-table')]
-    public function resetTable()
+    public function resetTable(): void
     {
         $this->resetPage();
     }
 
     #[Computed]
-    protected function filterByColumn()
+    protected function filterByColumn(): array
     {
         $model = new $this->model;
         $table = $model->getTable();
@@ -168,7 +170,7 @@ class DataTable extends Component
         return $columns;
     }
 
-    protected function getRelationColumns($model, $relationPath)
+    protected function getRelationColumns($model, string $relationPath): array
     {
         $parts = explode('.', $relationPath);
         $relationName = array_shift($parts);
@@ -207,7 +209,7 @@ class DataTable extends Component
         return $result;
     }
 
-    public function showFilter()
+    public function showFilter(): void
     {
         $this->filter = true;
 
@@ -219,14 +221,14 @@ class DataTable extends Component
 
     }
 
-    public function closeFilter()
+    public function closeFilter(): void
     {
         $this->filter = false;
         $this->filterDataSearch = false;
         $this->resetPage();
     }
 
-    public function filterData()
+    public function filterData(): void
     {
         $this->filterDataSearch = true;
         $this->reset('search');
@@ -235,7 +237,7 @@ class DataTable extends Component
         $this->resetPage();
     }
 
-    public function addFilter()
+    public function addFilter(): void
     {
         // check if filterByColumn count == filterBy count
         // button should be disabled
@@ -248,7 +250,7 @@ class DataTable extends Component
         }
     }
 
-    public function resetFilter()
+    public function resetFilter(): void
     {
         // reset filterBy and query
         // just add one filterBy for default
@@ -261,7 +263,7 @@ class DataTable extends Component
         $this->filterDataSearch = false;
     }
 
-    public function deleteFilter($index)
+    public function deleteFilter(int $index): void
     {
         if (count($this->filterByColumn) == count($this->query)) {
             $this->disabledAddFilterButton = false;
@@ -295,6 +297,16 @@ class DataTable extends Component
         // check if filterBy not empty
         if($this->filterDataSearch) {
             $query = $this->model::query();
+
+            // Apply scope if it exists
+            if (!empty($this->scopeParams)) {
+                $query = $query->{$this->scope}(...$this->scopeParams);
+            } else {
+                if ($this->scope) {
+                    $query = $query->{$this->scope}();
+                }
+            }
+
             foreach ($this->filterBy as $i => $column) {
 
                 $value = trim($this->query[$i]) ?? null;
@@ -350,11 +362,25 @@ class DataTable extends Component
 
     public function placeholder()
     {
-        return view('livewire-datatable::placeholders.datatable');
+        $template = config('livewire-datatable.template', 'tailwind');
+        $viewName = match($template) {
+            'bootstrap' => 'livewire-datatable::placeholders.templates.bootstrap.datatable',
+            'tailwind' => 'livewire-datatable::placeholders.templates.tailwind.datatable',
+            default => 'livewire-datatable::placeholders.templates.tailwind.datatable',
+        };
+
+        return view($viewName);
     }
 
     public function render()
     {
-        return view('livewire-datatable::datatable');
+        $template = config('livewire-datatable.template', 'tailwind');
+        $viewName = match($template) {
+            'bootstrap' => 'livewire-datatable::templates.bootstrap.datatable',
+            'tailwind' => 'livewire-datatable::templates.tailwind.datatable',
+            default => 'livewire-datatable::templates.tailwind.datatable',
+        };
+
+        return view($viewName);
     }
 }
