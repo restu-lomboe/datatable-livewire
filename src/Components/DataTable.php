@@ -87,8 +87,10 @@ class DataTable extends Component
         $this->pageOptions = config('livewire-datatable.per_page_options', [10, 25, 50, 100]);
         $this->perPage = $this->pageOptions[0] ?? 10;
 
-        // Load theme from config and merge with any custom theme passed
-        $this->theme = array_merge(config('livewire-datatable.theme', []), $theme);
+        // Load theme from config based on template and merge with any custom theme passed
+        $template = config('livewire-datatable.template', 'tailwind');
+        $themeKey = $template === 'bootstrap' ? 'bootstrap_theme' : 'theme';
+        $this->theme = array_merge(config("livewire-datatable.{$themeKey}", []), $theme);
 
         // Initialize export settings from config
         $this->enableExport = config('livewire-datatable.export.enabled', true);
@@ -360,11 +362,25 @@ class DataTable extends Component
 
     public function placeholder()
     {
-        return view('livewire-datatable::placeholders.datatable');
+        $template = config('livewire-datatable.template', 'tailwind');
+        $viewName = match($template) {
+            'bootstrap' => 'livewire-datatable::placeholders.templates.bootstrap.datatable',
+            'tailwind' => 'livewire-datatable::placeholders.templates.tailwind.datatable',
+            default => 'livewire-datatable::placeholders.templates.tailwind.datatable',
+        };
+
+        return view($viewName);
     }
 
     public function render()
     {
-        return view('livewire-datatable::datatable');
+        $template = config('livewire-datatable.template', 'tailwind');
+        $viewName = match($template) {
+            'bootstrap' => 'livewire-datatable::templates.bootstrap.datatable',
+            'tailwind' => 'livewire-datatable::templates.tailwind.datatable',
+            default => 'livewire-datatable::templates.tailwind.datatable',
+        };
+
+        return view($viewName);
     }
 }

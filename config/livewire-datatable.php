@@ -1,6 +1,21 @@
 <?php
 
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Template System
+    |--------------------------------------------------------------------------
+    |
+    | This option controls which template theme the datatable uses.
+    | Supported themes: 'tailwind', 'bootstrap'
+    |
+    | The 'tailwind' theme provides Tailwind CSS based styling.
+    | The 'bootstrap' theme provides Bootstrap 5+ based styling.
+    |
+    */
+    'template' => env('DATATABLE_TEMPLATE', 'tailwind'),
+
     /*
     |--------------------------------------------------------------------------
     | Default Per Page Options
@@ -137,6 +152,98 @@ return [
 
         // Pagination
         'pagination_wrapper' => 'p-4 bg-white dark:bg-gray-800',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bootstrap Template Classes Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Bootstrap template rendering and styling.
+    |
+    */
+    'bootstrap_theme' => [
+        // Container & Layout
+        'container' => 'container-fluid px-0',
+        'card' => 'card border shadow-sm',
+        'card_header' => 'card-header bg-white border-bottom p-3',
+        'card_body' => 'card-body',
+        'card_footer' => 'card-footer bg-white border-top py-3',
+
+        // Filter Panel
+        'filter_panel' => 'card border-0 shadow-sm h-100',
+        'filter_header' => 'card-header bg-primary bg-opacity-10 border-bottom py-4',
+        'filter_header_title' => 'mb-0 fw-600',
+        'filter_close_button' => 'btn-close',
+        'filter_content' => 'card-body',
+        'filter_items' => 'filter-items space-y-3',
+        'filter_item' => 'mb-3',
+        'filter_input_group' => 'input-group input-group-sm',
+        'filter_input' => 'form-control border-primary border-opacity-25',
+        'filter_select' => 'form-select border-primary border-opacity-25',
+        'filter_delete_button' => 'btn btn-sm btn-link text-danger text-decoration-none mt-2 d-block w-100',
+        'filter_actions' => 'd-flex justify-content-between gap-2',
+        'filter_add_button' => 'btn btn-sm btn-primary w-100',
+        'filter_reset_button' => 'btn btn-sm btn-outline-warning w-100',
+        'filter_apply_button' => 'btn btn-sm btn-success w-100',
+
+        // Header Controls
+        'header_row' => 'row g-3 align-items-center',
+        'search_col' => 'col-md-6 col-lg-5',
+        'controls_col' => 'col-md-6 col-lg-7',
+        'search_input_group' => 'input-group input-group-md',
+        'search_input' => 'form-control border-secondary border-opacity-25',
+        'search_icon' => 'input-group-text bg-white border-secondary border-opacity-25',
+
+        // Controls
+        'controls_flex' => 'd-flex gap-2 justify-content-end flex-wrap align-items-center',
+        'per_page_group' => 'input-group input-group-sm',
+        'per_page_select' => 'form-select form-select-md border-secondary border-opacity-25 w-25',
+        'filter_button' => 'btn btn-md btn-outline-primary',
+        'export_dropdown' => 'dropdown',
+        'export_button' => 'btn btn-md btn-outline-info dropdown-toggle',
+        'export_menu' => 'dropdown-menu dropdown-menu-end',
+        'export_item' => 'dropdown-item',
+
+        // Table
+        'table_responsive' => 'table-responsive',
+        'table' => 'table table-hover align-middle mb-0',
+        'table_style' => 'font-size: 0.95rem;',
+        'thead' => 'table-light',
+        'thead_row' => 'fw-600',
+        'th' => 'border-bottom-2 text-secondary fw-600 py-3 px-4',
+        'th_button' => 'btn btn-link btn-sm text-dark text-decoration-none p-0 d-inline-flex align-items-center',
+        'th_button_style' => 'font-weight: 600;',
+        'th_sort_icon' => 'ms-2',
+        'sort_icon_asc' => 'bi bi-sort-up',
+        'sort_icon_desc' => 'bi bi-sort-down',
+        'sort_icon_neutral' => 'bi bi-arrow-up-down',
+        'sort_icon_color_active' => 'color: #0d6efd; font-size: 1rem;',
+        'sort_icon_color_inactive' => 'font-size: 0.9rem;',
+        'sort_icon_inactive_class' => 'opacity-50',
+
+        // Tbody
+        'tbody' => 'tbody',
+        'tr' => 'border-bottom',
+        'td' => 'px-4 py-3',
+
+        // Column-specific cell styling
+        // 'td_id' => 'font-mono text-gray-500 dark:text-gray-400', // Example: ID column styling
+        // 'td_created_at' => 'text-xs', // Example: Date column styling
+        // 'td_status' => 'text-center', // Example: Status column styling
+        // 'td_email' => 'font-medium', // Example: Email column styling
+        // 'td_actions' => 'text-right space-x-2', // Example: Actions column styling
+
+        // Empty State
+        'empty_wrapper' => 'text-center py-5',
+        'empty_content' => 'text-secondary',
+        'empty_icon' => 'bi bi-inbox',
+        'empty_icon_style' => 'font-size: 2.5rem;',
+
+        // Pagination
+        'pagination_wrapper' => 'd-flex justify-content-between align-items-center',
+        'pagination_info' => 'text-muted',
+        'pagination_controls' => 'd-flex gap-2',
     ],
 
     /*
