@@ -296,9 +296,7 @@
 
             @if ($this->getQuery->hasPages())
                 <div data-class="pagination_wrapper" @class([$this->getClass('pagination_wrapper')])>
-                    <div class="dark">
-                        {{ $this->getQuery->links() }}
-                    </div>
+                    {{ $this->getQuery->links() }}
                 </div>
             @endif
         </div>
