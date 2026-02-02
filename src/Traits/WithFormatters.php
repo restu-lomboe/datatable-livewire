@@ -82,6 +82,11 @@ trait WithFormatters
 
     public function formatValue($key, $value): string|int|float|bool
     {
+        // Handle null values by returning a dash
+        if ($value === null || $value === '') {
+            return '-';
+        }
+
         if (!isset($this->formatters[$key])) {
             return $value;
         }
