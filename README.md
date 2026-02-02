@@ -749,6 +749,10 @@ Or in `.env`:
 DATATABLE_TEMPLATE=bootstrap
 ```
 
+#### Bootstrap Pagination
+
+If you're using Bootstrap CSS framework instead of Tailwind CSS, you can configure Livewire to use Bootstrap pagination styles. See the [Livewire Bootstrap Pagination Documentation](https://livewire.laravel.com/docs/4.x/pagination#using-bootstrap-instead-of-tailwind) for detailed setup instructions.
+
 #### Bootstrap Configuration
 
 ```php

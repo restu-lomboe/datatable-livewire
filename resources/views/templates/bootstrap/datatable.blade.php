@@ -265,7 +265,7 @@
                             records
                         </small>
                         <div data-class="pagination_controls" @class([$this->getClass('pagination_controls')])>
-                            {{ $this->getQuery->links('pagination::bootstrap-5') }}
+                            {{ $this->getQuery->links() }}
                         </div>
                     </div>
                 </nav>
