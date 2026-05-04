@@ -114,11 +114,11 @@ This allows you to customize default settings in `config/livewire-datatable.php`
 
 Choose your CSS framework template in `.env`:
 
-````env
+```env
 DATATABLE_TEMPLATE=tailwind    # Default
 # or
 DATATABLE_TEMPLATE=bootstrap
-```.
+```
 
 ## 🚀 Quick Start
 
