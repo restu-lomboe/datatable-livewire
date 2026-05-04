@@ -65,8 +65,8 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 ## 📋 Requirements
 
 - **PHP**: ^8.2
-- **Laravel**: ^12.0
-- **Livewire**: ^3.0
+- **Laravel**: ^12.0 || ^13.0
+- **Livewire**: ^4.0
 - **CSS Framework**: Tailwind CSS ^3.0+ OR Bootstrap 5+
 
 ### Browser Support
@@ -85,6 +85,8 @@ composer require developerawam/livewire-datatable
 
 #### For Tailwind CSS
 
+**For Tailwind CSS v3:**
+
 Add the package's views to your Tailwind configuration:
 
 ```js
@@ -97,6 +99,18 @@ module.exports = {
   ],
 };
 ```
+
+**For Tailwind CSS v4+:**
+
+Use the `@source` directive in your `resources/css/app.css`:
+
+```css
+@import "tailwindcss";
+
+@source '../../vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php';
+```
+
+This allows Tailwind CSS v4+ to automatically scan and generate styles for the datatable components.
 
 #### For Bootstrap 5+
 

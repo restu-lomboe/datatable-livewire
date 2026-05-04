@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### ✨ Improvements
+
+- **Laravel v13 Support**: Package now supports Laravel 13.0 while maintaining backward compatibility with Laravel 12.0
+- **Orchestra Testbench v10 Support**: Updated test dependencies to support testbench v10 for Laravel 13
+
+---
+
 ## [v1.4.0] - 2025-12-11
 
 ### ✨ New Features
 
 - **Advanced Dynamic Filter System**:
-
   - Multiple column filtering with configurable UI
   - Filter by multiple conditions on same table
   - Real-time filter application with visual feedback
@@ -23,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Advanced filter panel with collapsible interface
 
 - **Default Sort Configuration**:
-
   - Custom default sort field per table
   - Custom default sort direction (asc/desc)
   - Maintains default sort on page load
@@ -31,7 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Supports sorting by relationships
 
 - **Fully Dynamic CSS Classes**:
-
   - All CSS classes moved to configuration file
   - Dynamic class binding for all UI elements
   - Data attributes for debugging and inspection
@@ -41,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Text styling configuration
 
 - **Enhanced Export with Filtering**:
-
   - Export respects active filters and search
   - Export with applied sorting
   - Filtered exports with proper naming convention
@@ -103,7 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### ✨ New Features
 
 - Added advanced value formatting system:
-
   - Simple formatters (date, datetime, currency, boolean, etc.)
   - Complex formatters with customizable options
   - Custom date format patterns support
@@ -112,14 +116,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Support for both Model and API data sources
 
 - Improved pagination system:
-
   - Support for both default and simple pagination
   - Total count display in simple pagination mode
   - Consistent behavior across data sources
   - Query parameter preservation in pagination links
 
 - Enhanced API integration:
-
   - Support for "Show All" pagination in API data sources
   - Consistent API response formatting for all data modes
   - Smart handling of per_page=all or null for full dataset retrieval
@@ -155,7 +157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### ✨ New Features
 
 - Added comprehensive export functionality:
-
   - Export to Excel and PDF formats
   - Support for exporting all data regardless of pagination
   - Configurable export buttons with dropdown interface
