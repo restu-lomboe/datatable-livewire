@@ -109,7 +109,7 @@
                     <div data-class="controls_col" @class([$this->getClass('controls_col')])>
                         <div data-class="controls_flex" @class([$this->getClass('controls_flex')])>
                             <!-- Filter Button -->
-                            @if ($model !== null && $showFiterButton)
+                            @if ($model !== null && $showFilterButton)
                                 <button type="button" wire:click="showFilter" data-class="filter_button"
                                     @class([$this->getClass('filter_button')]) title="Open advanced filters">
                                     <i class="bi bi-funnel"></i>
@@ -164,7 +164,7 @@
                 <table data-class="table" @class([$this->getClass('table')]) style="{{ $this->getClass('table_style') }}">
                     <thead data-class="thead" @class([$this->getClass('thead')])>
                         <tr data-class="thead_row" @class([$this->getClass('thead_row')])>
-                            @foreach ($columns as $key => $column)
+                            @foreach ($this->activeColumns as $key => $column)
                                 <th scope="col" data-class="th" @class([$this->getClass('th')])>
                                     @if (in_array($key, $sortable))
                                         <button data-class="th_button" @class([$this->getClass('th_button')])
@@ -201,7 +201,7 @@
                         @forelse($this->getQuery as $index => $item)
                             <tr wire:key="row-{{ $item->id ?? $index }}" id="row-{{ $item->id ?? $index }}"
                                 data-class="tr" @class([$this->getClass('tr')])>
-                                @foreach ($columns as $key => $column)
+                                @foreach ($this->activeColumns as $key => $column)
                                     <td data-class="td" @class([$this->getClass('td')])
                                         wire:key="cell-{{ $key }}">
                                         <div data-class="td_{{ $key }}" @class([$this->getClass("td_{$key}")])>
@@ -235,7 +235,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ count($columns) }}" data-class="empty_wrapper"
+                                <td colspan="{{ count($this->activeColumns) + ($selectable ? 1 : 0) }}" data-class="empty_wrapper"
                                     @class([$this->getClass('empty_wrapper')])>
                                     <div data-class="empty_content" @class([$this->getClass('empty_content')])>
                                         <i data-class="empty_icon" @class([$this->getClass('empty_icon')])

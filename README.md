@@ -8,11 +8,14 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 
 ## 🎯 Quick Overview
 
-- **Zero Configuration**: Works out of the box with just your Eloquent model
-- **Server-Side Rendering**: Handles thousands of records efficiently
-- **Feature-Rich**: Search, sort, filter, paginate, and export with ease
-- **Fully Customizable**: Configure every aspect via config or per-component
-- **Production Ready**: Built for real-world applications with proper error handling
+- **Zero Configuration** — Works out of the box with just your Eloquent model
+- **Server-Side Rendering** — Handles thousands of records efficiently
+- **Feature-Rich** — Search, sort, filter, paginate, export, row selection, column visibility, and more
+- **Fully Customizable** — Configure every aspect via config or per-component
+- **Production Ready** — Built for real-world applications with proper error handling
+- **Blaze Optimized** — Optional 91–97% rendering overhead reduction via `livewire/blaze`
+
+---
 
 ## 📚 Table of Contents
 
@@ -31,47 +34,62 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Custom Cell Templates](#custom-cell-templates)
   - [Default Sort Configuration](#default-sort-configuration)
   - [Advanced Dynamic Filtering](#advanced-dynamic-filtering)
+  - [Row Selection](#row-selection)
+  - [Per-Column Search](#per-column-search)
+  - [Column Visibility Toggle](#column-visibility-toggle)
+  - [Multi-Column Sort](#multi-column-sort)
+  - [Saved Filter Presets](#saved-filter-presets)
+  - [Row Numbering](#row-numbering-no-column)
 - [Exporting Data](#-exporting-data)
+- [API Integration](#-api-integration)
+- [Performance: Blaze Integration](#-performance-blaze-integration)
 - [Customization](#-customization)
   - [Template System](#template-system)
   - [Theme Configuration](#theme-configuration)
   - [Dynamic CSS Classes](#dynamic-css-classes)
   - [Dark Mode Support](#dark-mode-support)
   - [Pagination Options](#pagination-options)
-- [API Integration](#-api-integration)
+- [API Reference](#-api-reference)
 - [Troubleshooting](#-troubleshooting)
 - [Support](#-support)
 
+---
+
 ## ✨ Features
 
-| Feature                       | Description                                                     |
-| ----------------------------- | --------------------------------------------------------------- |
-| ⚡ **Server-Side Rendering**  | Handle thousands of records efficiently                         |
-| 🔍 **Smart Search**           | Live search with intelligent debouncing across multiple columns |
-| 📊 **Column Sorting**         | Sort by any column, including relationship data                 |
-| 🔤 **Advanced Filtering**     | Multi-column filtering with intuitive UI                        |
-| 📄 **Pagination**             | Fully customizable pagination with per-page options             |
-| 📤 **Data Export**            | Export to Excel and PDF while respecting filters                |
-| 🎨 **Dynamic Styling**        | All CSS classes configurable from config file                   |
-| 🌙 **Dark Mode**              | Automatic dark mode support with Tailwind                       |
-| 📱 **Responsive Design**      | Mobile-friendly on all screen sizes                             |
-| 🔗 **Relationships**          | Display and sort by related model data using dot notation       |
-| 🎯 **Custom Templates**       | Create custom cell content with Blade components                |
-| 🛠 **Event System**           | Built-in event handling for user interactions                   |
-| 🔧 **Zero Config**            | Works out of the box with sensible defaults                     |
-| 🎨 **Multi-Template Support** | Tailwind CSS and Bootstrap 5+ templates built-in                |
-| 📋 **Row Numbering**          | Smart "no" column with consistent sequential numbering          |
+| Feature | Description |
+|---|---|
+| ⚡ **Server-Side Rendering** | Handle thousands of records efficiently |
+| 🔍 **Smart Search** | Live search with debouncing across multiple columns |
+| 🔎 **Per-Column Search** | Individual search inputs below each column header |
+| 📊 **Column Sorting** | Sort by any column, including relationship data |
+| 🔀 **Multi-Column Sort** | Sort by up to 3 columns simultaneously via Ctrl+Click |
+| 🔤 **Advanced Filtering** | Multi-column filtering with smart cast-aware operators |
+| 💾 **Saved Filter Presets** | Save and reload named filter combinations |
+| ☑️ **Row Selection** | Per-row checkboxes with select-all and event dispatch |
+| 👁️ **Column Visibility** | Toggle columns show/hide dynamically |
+| 📄 **Pagination** | Fully customizable pagination with per-page options |
+| 📤 **Data Export** | Export to Excel and PDF while respecting active filters |
+| 🎨 **Dynamic Styling** | All CSS classes configurable from config file |
+| 🌙 **Dark Mode** | Automatic dark mode support with Tailwind |
+| 📱 **Responsive Design** | Mobile-friendly on all screen sizes |
+| 🔗 **Relationships** | Display and sort by related model data using dot notation |
+| 🎯 **Custom Templates** | Create custom cell content with Blade components |
+| 🛠 **Event System** | Built-in event handling for user interactions |
+| 🔧 **Zero Config** | Works out of the box with sensible defaults |
+| 🎨 **Multi-Template** | Tailwind CSS and Bootstrap 5+ templates built-in |
+| 🚀 **Blaze Ready** | Optional pre-compilation for 91-97% render speedup |
+
+---
 
 ## 📋 Requirements
 
 - **PHP**: ^8.2
-- **Laravel**: ^12.0 || ^13.0
+- **Laravel**: ^12.0 \|\| ^13.0
 - **Livewire**: ^4.0
 - **CSS Framework**: Tailwind CSS ^3.0+ OR Bootstrap 5+
 
-### Browser Support
-
-All modern browsers (Chrome, Firefox, Safari, Edge)
+---
 
 ## 📦 Installation
 
@@ -83,56 +101,45 @@ composer require developerawam/livewire-datatable
 
 ### 2. Configure Your CSS Framework
 
-#### For Tailwind CSS
-
-**For Tailwind CSS v3:**
-
-Add the package's views to your Tailwind configuration:
+#### Tailwind CSS v3
 
 ```js
 // tailwind.config.js
 module.exports = {
   content: [
     "./resources/**/*.blade.php",
-    "./resources/**/*.js",
     "./vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php",
   ],
 };
 ```
 
-**For Tailwind CSS v4+:**
-
-Use the `@source` directive in your `resources/css/app.css`:
+#### Tailwind CSS v4+
 
 ```css
+/* resources/css/app.css */
 @import "tailwindcss";
-
 @source '../../vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php';
 ```
 
-This allows Tailwind CSS v4+ to automatically scan and generate styles for the datatable components.
+#### Bootstrap 5+
 
-#### For Bootstrap 5+
+No additional configuration needed — Bootstrap is detected automatically.
 
-No additional configuration needed! Bootstrap is automatically detected and used.
-
-### 3. (Optional) Publish Configuration
+### 3. Publish Configuration (Optional)
 
 ```bash
 php artisan vendor:publish --tag="livewire-datatable-config"
 ```
 
-This allows you to customize default settings in `config/livewire-datatable.php`
-
-### 4. (Optional) Set Template System
-
-Choose your CSS framework template in `.env`:
+### 4. Set Template (Optional)
 
 ```env
-DATATABLE_TEMPLATE=tailwind    # Default
-# or
+# .env
+DATATABLE_TEMPLATE=tailwind   # default
 DATATABLE_TEMPLATE=bootstrap
 ```
+
+---
 
 ## 🚀 Quick Start
 
@@ -142,7 +149,7 @@ Create a fully functional DataTable in under 2 minutes.
 
 ```bash
 php artisan make:livewire UsersTable
-````
+```
 
 ### 2. Setup Component
 
@@ -159,14 +166,14 @@ class UsersTable extends Component
     public function render()
     {
         return view('livewire.users-table', [
-            'model' => User::class,
-            'columns' => [
-                'id' => 'ID',
-                'name' => 'Name',
-                'email' => 'Email',
-                'created_at' => 'Joined'
+            'model'      => User::class,
+            'columns'    => [
+                'id'         => 'ID',
+                'name'       => 'Name',
+                'email'      => 'Email',
+                'created_at' => 'Joined',
             ],
-            'searchable' => ['name', 'email']
+            'searchable' => ['name', 'email'],
         ]);
     }
 }
@@ -192,6 +199,8 @@ class UsersTable extends Component
 
 **Done!** You now have a fully functional DataTable with search, sorting, and pagination.
 
+---
+
 ## 📖 Basic Usage
 
 ### Columns
@@ -200,11 +209,11 @@ Define what data to display and how to label it:
 
 ```php
 'columns' => [
-    'id' => 'ID',
-    'name' => 'Full Name',
-    'email' => 'Email Address',
-    'created_at' => 'Joined Date',
-    'department.name' => 'Department',  // Relationship data
+    'id'              => 'ID',
+    'name'            => 'Full Name',
+    'email'           => 'Email Address',
+    'created_at'      => 'Joined Date',
+    'department.name' => 'Department',   // Relationship via dot notation
 ]
 ```
 
@@ -218,89 +227,80 @@ Make columns searchable:
 
 ### Sorting
 
-Control which columns can be sorted:
+All columns are sortable by default. Prevent sorting on specific columns:
 
 ```php
-// By default, all columns are sortable
-// Prevent sorting on specific columns:
 'unsortable' => ['actions', 'avatar']
 ```
 
 ### Value Formatting
 
-Format column values automatically using formatters.
-
 #### Simple Formatters
-
-Use simple string formatters for common formats:
 
 ```php
 'formatters' => [
-    'created_at' => 'datetime',    // Format as datetime
-    'updated_at' => 'date',        // Format as date
-    'balance' => 'currency',       // Format as currency
-    'is_active' => 'boolean',      // Format as Yes/No
+    'created_at' => 'datetime',
+    'updated_at' => 'date',
+    'balance'    => 'currency',
+    'is_active'  => 'boolean',
+    'name'       => 'uppercase',
 ]
 ```
 
-#### Advanced Formatters
+> **Smart cast detection:** Boolean and integer columns automatically use exact match (`=`) instead of `LIKE` when filtering — no extra setup required.
 
-For complex formatting, use array syntax:
+#### Advanced Formatters
 
 ```php
 'formatters' => [
     'description' => [
-        'type' => 'words',
-        'options' => ['words' => 10, 'end' => '...']
+        'type'    => 'words',
+        'options' => ['words' => 10, 'end' => '...'],
     ],
     'title' => [
-        'type' => 'limit',
-        'options' => ['length' => 50, 'end' => '...']
+        'type'    => 'limit',
+        'options' => ['length' => 50, 'end' => '...'],
     ],
     'price' => [
-        'type' => 'money',
+        'type'    => 'money',
         'options' => [
-            'symbol' => '$',
-            'decimals' => 2,
-            'decimal_point' => '.',
-            'thousand_sep' => ','
-        ]
+            'symbol'       => 'Rp ',
+            'decimals'     => 0,
+            'decimal_point'=> ',',
+            'thousand_sep' => '.',
+        ],
     ],
 ]
 ```
 
 #### Available Formatters
 
-| Formatter   | Usage                    | Options                                         |
-| ----------- | ------------------------ | ----------------------------------------------- |
-| `date`      | Format as date           | `format: 'Y-m-d'`                               |
-| `datetime`  | Format as datetime       | `format: 'Y-m-d H:i:s'`                         |
-| `time`      | Format as time           | `format: 'H:i:s'`                               |
-| `number`    | Add thousands separator  | —                                               |
-| `currency`  | Format as currency       | `symbol, decimals, decimal_point, thousand_sep` |
-| `boolean`   | Convert to Yes/No        | `true, false`                                   |
-| `uppercase` | Uppercase text           | —                                               |
-| `lowercase` | Lowercase text           | —                                               |
-| `limit`     | Limit string length      | `length, end`                                   |
-| `words`     | Limit by word count      | `words, end`                                    |
-| `markdown`  | Convert markdown to HTML | —                                               |
-| `money`     | Advanced currency        | `symbol, decimals, decimal_point, thousand_sep` |
+| Formatter | Description | Options |
+|---|---|---|
+| `date` | Format as date | `format: 'Y-m-d'` |
+| `datetime` | Format as datetime | `format: 'Y-m-d H:i:s'` |
+| `time` | Format as time | `format: 'H:i:s'` |
+| `number` | Thousand separator | `decimals, decimal_point, thousand_sep` |
+| `currency` | Currency format | `symbol, decimals, decimal_point, thousand_sep` |
+| `boolean` | Yes / No | `true: 'Yes', false: 'No'` |
+| `uppercase` | Uppercase text | — |
+| `lowercase` | Lowercase text | — |
+| `limit` | Truncate by characters | `length, end` |
+| `words` | Truncate by word count | `words, end` |
+| `markdown` | Markdown to HTML | — |
+| `money` | Advanced currency | `symbol, decimals, decimal_point, thousand_sep` |
 
-## � Advanced Features
+---
+
+## 🔥 Advanced Features
 
 ### Relationships
 
 Display and sort data from related models using dot notation.
 
-#### 1. Setup Model with Relationships
+#### 1. Setup Model
 
 ```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
 class User extends Model
 {
     protected $with = ['department', 'role'];
@@ -309,41 +309,30 @@ class User extends Model
     {
         return $this->belongsTo(Department::class);
     }
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
 }
 ```
 
-#### 2. Use Dot Notation in Columns
+#### 2. Use Dot Notation
 
 ```php
 'columns' => [
-    'id' => 'ID',
-    'name' => 'Name',
-    'department.name' => 'Department',
-    'role.name' => 'Role',
+    'id'                  => 'ID',
+    'name'                => 'Name',
+    'department.name'     => 'Department',
     'department.location' => 'Office',
+    'role.name'           => 'Role',
 ]
 ```
 
-DataTable automatically handles relationships and makes them sortable!
+DataTable automatically handles relationship joins and makes them sortable.
+
+---
 
 ### Custom Query Scopes
 
-Apply filters and constraints using Eloquent query scopes.
-
-#### 1. Define Scope on Model
+#### 1. Define Scope
 
 ```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Builder;
-
 class User extends Model
 {
     public function scopeActive(Builder $query): Builder
@@ -351,177 +340,74 @@ class User extends Model
         return $query->where('status', 'active');
     }
 
-    public function scopeFromDepartment(Builder $query, string $department): Builder
+    public function scopeFromDepartment(Builder $query, string $dept): Builder
     {
-        return $query->whereHas('department', fn ($q) => $q->where('name', $department));
+        return $query->whereHas('department', fn ($q) => $q->where('name', $dept));
     }
 }
 ```
 
-#### 2. Apply Scope to DataTable
+#### 2. Apply Scope
 
 ```php
-public function render()
-{
-    return view('livewire.users-table', [
-        'model' => User::class,
-        'scope' => 'active',  // Single scope
-        'columns' => [...],
-    ]);
-}
+// Simple scope
+'scope' => 'active',
+
+// Scope with parameters
+'scope'       => 'fromDepartment',
+'scopeParams' => ['Engineering'],
 ```
 
-#### 3. Apply Scope with Parameters
-
-```php
-public function render()
-{
-    return view('livewire.users-table', [
-        'model' => User::class,
-        'scope' => 'fromDepartment',
-        'scopeParams' => ['Engineering'],
-        'columns' => [...],
-    ]);
-}
-```
+---
 
 ### Custom Cell Templates
-
-Create rich, interactive cell content with custom Blade templates.
 
 #### 1. Define Custom Columns
 
 ```php
-public function render()
-{
-    return view('livewire.users-table', [
-        'model' => User::class,
-        'columns' => [
-            'id' => 'ID',
-            'name' => 'Name',
-            'status' => 'Status',
-            'actions' => 'Actions'
-        ],
-        'customColumns' => [
-            'status' => 'components.table.status-badge',
-            'actions' => 'components.table.user-actions'
-        ],
-        'unsortable' => ['actions']
-    ]);
-}
+'customColumns' => [
+    'status'  => 'components.table.status-badge',
+    'actions' => 'components.table.user-actions',
+],
+'unsortable' => ['actions'],
 ```
 
-#### 2. Create Custom Templates
-
-**Status Badge** (`resources/views/components/table/status-badge.blade.php`):
+#### 2. Create Template
 
 ```blade
+{{-- resources/views/components/table/status-badge.blade.php --}}
 @php
-    $statusColors = [
-        'active' => 'bg-green-100 text-green-800',
+    $colors = [
+        'active'   => 'bg-green-100 text-green-800',
         'inactive' => 'bg-red-100 text-red-800',
-        'pending' => 'bg-yellow-100 text-yellow-800'
+        'pending'  => 'bg-yellow-100 text-yellow-800',
     ];
-    $colorClass = $statusColors[$value] ?? 'bg-gray-100 text-gray-800';
 @endphp
-
-<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $colorClass }}">
+<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $colors[$value] ?? 'bg-gray-100 text-gray-800' }}">
     {{ ucfirst($value) }}
 </span>
 ```
 
-**Action Buttons** (`resources/views/components/table/user-actions.blade.php`):
+**Available variables in templates:** `$item` (model instance), `$value` (column value).
 
-```blade
-<div class="flex items-center space-x-2">
-    <button
-        wire:click="$dispatch('user-edit', { id: {{ $item->id }} })"
-        class="text-blue-600 hover:text-blue-800">
-        Edit
-    </button>
-    <button
-        wire:click="$dispatch('user-delete', { id: {{ $item->id }} })"
-        wire:confirm="Delete this user?"
-        class="text-red-600 hover:text-red-800">
-        Delete
-    </button>
-</div>
-```
-
-#### 3. Handle Events in Component
+#### 3. Handle Events
 
 ```php
-<?php
-
-namespace App\Livewire;
-
-use App\Models\User;
-use Livewire\Component;
 use Livewire\Attributes\On;
 
-class UsersTable extends Component
+#[On('user-delete')]
+public function deleteUser($id)
 {
-    #[On('user-edit')]
-    public function editUser($id)
-    {
-        $this->redirect(route('users.edit', $id));
-    }
-
-    #[On('user-delete')]
-    public function deleteUser($id)
-    {
-        try {
-            User::findOrFail($id)->delete();
-            session()->flash('message', 'User deleted successfully!');
-            // Refresh table after deletion
-            $this->dispatch('reset-table');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to delete user.');
-        }
-    }
-
-    #[On('user-update-status')]
-    public function updateUserStatus($id)
-    {
-        try {
-            $user = User::findOrFail($id);
-            $user->update(['status' => $user->status === 'active' ? 'inactive' : 'active']);
-            session()->flash('message', 'User status updated!');
-            // Refresh table after status update
-            $this->dispatch('reset-table');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to update user status.');
-        }
-    }
-
-    public function render()
-    {
-        return view('livewire.users-table', [
-            'model' => User::class,
-            'columns' => [...],
-            'customColumns' => [...],
-        ]);
-    }
+    User::findOrFail($id)->delete();
+    $this->dispatch('reset-table'); // Refresh table
 }
 ```
 
-**Available Variables in Custom Templates:**
-
-- `$item` - Current model instance
-- `$value` - Current column value
-
-**Refresh Table After Actions:**
-
-```php
-// Dispatch event to refresh the table after modifications
-$this->dispatch('reset-table');
-```
+---
 
 ### Default Sort Configuration
 
-Customize the default sort field and direction.
-
-```php
+```blade
 <livewire:livewire-datatable
     :model="User::class"
     :columns="[...]"
@@ -529,408 +415,495 @@ Customize the default sort field and direction.
     defaultSortDirection="desc" />
 ```
 
-Works with relationships using dot notation:
+Works with relationships:
 
-```php
+```blade
 defaultSortField="department.name"
 defaultSortDirection="asc"
 ```
 
+---
+
 ### Advanced Dynamic Filtering
 
-Filter data across multiple columns with an intuitive interface.
+Users can filter across multiple columns with an intuitive side panel.
 
-#### Enable/Disable Filtering
+#### Enable / Disable
 
 ```php
 // config/livewire-datatable.php
-return [
-    'advanced_filter' => true,  // Default: true
-];
+'advanced_filter' => true,
 ```
 
 #### How It Works
 
-Users can:
+1. Click the **Filter** button to open the filter panel
+2. Select a column and enter a value
+3. Click **+ Filter..** to add more conditions (AND logic)
+4. Click **Filter** to apply — or **Reset** to clear all
+5. Export respects active filters
 
-- Click "Filter.." to add filter conditions
-- Select columns to filter by
-- Enter filter values
-- Add multiple conditions (AND logic)
-- Reset all filters at once
+> **Smart operators:** Boolean/integer columns automatically use exact match (`=`). String columns use `LIKE %value%`. No extra config needed.
 
-#### Customization
+---
 
-All filter elements have configurable CSS classes:
+### Row Selection
+
+Enable per-row checkboxes for bulk actions.
+
+#### Enable
+
+```blade
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="[...]"
+    :selectable="true" />
+```
+
+Or globally in config:
 
 ```php
 // config/livewire-datatable.php
-'theme' => [
-    'filter_panel' => 'p-4 border-r border-gray-200',
-    'filter_items' => 'space-y-3',
-    'filter_input' => 'py-2.5 px-4 border-gray-200 rounded-lg',
-    'filter_add_button' => 'py-2 px-3 text-sm font-medium',
-    'filter_reset_button' => 'py-2 px-3 text-sm font-medium',
-    'filter_apply_button' => 'py-2 px-3 text-sm font-medium',
-]
+'selection' => ['enabled' => true],
 ```
+
+#### Listen for Selection Changes
+
+```php
+use Livewire\Attributes\On;
+
+#[On('datatable-selection-changed')]
+public function onSelectionChanged(array $ids): void
+{
+    $this->selectedUserIds = $ids;
+    // Now you can bulk delete, export, etc.
+}
+```
+
+#### Available Methods (callable from JS or child components)
+
+| Method | Description |
+|---|---|
+| `toggleSelect($id)` | Toggle a single row |
+| `toggleSelectAll()` | Select / deselect all rows on current page |
+| `clearSelection()` | Clear all selections |
+| `isSelected($id)` | Check if an ID is selected |
+
+---
+
+### Per-Column Search
+
+Show a search input below each column header — useful alongside global search.
+
+#### Enable
+
+```blade
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="[...]"
+    :per-column-search="true" />
+```
+
+Or globally:
+
+```php
+// config/livewire-datatable.php
+'per_column_search' => true,
+```
+
+Per-column search is combined (AND) with any active global search and filters.
+
+To clear programmatically:
+
+```php
+$this->dispatch('reset-table'); // Resets all
+// Or call clearColumnSearch() / clearColumnSearchFor('email') on the component
+```
+
+---
+
+### Column Visibility Toggle
+
+Let users show/hide columns dynamically. State is persisted in session.
+
+#### Enable
+
+```blade
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="[...]"
+    :column-visibility="true" />
+```
+
+Or globally:
+
+```php
+// config/livewire-datatable.php
+'column_visibility' => true,
+```
+
+A **columns** button appears in the toolbar. Users can uncheck any column to hide it. At least one column is always kept visible. Clicking **Show all** restores all columns.
+
+---
+
+### Multi-Column Sort
+
+Sort by up to 3 columns simultaneously.
+
+#### Enable
+
+```blade
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="[...]"
+    :multi-sort="true" />
+```
+
+Or globally:
+
+```php
+// config/livewire-datatable.php
+'multi_sort' => true,
+```
+
+#### How It Works
+
+| Action | Result |
+|---|---|
+| **Click** a column header | Single-column sort (stack resets) |
+| **Ctrl+Click** a column header | Add column to sort stack |
+| **Ctrl+Click** an already-sorted column | Toggle its direction |
+| Number badge on header | Sort priority (1 = primary, 2 = secondary, 3 = tertiary) |
+
+Maximum 3 sort levels. Adding a 4th replaces the oldest.
+
+---
+
+### Saved Filter Presets
+
+Save the current filter + sort state as a named preset and reload it later.
+
+#### Enable
+
+```blade
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="[...]"
+    :saved-filters="true" />
+```
+
+#### Driver: Session (default — no extra setup)
+
+```php
+// config/livewire-datatable.php
+'saved_filters' => [
+    'enabled' => true,
+    'driver'  => 'session',
+],
+```
+
+Presets are stored in PHP session — cleared on logout.
+
+#### Driver: Database (persists across sessions, per user)
+
+```php
+// config/livewire-datatable.php
+'saved_filters' => [
+    'enabled' => true,
+    'driver'  => 'database',
+],
+```
+
+```bash
+php artisan vendor:publish --tag="livewire-datatable-migrations"
+php artisan migrate
+```
+
+This creates the `datatable_filter_presets` table.
+
+#### How It Works
+
+1. Set your filters and sort as desired
+2. Click **+ Save current filter as preset** in the filter panel
+3. Enter a name and click **Save**
+4. Your preset appears in the list — click to reload it, **✕** to delete
+
+---
 
 ### Row Numbering ("no" Column)
 
-The "no" column provides sequential row numbering that works intelligently with sorting and pagination.
-
-#### Behavior
-
-- **Sequential numbering**: Always displays 1, 2, 3... regardless of sort order
-- **Pagination-aware**: Continues numbering across pages (page 2 shows 11, 12, 13...)
-- **Sort-independent**: Doesn't reverse or change based on sort direction
-- **Consistent**: Maintains the same numbering regardless of active filters or searches
-
-#### Example
-
-```
-Page 1 (perPage: 10):
-No | Name              | Email
-1  | John Doe         | john@example.com
-2  | Jane Smith       | jane@example.com
-...
-10 | Mike Johnson     | mike@example.com
-
-Page 2:
-No | Name              | Email
-11 | Sarah Williams   | sarah@example.com
-12 | Tom Brown        | tom@example.com
-```
-
-Even when sorting by different columns, the "no" column always displays sequential numbering.
-
-## 🌐 API Integration
-
-The DataTable supports both Eloquent models and API endpoints for flexibility.
-
-### Setup API DataTable
+Add `'no' => 'No.'` to your columns for smart sequential numbering.
 
 ```php
-<?php
-
-namespace App\Livewire;
-
-use Livewire\Component;
-
-class TodoTableApi extends Component
-{
-    public function render()
-    {
-        $apiConfig = [
-            'url' => url('/api/todos'),
-            'headers' => ['Accept' => 'application/json'],
-            'data_key' => 'data',           // Where to find items
-            'total_key' => 'total',         // Where to find total count
-            'search_param' => 'search',
-            'sort_param' => 'sort',
-            'sort_direction_param' => 'direction',
-            'per_page_param' => 'per_page',
-            'page_param' => 'page',
-        ];
-
-        return view('livewire.todo-table-api', [
-            'apiConfig' => $apiConfig,
-            'columns' => ['id' => 'ID', 'title' => 'Title'],
-            'searchable' => ['title'],
-        ]);
-    }
-}
+'columns' => [
+    'no'   => 'No.',
+    'name' => 'Name',
+    ...
+]
 ```
 
-### API View
+- Continues correctly across pages (page 2 starts at 11, 21, etc.)
+- Sort-direction aware when sorting by "no" column
+- Not affected by active filters or search
 
-```blade
-<div>
-    <livewire:livewire-datatable
-        :api-config="$apiConfig"
-        :columns="$columns"
-        :searchable="$searchable" />
-</div>
-```
-
-### Required Response Format
-
-Your API must return:
-
-```json
-{
-  "data": [{ "id": 1, "title": "Task", "created_at": "2025-01-27T10:00:00Z" }],
-  "total": 100,
-  "per_page": 10,
-  "current_page": 1,
-  "last_page": 10,
-  "from": 1,
-  "to": 10
-}
-```
-
-### API Query Parameters
-
-DataTable sends these parameters:
-
-```
-GET /api/todos?search=keyword&sort=title&direction=asc&per_page=10&page=1
-```
-
-### Custom API Configuration
-
-```php
-$apiConfig = [
-    'url' => url('/api/todos'),
-    'method' => 'GET',
-    'headers' => [
-        'Authorization' => 'Bearer ' . $token,
-        'Accept' => 'application/json',
-    ],
-    'query_params' => ['status' => 'active'],
-    'response_key' => 'data.todos',  // For nested responses
-];
-```
+---
 
 ## 📤 Exporting Data
 
-Export your DataTable data to Excel and PDF formats.
-
-### Export Features
-
-- Export to Excel (`.xlsx`) and PDF
-- Exports all records (respects pagination)
-- Respects active search filters
-- Maintains data formatting (dates, currency, etc.)
-- Automatically excludes action columns
-- Responsive UI with dark mode support
+Export to Excel (`.xlsx`) and PDF with one click.
 
 ### Configuration
 
 ```php
 // config/livewire-datatable.php
 'export' => [
-    'enabled' => true,
-    'types' => ['excel', 'pdf'],
-    'orientation' => 'portrait',
-    'paper_size' => 'a4',
-];
-```
-
-### How to Use
-
-1. Click the "Export" dropdown in the controls
-2. Select "Export Excel" or "Export PDF"
-3. File downloads automatically
-
-### Example with Custom Options
-
-```php
-'export' => [
-    'enabled' => true,
-    'types' => ['excel', 'pdf'],
-    'orientation' => 'landscape',
-    'paper_size' => 'a4',
-    'dropdown' => [
-        'position' => 'top',
-        'trigger_text' => 'Download',
+    'enabled'     => true,
+    'types'       => ['excel', 'pdf'],
+    'orientation' => 'portrait',  // or 'landscape'
+    'paper_size'  => 'a4',
+    'dropdown'    => [
+        'position'     => 'top',     // 'top', 'bottom', 'both'
+        'trigger_text' => 'Export',
+        'excel_text'   => 'Excel',
+        'pdf_text'     => 'PDF',
     ],
 ],
 ```
+
+### Behavior
+
+- Exports **all records** (not just the current page)
+- Respects active **search**, **filters**, and **sort**
+- Filename includes search term or "filtered" suffix when applicable
+- Formatting (dates, currency, etc.) is preserved in exports
+
+---
+
+## 🌐 API Integration
+
+Use an external REST API as the data source instead of an Eloquent model.
+
+### Setup
+
+```php
+class TodoTableApi extends Component
+{
+    public function render()
+    {
+        $apiConfig = [
+            'url'                  => url('/api/todos'),
+            'headers'              => ['Accept' => 'application/json'],
+            'data_key'             => 'data',
+            'total_key'            => 'total',
+            'search_param'         => 'search',
+            'sort_param'           => 'sort',
+            'sort_direction_param' => 'direction',
+            'per_page_param'       => 'per_page',
+            'page_param'           => 'page',
+        ];
+
+        return view('livewire.todo-table-api', [
+            'apiConfig'  => $apiConfig,
+            'columns'    => ['id' => 'ID', 'title' => 'Title'],
+            'searchable' => ['title'],
+        ]);
+    }
+}
+```
+
+### View
+
+```blade
+<livewire:livewire-datatable
+    :api-config="$apiConfig"
+    :columns="$columns"
+    :searchable="$searchable" />
+```
+
+### Required API Response Format
+
+```json
+{
+  "data": [{ "id": 1, "title": "Task" }],
+  "total": 100,
+  "per_page": 10,
+  "current_page": 1,
+  "last_page": 10
+}
+```
+
+### Query Parameters Sent
+
+```
+GET /api/todos?search=keyword&sort=title&direction=asc&per_page=10&page=1
+```
+
+### With Authentication
+
+```php
+$apiConfig = [
+    'url'     => url('/api/todos'),
+    'headers' => [
+        'Authorization' => 'Bearer ' . $token,
+        'Accept'        => 'application/json',
+    ],
+];
+```
+
+---
+
+## 🚀 Performance: Blaze Integration
+
+`livewire/blaze` pre-compiles anonymous Blade components into optimized PHP functions, eliminating 91–97% of rendering overhead.
+
+> ⚠️ **Penting:** Blaze dirancang untuk **anonymous Blade components** (`x-component` syntax), **bukan** untuk Livewire component views. Jangan arahkan `Blaze::optimize()->in()` ke direktori Livewire views — ini akan menyebabkan error **"missing root tag"** karena Blaze dapat merusak root `<div>` yang dibutuhkan Livewire.
+
+### Install
+
+```bash
+composer require livewire/blaze:^1.0
+php artisan view:clear
+```
+
+### Cara Penggunaan yang Benar
+
+Arahkan Blaze hanya ke direktori **anonymous Blade components** yang dipakai di dalam Livewire views kamu — bukan ke view Livewire itu sendiri.
+
+```
+resources/views/
+├── livewire/           ← ❌ JANGAN arahkan Blaze ke sini
+│   └── users-table.blade.php
+└── components/         ← ✅ Arahkan Blaze ke sini
+    ├── button.blade.php
+    ├── badge.blade.php
+    └── table/
+        └── status-badge.blade.php
+```
+
+Konfigurasi di `AppServiceProvider`:
+
+```php
+use Livewire\Blaze\Blaze;
+
+public function boot(): void
+{
+    if (class_exists(Blaze::class)) {
+        Blaze::optimize()
+            // ✅ Anonymous Blade components — aman
+            ->in(resource_path('views/components'))
+
+            // ✅ Ikon yang dirender berulang — cocok untuk memo
+            ->in(resource_path('views/components/icons'), memo: true);
+
+        // ❌ JANGAN lakukan ini — akan menyebabkan "missing root tag":
+        // ->in(resource_path('views/livewire'))
+        // ->in(resource_path('views/vendor/livewire-datatable'))
+    }
+}
+```
+
+### Strategi Optimasi
+
+| Strategi | Kapan dipakai | Risiko |
+|---|---|---|
+| Standard compile | Komponen dengan props dinamis | Rendah |
+| `memo: true` | Komponen yang dirender berulang dengan input sama (ikon, badge statis) | Sedang |
+| `fold: true` | Komponen 100% statis tanpa variabel runtime | Tinggi — baca docs Blaze terlebih dahulu |
+
+Untuk panduan lengkap, lihat [`docs/BLAZE.md`](docs/BLAZE.md).
+
+---
 
 ## 🎨 Customization
 
 ### Template System
 
-The DataTable supports multiple CSS frameworks. Switch between them easily:
-
-#### Available Templates
-
-- **tailwind** - Tailwind CSS (default)
-- **bootstrap** - Bootstrap 5+
-
-#### Switch Template
-
-Set in `config/livewire-datatable.php`:
-
 ```php
+// config/livewire-datatable.php
 'template' => env('DATATABLE_TEMPLATE', 'tailwind'),
 ```
 
-Or in `.env`:
+Available templates: `tailwind` (default), `bootstrap`.
 
-```env
-DATATABLE_TEMPLATE=bootstrap
-```
-
-#### Bootstrap Pagination
-
-If you're using Bootstrap CSS framework instead of Tailwind CSS, you can configure Livewire to use Bootstrap pagination styles. See the [Livewire Bootstrap Pagination Documentation](https://livewire.laravel.com/docs/4.x/pagination#using-bootstrap-instead-of-tailwind) for detailed setup instructions.
-
-#### Bootstrap Configuration
-
-```php
-'bootstrap_theme' => [
-    'wrapper' => 'container-fluid card',
-    'table' => 'table table-hover table-sm',
-    'th' => 'table-light',
-    'th_sort_button' => 'btn btn-sm btn-ghost',
-    // ... more bootstrap classes
-]
-```
+For Bootstrap pagination styles, follow the [Livewire Bootstrap Pagination docs](https://livewire.laravel.com/docs/pagination#using-bootstrap-instead-of-tailwind).
 
 ### Theme Configuration
 
-Customize the default appearance via `config/livewire-datatable.php`.
-
-#### Quick Example
+All CSS classes are configurable via `config/livewire-datatable.php`:
 
 ```php
 'theme' => [
-    'table' => 'min-w-full divide-y divide-gray-200',
-    'th' => 'px-6 py-3 bg-gray-50 text-left text-xs font-medium',
-    'td' => 'px-6 py-4 whitespace-nowrap text-sm',
-    'tr' => 'hover:bg-gray-50 transition',
+    'table'  => 'min-w-full divide-y divide-gray-200',
+    'th'     => 'px-6 py-3 bg-gray-50 text-left text-xs font-medium uppercase',
+    'td'     => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700',
+    'tr'     => 'hover:bg-gray-50 transition',
 ]
 ```
 
-#### Per-Column Styling
-
-Style specific columns using column keys:
+### Per-Column Styling
 
 ```php
 'theme' => [
-    'td_id' => 'font-mono text-gray-500 text-xs',
-    'td_email' => 'font-medium text-blue-600',
-    'td_status' => 'text-center font-semibold',
+    'td_id'      => 'font-mono text-gray-500 text-xs',
+    'td_email'   => 'font-medium text-blue-600',
+    'td_status'  => 'text-center font-semibold',
     'td_actions' => 'text-right space-x-2',
 ]
 ```
 
-### Dynamic CSS Classes
-
-Every element in the DataTable is fully configurable via CSS classes. All elements have `data-class` attributes for easy debugging.
-
-#### Component-Level Overrides
-
-Override theme for specific tables:
+### Component-Level Overrides
 
 ```php
 public function render()
 {
     return view('livewire.users-table', [
-        'model' => User::class,
+        'model'   => User::class,
         'columns' => ['id' => 'ID', 'name' => 'Name'],
-        'theme' => [
+        'theme'   => [
             'table' => 'min-w-full divide-y divide-blue-200',
-            'tr' => 'hover:bg-blue-50',
-            'td_id' => 'font-mono text-gray-500',
-        ]
+            'tr'    => 'hover:bg-blue-50',
+        ],
     ]);
 }
 ```
 
-Use in view:
+### Dynamic CSS Classes
 
-```blade
-<livewire:livewire-datatable
-    :model="$model"
-    :columns="$columns"
-    :theme="$theme" />
-```
+Every element has a `data-class` attribute for easy debugging. Inspect in browser DevTools to identify which config key controls each element.
 
 ### Dark Mode Support
 
-Automatic dark mode support with Tailwind CSS. Simply add the `dark` class to your HTML element:
-
 ```html
-<html class="dark">
-  <!-- Your app -->
-</html>
+<!-- Enable dark mode -->
+<html class="dark">...</html>
 ```
-
-Or use dynamic switching:
 
 ```js
-document.documentElement.classList.toggle("dark");
+// Toggle dynamically
+document.documentElement.classList.toggle('dark');
 ```
-
-### Debugging Style Issues
-
-Each element has a `data-class` attribute showing which config key controls it. Inspect in browser to find the right configuration option.
 
 ### Pagination Options
 
-Customize pagination behavior and options.
+```php
+// config/livewire-datatable.php
+'per_page_options' => [10, 25, 50, 100, 'all'],
+```
 
-#### Per-Page Options
+The `'all'` option loads all records at once.
 
-Configure available per-page choices:
+### Schema Cache
+
+The package caches `Schema::getColumnListing()` to avoid redundant DB calls on every render:
 
 ```php
 // config/livewire-datatable.php
-'per_page_options' => [10, 25, 50, 100, 'all']
+'schema_cache_ttl' => 300, // seconds. Set to 0 to disable.
 ```
 
-The `'all'` option allows users to display all records at once.
-
-#### Default Per Page
-
-```php
-// Set in component
-public $perPage = 25;
-```
-
-Or let users choose with the per-page selector in the UI.
+---
 
 ## 📝 Complete Example
-
-Here's a comprehensive example with multiple features:
-'export_dropdown_arrow' => '-mr-1 ml-2 h-5 w-5',
-'export_button' => 'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800',
-
-        // Table structure
-        'table_wrapper' => 'overflow-x-auto border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow',
-        'table' => 'min-w-full divide-y divide-gray-200 dark:divide-gray-700',
-
-        // Table headers
-        'thead' => '',
-        'thead_row' => '',
-        'th' => 'px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
-        'th_sort_button' => 'group inline-flex items-center gap-x-2 hover:text-gray-700 dark:hover:text-gray-200',
-        'th_sort_icon_wrapper' => 'inline-flex rounded p-1 transition',
-        'th_sort_icon_active' => 'size-4 text-blue-500',
-        'th_sort_icon_inactive' => 'size-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-200',
-        'th_text' => 'text-gray-700 dark:text-gray-200 capitalize',
-
-        // Table body
-        'tbody' => 'divide-y divide-gray-200 dark:divide-gray-700',
-        'tr' => 'hover:bg-gray-50 dark:hover:bg-gray-700/25 transition',
-        'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
-
-        // Empty state
-        'empty_wrapper' => 'px-6 py-8 text-center',
-        'empty_content' => 'flex flex-col items-center justify-center',
-        'empty_icon' => 'size-16 text-gray-400 dark:text-gray-500 mb-2',
-        'empty_text' => 'text-gray-500 dark:text-gray-400 text-sm font-medium',
-
-        // Pagination
-        'pagination_wrapper' => 'p-4',
-
-        // Column-specific styling (optional)
-        // 'td_id' => 'font-mono text-gray-500 text-xs',
-        // 'td_email' => 'font-medium text-blue-600',
-        // 'td_status' => 'text-center font-semibold',
-        // 'td_actions' => 'text-right space-x-2',
-    ]
-
-];
-
-````
-
-## 📝 Complete Example
-
-Here's a comprehensive example with multiple features:
 
 ```php
 <?php
@@ -952,93 +925,189 @@ class AdvancedUsersTable extends Component
     #[On('user-delete')]
     public function deleteUser($id)
     {
-        try {
-            User::findOrFail($id)->delete();
-            session()->flash('message', 'User deleted!');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to delete user.');
-        }
+        User::findOrFail($id)->delete();
+        session()->flash('message', 'User deleted!');
+        $this->dispatch('reset-table');
+    }
+
+    // Handle row selection changes
+    #[On('datatable-selection-changed')]
+    public function onSelectionChanged(array $ids): void
+    {
+        $this->selectedIds = $ids;
     }
 
     public function render()
     {
         return view('livewire.advanced-users-table', [
-            'model' => User::class,
-            'scope' => 'active',
-            'columns' => [
-                'id' => 'ID',
-                'name' => 'Name',
-                'email' => 'Email',
+            'model'              => User::class,
+            'scope'              => 'active',
+            'columns'            => [
+                'no'              => 'No.',
+                'name'            => 'Name',
+                'email'           => 'Email',
                 'department.name' => 'Department',
-                'role.name' => 'Role',
-                'status' => 'Status',
-                'created_at' => 'Joined',
-                'actions' => 'Actions'
+                'role.name'       => 'Role',
+                'status'          => 'Status',
+                'created_at'      => 'Joined',
+                'actions'         => 'Actions',
             ],
-            'searchable' => ['name', 'email'],
-            'unsortable' => ['actions'],
-            'customColumns' => [
-                'status' => 'components.table.status-badge',
-                'actions' => 'components.table.user-actions'
+            'searchable'         => ['name', 'email'],
+            'unsortable'         => ['actions'],
+            'customColumns'      => [
+                'status'  => 'components.table.status-badge',
+                'actions' => 'components.table.user-actions',
             ],
-            'defaultSortField' => 'created_at',
+            'formatters'         => [
+                'created_at' => 'date',
+                'status'     => 'uppercase',
+            ],
+            'defaultSortField'     => 'created_at',
             'defaultSortDirection' => 'desc',
         ]);
     }
 }
-````
+```
+
+```blade
+{{-- resources/views/livewire/advanced-users-table.blade.php --}}
+<div>
+    <livewire:livewire-datatable
+        :model="$model"
+        :scope="$scope"
+        :columns="$columns"
+        :searchable="$searchable"
+        :unsortable="$unsortable"
+        :custom-columns="$customColumns"
+        :formatters="$formatters"
+        :default-sort-field="$defaultSortField"
+        :default-sort-direction="$defaultSortDirection"
+        :selectable="true"
+        :column-visibility="true"
+        :multi-sort="true"
+        :per-column-search="true"
+        :saved-filters="true" />
+</div>
+```
+
+---
 
 ## ✅ API Reference
 
-Quick reference of all available parameters:
+### Component Parameters
 
-| Parameter              | Type   | Description              |
-| ---------------------- | ------ | ------------------------ |
-| `model`                | string | Eloquent model class     |
-| `columns`              | array  | Field names and labels   |
-| `searchable`           | array  | Searchable field names   |
-| `unsortable`           | array  | Non-sortable field names |
-| `customColumns`        | array  | Custom template paths    |
-| `formatters`           | array  | Value formatters         |
-| `scope`                | string | Query scope name         |
-| `scopeParams`          | array  | Query scope parameters   |
-| `defaultSortField`     | string | Initial sort field       |
-| `defaultSortDirection` | string | 'asc' or 'desc'          |
-| `theme`                | array  | CSS class overrides      |
-| `apiConfig`            | array  | API configuration        |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `model` | `string` | `null` | Eloquent model class |
+| `apiConfig` | `array` | `null` | API datasource config (use instead of `model`) |
+| `columns` | `array` | `[]` | Column keys and labels |
+| `searchable` | `array` | `[]` | Searchable field names |
+| `unsortable` | `array` | `[]` | Non-sortable column keys |
+| `customColumns` | `array` | `[]` | Map of column key → Blade view path |
+| `formatters` | `array` | `[]` | Column formatter definitions |
+| `formatterOptions` | `array` | `[]` | Options per formatter |
+| `scope` | `string` | `null` | Eloquent scope name |
+| `scopeParams` | `array` | `[]` | Parameters for scope |
+| `defaultSortField` | `string` | `'created_at'` | Initial sort column |
+| `defaultSortDirection` | `string` | `'desc'` | `'asc'` or `'desc'` |
+| `theme` | `array` | `[]` | CSS class overrides |
+| `selectable` | `bool` | `false` | Enable row checkboxes |
+| `perColumnSearch` | `bool` | `false` | Enable per-column search inputs |
+| `columnVisibility` | `bool` | `false` | Enable column show/hide toggle |
+| `multiSort` | `bool` | `false` | Enable multi-column sort |
+| `savedFilters` | `bool` | `false` | Enable save/load filter presets |
+
+### Dispatched Events
+
+| Event | Payload | Triggered When |
+|---|---|---|
+| `datatable-selection-changed` | `ids: array` | Row selection changes |
+| `datatable-preset-saved` | `name: string` | A filter preset is saved |
+
+### Listened Events
+
+| Event | Description |
+|---|---|
+| `reset-table` | Resets pagination and refreshes the table |
+
+---
 
 ## ❓ Troubleshooting
 
-### Common Issues
-
 **Search not working on relationships**
 
-Ensure the relationship is eager loaded in your model using `$with`:
+Ensure the relation is eager-loaded on the model:
 
 ```php
 protected $with = ['department', 'role'];
 ```
 
+**Per-column search / filter not detecting columns**
+
+Check that `schema_cache_ttl` is not serving stale schema. Run:
+
+```bash
+php artisan cache:clear
+```
+
+**Column visibility state not persisting**
+
+Column visibility uses PHP session. Ensure sessions are configured and the user's session is active.
+
+**Saved filter presets not saving (database driver)**
+
+Run the migration:
+
+```bash
+php artisan vendor:publish --tag="livewire-datatable-migrations"
+php artisan migrate
+```
+
+**Multi-sort Ctrl+Click not working**
+
+Ensure your browser is not intercepting Ctrl+Click for other purposes. MetaKey (Cmd on Mac) also works.
+
+**Error "missing root tag" setelah install Blaze**
+
+Ini terjadi jika `Blaze::optimize()->in()` diarahkan ke direktori Livewire views. Blaze hanya boleh digunakan pada anonymous Blade components, **bukan** Livewire component views.
+
+Pindahkan konfigurasi Blaze ke direktori `components/` saja:
+
+```php
+// ✅ Benar
+Blaze::optimize()->in(resource_path('views/components'));
+
+// ❌ Salah — akan menyebabkan "missing root tag"
+Blaze::optimize()->in(resource_path('views/livewire'));
+Blaze::optimize()->in(resource_path('views/vendor/livewire-datatable'));
+```
+
+Setelah memperbaiki, jalankan:
+
+```bash
+php artisan view:clear
+```
+
+Lihat [`docs/BLAZE.md`](docs/BLAZE.md) untuk panduan lengkap.
+
 **Custom columns not displaying**
 
-- Verify the view file exists at the specified path
-- Check that the view receives `$item` and `$value` variables
-
-**Styles not applying**
-
-- Verify Tailwind CSS is properly configured
-- Check that package views are in `tailwind.config.js` content array
+- Verify the Blade view file exists at the specified path
+- Confirm the view receives `$item` and `$value` variables
+- Check template is not cached: `php artisan view:clear`
 
 **Export not working**
 
-- Verify export is enabled in config
-- Check that required packages are installed
+- Verify `export.enabled` is `true` in config
+- Ensure `maatwebsite/excel` and `barryvdh/laravel-dompdf` are installed
 
-### Getting Help
+**Styles not applying (Tailwind)**
 
-1. Check [GitHub issues](https://github.com/developerawam/livewire-datatable/issues)
-2. Review the examples in this documentation
-3. Inspect browser console for errors
+- Confirm package views are in `tailwind.config.js` content array
+- For Tailwind v4, check `@source` directive in `app.css`
+- Run `npm run build` to recompile assets
+
+---
 
 ## 💝 Support
 
@@ -1046,18 +1115,24 @@ If this package has helped your project, consider supporting its continued devel
 
 [![Donate on Saweria](https://img.shields.io/badge/Donate-Saweria-orange)](https://saweria.co/developerawam)
 
+---
+
 ## 🔒 Security
 
-Please report security vulnerabilities to info@developerawam.com instead of using the public issue tracker.
+Please report security vulnerabilities to **info@developerawam.com** instead of using the public issue tracker.
+
+---
 
 ## 👥 Credits
 
-- [Developer Awam](https://github.com/developerawam) - Package Author
-- [Restu](https://github.com/restu-lomboe) - Lead Developer
+- [Developer Awam](https://github.com/developerawam) — Package Author
+- [Restu](https://github.com/restu-lomboe) — Lead Developer
+
+---
 
 ## 📄 License
 
-Licensed under the MIT License - see [LICENSE.md](LICENSE.md) for details.
+Licensed under the MIT License — see [LICENSE.md](LICENSE.md) for details.
 
 ---
 

@@ -2,243 +2,72 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
-and this project adheres to [Semantic Versioning](https://semver.org/).
+---
+
+## [v3.0.1] — 2026-05-05
+
+### 🐛 Bug Fixes
+
+- **State reset pada setiap Livewire re-render** — Semua fitur baru (WithSelection, WithColumnSearch, WithColumnVisibility, WithMultiSort, WithSavedFilters, WithExport) memiliki `boot*()` method yang menimpa nilai public property dari config setiap kali component dirender ulang. Ini menyebabkan fitur seperti checkbox selection, per-column search, column visibility, dan multi-sort hilang setelah setiap interaksi (sort, search, pagination). **Fix:** Semua `boot*()` method dihapus. Feature flags (`$selectable`, `$perColumnSearch`, `$columnVisibility`, `$multiSort`, `$savedFilters`) kini hanya diset **sekali** di `mount()`, dan Livewire mempertahankan nilainya secara otomatis via state hydration antar request.
 
 ---
 
-## [Unreleased]
+## [v3.0.0] — 2026-05-05
 
-### ✨ Improvements
+### ✨ New Traits / Features
 
-- **Laravel v13 Support**: Package now supports Laravel 13.0 while maintaining backward compatibility with Laravel 12.0
-- **Orchestra Testbench v10 Support**: Updated test dependencies to support testbench v10 for Laravel 13
+- **WithFiltering** — Centralized filter logic (#1 DRY refactor + #7 smart cast-aware operator)
+- **WithSelection** — Row checkbox selection with select-all and `datatable-selection-changed` event (#2)
+- **WithColumnSearch** — Schema cache via `Cache::remember` + per-column search inputs (#4 + #5)
+- **WithColumnVisibility** — Dynamic show/hide columns, state persisted to session (#6)
+- **WithSavedFilters** — Save/load named filter presets via session or database driver (#8)
+- **WithMultiSort** — Multi-column sort via Ctrl+Click, up to 3 levels with priority badges (#9)
 
----
+### 🔧 Bug Fixes
 
-## [v1.4.0] - 2025-12-11
+- **#3** — Typo `$showFiterButton` → `$showFilterButton` fixed; old property kept as deprecated alias for backward compat
+- **#4** — `Schema::getColumnListing()` now cached (default 5 min) instead of hitting DB on every render
+- **#1** — `WithExport::export()` no longer duplicates filter logic; uses `buildFilteredQuery()` from `WithFiltering`
+- **#7** — Filter operator now cast-aware: boolean/int columns use `=` instead of `LIKE`
 
-### ✨ New Features
+### 🚀 Performance
 
-- **Advanced Dynamic Filter System**:
-  - Multiple column filtering with configurable UI
-  - Filter by multiple conditions on same table
-  - Real-time filter application with visual feedback
-  - Filter state management (add, delete, reset)
-  - Works seamlessly with sorting and pagination
-  - Support for text input and dropdown filters
-  - Enable/disable filters via configuration
-  - Advanced filter panel with collapsible interface
+- **Blaze integration** — `LivewireDatatableServiceProvider` auto-registers Blaze optimizations when `livewire/blaze` is installed
+  - Main templates: standard compile (91-97% overhead reduction)
+  - Placeholder views: `memo: true` (memoized for lazy-load polling)
 
-- **Default Sort Configuration**:
-  - Custom default sort field per table
-  - Custom default sort direction (asc/desc)
-  - Maintains default sort on page load
-  - Flexible sort reset with filtering
-  - Supports sorting by relationships
+### 📦 New Files
 
-- **Fully Dynamic CSS Classes**:
-  - All CSS classes moved to configuration file
-  - Dynamic class binding for all UI elements
-  - Data attributes for debugging and inspection
-  - Complete theme customization without template changes
-  - Icon styling configuration (SVG classes)
-  - Layout wrapper configuration
-  - Text styling configuration
+```
+src/Traits/WithFiltering.php
+src/Traits/WithSelection.php
+src/Traits/WithColumnSearch.php
+src/Traits/WithColumnVisibility.php
+src/Traits/WithSavedFilters.php
+src/Traits/WithMultiSort.php
+database/migrations/..._create_datatable_filter_presets_table.php
+docs/IMPROVEMENTS.md
+```
 
-- **Enhanced Export with Filtering**:
-  - Export respects active filters and search
-  - Export with applied sorting
-  - Filtered exports with proper naming convention
-  - Support for searched data export
+### 🔄 Modified Files
 
-### 🔧 Improvements
-
-- Improved sorting behavior when filtering is active
-- Better pagination handling with active filters
-- Reset sort field when filtering data
-- Dynamic class extraction via `getClass()` method
-- All SVG icon classes configurable
-- All layout wrapper classes configurable
-- Per-page text styling configurable
-- Column header text styling configurable
-
-### 🏗 Architecture
-
-- Implemented `filterData()` method for filtering logic
-- Enhanced `getQuery()` computed property for filtered queries
-- Improved sort reset mechanism
-- Dynamic theme loading from configuration
-- Trait-based approach maintained for extensibility
-
-### 🎨 UI/UX
-
-- Professional filter panel with icons
-- Smooth animations and transitions
-- Responsive filter controls
-- Dark mode support for all new elements
-- Better visual hierarchy in filter UI
-- Collapsible filter sections
-- Visual feedback for active filters
-
-### 🔐 Security
-
-- Filter validation with model scope
-- Safe query parameter handling
-- Protection against unauthorized filtering
-
-### 📚 Documentation
-
-- Added advanced filtering documentation
-- Filter configuration examples
-- Default sort configuration guide
-- Theme customization guide
-- Dynamic class configuration reference
-- CSS class reference with data-class attributes
-
-## [v1.3.4] - 2025-12-10
-
-### 🔧 Improvements
-
-- Fixed UI filter adjustments
-- Enhanced filter configuration options
-
-## [v1.3.0] - 2025-10-18
-
-### ✨ New Features
-
-- Added advanced value formatting system:
-  - Simple formatters (date, datetime, currency, boolean, etc.)
-  - Complex formatters with customizable options
-  - Custom date format patterns support
-  - Flexible number and currency formatting
-  - Text manipulation (limit, words, markdown)
-  - Support for both Model and API data sources
-
-- Improved pagination system:
-  - Support for both default and simple pagination
-  - Total count display in simple pagination mode
-  - Consistent behavior across data sources
-  - Query parameter preservation in pagination links
-
-- Enhanced API integration:
-  - Support for "Show All" pagination in API data sources
-  - Consistent API response formatting for all data modes
-  - Smart handling of per_page=all or null for full dataset retrieval
-  - Two-step process for efficient all-records fetching
-  - Flexible response mapping
-  - Customizable query parameters
-  - Robust error handling
-  - Support for nested API responses
-
-### 🔧 Improvements
-
-- Refactored formatting logic into WithFormatters trait
-- Added support for custom formatter options
-- Improved type declarations and PHP 8.2 compatibility
-- Better error handling for API responses
-
-### 🏗 Architecture
-
-- Introduced WithFormatters trait for better code organization
-- Improved separation of concerns in data handling
-- Enhanced type safety across components
-- Better abstraction for data sources
-
-### 📚 Documentation
-
-- Added comprehensive formatter documentation
-- Improved API integration examples
-- Added date format pattern examples
-- Updated configuration examples
-
-## [v1.3.0] - 2025-10-18
-
-### ✨ New Features
-
-- Added comprehensive export functionality:
-  - Export to Excel and PDF formats
-  - Support for exporting all data regardless of pagination
-  - Configurable export buttons with dropdown interface
-  - Custom filename generation with search context
-  - Proper formatting in exported files
-  - Exclude action columns from exports
-  - Support for all data types and relationships
-
-- Enhanced pagination system:
-  - Added "Show All" records option
-  - Dynamic handling of large datasets
-  - Improved performance with optimized queries
-  - Maintains search and sort functionality
-  - Smooth transition between page sizes
-
-### 🔧 Improvements
-
-- Optimized data export for large datasets
-- Better handling of formatters in exports
-- Improved memory efficiency for large exports
-- Enhanced search functionality with export integration
-- Added export button position configuration
-- support custom params for scopr
-
-### 🏗 Architecture
-
-- Introduced WithExport trait for export functionality
-- Added DataTableExport class for Excel exports
-- Improved PDF template system
-- Better handling of data transformations
-
-### 📚 Documentation
-
-- Added export configuration documentation
-- Updated pagination examples
-- Added formatter integration examples
-- New examples for customizing exports
-
-## [Unreleased]
-
-### 🚀 Planned for v1.4.0
-
-- Column Filtering (dropdown, select, date range)
-- Server-side Caching for heavy datasets
-- Advanced Column Formatting
-- Bulk Actions Support
-
-### ⚡ Improvements
-
-- Optimize queries on relationship-heavy tables
-- Improve responsiveness for mobile
-- Reduce Tailwind overhead in theme rendering
-
-### 🛠 Developer Experience
-
-- Add more unit tests for custom query & custom methods
-- Better error messages on misconfigured `columns`/`model`
-- Example playground project in repo
-
-### 🔒 Security
-
-- Optional CSRF protection for inline actions
-- Config option to restrict searchable/sortable columns
+```
+src/Components/DataTable.php
+src/Traits/WithExport.php
+src/LivewireDatatableServiceProvider.php
+resources/views/templates/tailwind/datatable.blade.php
+resources/views/templates/bootstrap/datatable.blade.php
+composer.json
+config/config.php
+tests/DataTableTest.php
+```
 
 ---
 
-## [v1.0.0] - 2025-08-10
+## [v2.1.0] — 2024-12-11
 
-### 🎉 Initial Release
-
-- Live search with debouncing
-- Column sorting (with relationship support)
-- Dynamic pagination
-- Fully customizable theming with TailwindCSS
-- Dark mode support
-- Responsive design
-- Custom cell templates
-- Event-driven architecture
-
-### [v1.1.0] - 2025-08-24
-
-- Serverside rendering
-- Improvement performance with Computed Properties Livewire
-- Dynamic pagination (add method simplePagination)
-- make column no, and can sorting by number column
+### ✨ New Features
+- Advanced Dynamic Filter System
+- Default Sort Configuration
+- Fully Dynamic CSS Classes
+- Enhanced Export with Filtering

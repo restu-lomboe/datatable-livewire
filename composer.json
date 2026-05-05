@@ -1,14 +1,17 @@
 {
   "name": "developerawam/livewire-datatable",
-  "description": "Laravel Livewire DataTable adalah package open-source yang membantu kamu membangun tabel dinamis di Laravel tanpa ribet. Semua sudah terintegrasi dengan Livewire, sehingga kamu bisa mendapatkan fitur pencarian, filter, sorting, dan pagination out-of-the-box tanpa JavaScript tambahan.",
+  "description": "Laravel Livewire DataTable — package open-source untuk membangun tabel dinamis di Laravel dengan fitur search, filter, sorting, pagination, export, row selection, multi-sort, dan integrasi Blaze.",
   "keywords": [
     "developerawam",
-    "livewire-datatable"
+    "livewire-datatable",
+    "laravel",
+    "livewire",
+    "datatable"
   ],
   "homepage": "https://github.com/developerawam/livewire-datatable",
   "license": "MIT",
   "type": "library",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "authors": [
     {
       "name": "Developer Awam",
@@ -26,6 +29,9 @@
   "require-dev": {
     "orchestra/testbench": "^9.0||^10.0",
     "phpunit/phpunit": "^11.0"
+  },
+  "suggest": {
+    "livewire/blaze": "^1.0 — Pre-compile Blade templates for 91-97% rendering overhead reduction."
   },
   "autoload": {
     "psr-4": {

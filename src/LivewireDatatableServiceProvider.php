@@ -7,45 +7,61 @@ use Maatwebsite\Excel\ExcelServiceProvider;
 use Barryvdh\DomPDF\ServiceProvider as PDFServiceProvider;
 use Livewire\Livewire;
 
+/**
+ * Blaze Integration — PENTING: Scope yang benar
+ *
+ * livewire/blaze dirancang untuk anonymous Blade COMPONENTS (x-component),
+ * BUKAN untuk Livewire component views secara langsung.
+ *
+ * ❌ SALAH: ->in('resources/views/livewire/...')
+ *    Blaze akan mengkompilasi view Livewire sebagai Blade component biasa,
+ *    yang bisa menghilangkan root <div> → error "missing root tag".
+ *
+ * ✅ BENAR: ->in('resources/views/components/...')
+ *    Blaze mengoptimasi anonymous Blade components yang digunakan DI DALAM
+ *    view Livewire. Livewire tetap merender viewnya sendiri secara normal.
+ *
+ * Untuk package ini, Blaze TIDAK dikonfigurasi otomatis karena view
+ * datatable adalah Livewire views, bukan anonymous Blade components.
+ * User dapat mengoptimasi anonymous components milik mereka sendiri secara manual.
+ */
 class LivewireDatatableServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap the application services.
-     */
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'livewire-datatable');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'livewire-datatable');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/livewire-datatable'),
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/livewire-datatable'),
             ], 'livewire-datatable-views');
 
             $this->publishes([
-                __DIR__.'/../config/config.php' => config_path('livewire-datatable.php'),
+                __DIR__ . '/../config/config.php' => config_path('livewire-datatable.php'),
             ], 'livewire-datatable-config');
+
+            $this->publishes([
+                __DIR__ . '/../database/migrations' => database_path('migrations'),
+            ], 'livewire-datatable-migrations');
         }
 
-        // Register Excel and PDF facades
         $this->app->alias('Excel', \Maatwebsite\Excel\Facades\Excel::class);
         $this->app->alias('PDF', \Barryvdh\DomPDF\Facade\Pdf::class);
 
-        // Register Livewire component
-        Livewire::component('livewire-datatable', \Developerawam\LivewireDatatable\Components\DataTable::class);
+        Livewire::component(
+            'livewire-datatable',
+            \Developerawam\LivewireDatatable\Components\DataTable::class
+        );
+
+        // NOTE: Blaze auto-registration DIHAPUS.
+        // Blaze tidak boleh dikonfigurasi pada Livewire view files.
+        // Lihat docs/BLAZE.md untuk panduan penggunaan Blaze yang benar.
     }
 
-    /**
-     * Register the application services.
-     */
     public function register(): void
     {
-        // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'livewire-datatable');
-
-        // Register Excel Service Provider
+        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'livewire-datatable');
         $this->app->register(ExcelServiceProvider::class);
-
-        // Register DomPDF Service Provider
         $this->app->register(PDFServiceProvider::class);
     }
 }

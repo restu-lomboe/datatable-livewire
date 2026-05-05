@@ -55,10 +55,22 @@ class ModelDataSource implements DataSourceInterface
             $query = $this->applySearch($query, $params['search']);
         }
 
-        if (!empty($params['sort_field']) && in_array($params['sort_field'], $this->sortable)) {
+        if (!empty($params['column_search'])) {
+            $query = $this->applyColumnSearch($query, $params['column_search']);
+        }
+
+        $sortStack = $params['sort_stack'] ?? [];
+
+        if (!empty($sortStack)) {
+            // Multi-sort: apply setiap entry di stack secara berurutan
+            foreach ($sortStack as $entry) {
+                if (!empty($entry['field']) && in_array($entry['field'], $this->sortable)) {
+                    $query = $this->applySort($query, $entry['field'], $entry['direction'] ?? 'asc');
+                }
+            }
+        } elseif (!empty($params['sort_field']) && in_array($params['sort_field'], $this->sortable)) {
             $query = $this->applySort($query, $params['sort_field'], $params['sort_direction'] ?? 'asc');
         } elseif ($this->defaultSortField) {
-            // Apply default sort if no sort field is specified
             $query = $this->applySort($query, $this->defaultSortField, $this->defaultSortDirection);
         }
 
@@ -201,6 +213,35 @@ class ModelDataSource implements DataSourceInterface
         $query->distinct();
 
         return $query->orderBy($relatedTable . '.' . $column, $direction);
+    }
+
+    protected function applyColumnSearch(Builder $query, array $columnSearch): Builder
+    {
+        foreach ($columnSearch as $rawKey => $term) {
+            // Decode encoded dot separator (dari wire:model encoding ___)
+            $column = str_replace('___', '.', $rawKey);
+
+            if (!is_string($term) || trim($term) === '') {
+                continue;
+            }
+
+            $term = trim($term);
+
+            if (str_contains($column, '.')) {
+                $parts = explode('.', $column);
+                $field = array_pop($parts);
+                $relationPath = implode('.', $parts);
+
+                // Gunakan whereHas agar tidak konflik dengan LEFT JOIN dari sort
+                $query->whereHas($relationPath, function ($q) use ($field, $term) {
+                    $q->where($field, 'LIKE', "%{$term}%");
+                });
+            } else {
+                $query->where($query->getModel()->getTable() . '.' . $column, 'LIKE', "%{$term}%");
+            }
+        }
+
+        return $query;
     }
 
     public static function make(string $model, ?string $scope = null, array $searchable = [], array $sortable = [], int $perPage = 10): self

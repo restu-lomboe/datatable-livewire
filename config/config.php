@@ -288,4 +288,71 @@ return [
     |
     */
     'advanced_filter' => true,
+    /*
+    |--------------------------------------------------------------------------
+    | livewire/blaze Integration
+    |--------------------------------------------------------------------------
+    | Blaze TIDAK dikonfigurasi otomatis oleh package ini.
+    |
+    | Blaze dirancang untuk anonymous Blade components, BUKAN Livewire views.
+    | Menggunakan Blaze pada Livewire views akan menyebabkan error
+    | "missing root tag".
+    |
+    | Untuk menggunakan Blaze, arahkan ke anonymous Blade components milikmu
+    | di AppServiceProvider. Lihat docs/BLAZE.md untuk panduan lengkap.
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Cache TTL
+    |--------------------------------------------------------------------------
+    | Improvement #4: How long (seconds) to cache Schema::getColumnListing().
+    | Set to 0 to disable caching.
+    |
+    */
+    'schema_cache_ttl' => 300,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Row Selection (#2)
+    |--------------------------------------------------------------------------
+    */
+    'selection' => [
+        'enabled' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Per-Column Search (#5)
+    |--------------------------------------------------------------------------
+    */
+    'per_column_search' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Column Visibility Toggle (#6)
+    |--------------------------------------------------------------------------
+    */
+    'column_visibility' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multi-Column Sort (#9)
+    |--------------------------------------------------------------------------
+    */
+    'multi_sort' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Saved Filter Presets (#8)
+    |--------------------------------------------------------------------------
+    | driver: 'session' (no extra setup) or 'database' (run migrations)
+    |
+    */
+    'saved_filters' => [
+        'enabled' => false,
+        'driver'  => 'session', // 'session' | 'database'
+    ],
 ];
+
