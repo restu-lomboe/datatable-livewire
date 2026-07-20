@@ -2,67 +2,103 @@
 
 namespace Developerawam\LivewireDatatable\Components;
 
-use Livewire\Component;
-use Illuminate\Support\Str;
-use Livewire\Attributes\On;
-use Livewire\WithPagination;
-use Livewire\Attributes\Lazy;
-use Livewire\Attributes\Computed;
-use Illuminate\Support\Facades\Schema;
-use Developerawam\LivewireDatatable\Traits\WithExport;
-use Developerawam\LivewireDatatable\Traits\WithFormatters;
 use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
-use Developerawam\LivewireDatatable\DataSources\DataSourceInterface;
+use Developerawam\LivewireDatatable\Traits\WithExport;
+use Developerawam\LivewireDatatable\Traits\WithFormatters;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Lazy]
 class DataTable extends Component
 {
-    use WithPagination, WithFormatters, WithExport;
+    use WithExport, WithFormatters, WithPagination;
 
     public $model;
+
     public $apiConfig;
+
     public $columns = [];
+
     public $searchable = [];
+
     public $sortable = [];
+
     public $unsortable = [];
+
     public $search = '';
+
     public $perPage;
+
     public $sortField = 'created_at';
+
     public $sortDirection = 'desc';
+
     public $defaultSortField = 'created_at';
+
     public $defaultSortDirection = 'desc';
+
     public $pageOptions;
+
     public $theme = [];
+
     public $customColumns = [];
+
     public $formatters = [];
+
     public $formatterOptions = [];
+
     public $scope;
+
     public $scopeParams = [];
+
     public $totals;
+
     public $page = 1;
+
     public $enableExport;
+
     public $exportTypes = [];
+
+    public $showCustomExport = false;
+
+    public $customExportColumns = [];
+
+    public $customExportType = 'excel';
+
+    public $customExportPaperSize = 'a4';
+
+    public $customExportOrientation = 'portrait';
+
     protected $dataSource;
 
     public $filter = false;
-    public $showFiterButton = false;
-    public $filterDataSearch = false;
-    public $filterBy = [];
-    public $query = [];
-    public $disabledAddFilterButton = false;
 
+    public $showFiterButton = false;
+
+    public $filterDataSearch = false;
+
+    public $filterBy = [];
+
+    public $query = [];
+
+    public $disabledAddFilterButton = false;
 
     protected function ensureDataSourceInitialized(): void
     {
-        if (!$this->dataSource) {
+        if (! $this->dataSource) {
             $this->initializeDataSource();
         }
     }
 
     public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc'): void
     {
-        if (!$model && !$apiConfig) {
+        if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
         }
 
@@ -145,6 +181,126 @@ class DataTable extends Component
         $this->resetPage();
     }
 
+    public function showCustomExportPanel(): void
+    {
+        $this->customExportColumns = array_keys($this->exportColumns);
+        $this->customExportType = 'excel';
+        $this->customExportPaperSize = config('livewire-datatable.export.paper_size', 'a4');
+        $this->customExportOrientation = config('livewire-datatable.export.orientation', 'portrait');
+        $this->showCustomExport = true;
+    }
+
+    public function closeCustomExport(): void
+    {
+        $this->showCustomExport = false;
+        $this->customExportColumns = [];
+    }
+
+    public function toggleCustomExportColumn(string $column): void
+    {
+        if (in_array($column, $this->customExportColumns)) {
+            $this->customExportColumns = array_values(array_filter($this->customExportColumns, fn ($c) => $c !== $column));
+        } else {
+            $this->customExportColumns[] = $column;
+        }
+    }
+
+    public function selectAllExportColumns(): void
+    {
+        $this->customExportColumns = array_keys($this->exportColumns);
+    }
+
+    public function deselectAllExportColumns(): void
+    {
+        $this->customExportColumns = [];
+    }
+
+    public function customExport()
+    {
+        $this->validate([
+            'customExportColumns' => 'required|array|min:1',
+            'customExportType' => 'required|in:excel,pdf',
+        ]);
+
+        $columns = collect($this->exportColumns)
+            ->filter(fn ($label, $key) => in_array($key, $this->customExportColumns))
+            ->toArray();
+
+        $type = $this->customExportType;
+        $paperSize = $this->customExportPaperSize;
+        $orientation = $this->customExportOrientation;
+
+        $this->closeCustomExport();
+
+        return $this->export($type, $columns, $paperSize, $orientation);
+    }
+
+    #[Computed]
+    protected function exportColumns(): array
+    {
+        if (! $this->model) {
+            return [];
+        }
+
+        $model = new $this->model;
+        $table = $model->getTable();
+
+        $exclude = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
+
+        $columns = collect(Schema::getColumnListing($table))
+            ->reject(fn ($c) => in_array($c, $exclude))
+            ->mapWithKeys(fn ($c) => [$c => Str::headline($c)])
+            ->toArray();
+
+        foreach (array_keys($model->getEagerLoads()) as $relationPath) {
+            $relationColumns = $this->getRelationExportColumns($model, $relationPath);
+
+            foreach ($relationColumns as $key => $label) {
+                $columns[$key] = $label;
+            }
+        }
+
+        return $columns;
+    }
+
+    protected function getRelationExportColumns($model, string $relationPath): array
+    {
+        $parts = explode('.', $relationPath);
+        $relationName = array_shift($parts);
+
+        if (! method_exists($model, $relationName)) {
+            return [];
+        }
+
+        $relation = $model->{$relationName}();
+        $relatedModel = $relation->getRelated();
+        $relatedTable = $relatedModel->getTable();
+
+        $exclude = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
+
+        $columns = collect(Schema::getColumnListing($relatedTable))
+            ->reject(fn ($c) => in_array($c, $exclude));
+
+        $result = [];
+
+        foreach ($columns as $col) {
+            $key = "{$relationPath}.{$col}";
+            $label = Str::headline(str_replace('.', ' ', "{$relationPath} {$col}"));
+            $result[$key] = $label;
+        }
+
+        if (! empty($parts)) {
+            $nestedPath = implode('.', $parts);
+            $nestedFields = $this->getRelationExportColumns($relatedModel, $nestedPath);
+
+            foreach ($nestedFields as $nestedKey => $nestedLabel) {
+                $result["{$relationName}.{$nestedKey}"] = $nestedLabel;
+            }
+        }
+
+        return $result;
+    }
+
     #[Computed]
     protected function filterByColumn(): array
     {
@@ -175,7 +331,7 @@ class DataTable extends Component
         $parts = explode('.', $relationPath);
         $relationName = array_shift($parts);
 
-        if (!method_exists($model, $relationName)) {
+        if (! method_exists($model, $relationName)) {
             return [];
         }
 
@@ -197,7 +353,7 @@ class DataTable extends Component
         }
 
         // If nested → recurse
-        if (!empty($parts)) {
+        if (! empty($parts)) {
             $nestedPath = implode('.', $parts);
             $nestedFields = $this->getRelationColumns($relatedModel, $nestedPath);
 
@@ -214,7 +370,7 @@ class DataTable extends Component
         $this->filter = true;
 
         // check if filterBy not empty
-        if(count($this->filterBy) == 0) {
+        if (count($this->filterBy) == 0) {
             $this->filterBy[] = '';
             $this->query[] = '';
         }
@@ -295,11 +451,11 @@ class DataTable extends Component
     protected function getQuery()
     {
         // check if filterBy not empty
-        if($this->filterDataSearch) {
+        if ($this->filterDataSearch) {
             $query = $this->model::query();
 
             // Apply scope if it exists
-            if (!empty($this->scopeParams)) {
+            if (! empty($this->scopeParams)) {
                 $query = $query->{$this->scope}(...$this->scopeParams);
             } else {
                 if ($this->scope) {
@@ -311,7 +467,9 @@ class DataTable extends Component
 
                 $value = trim($this->query[$i]) ?? null;
                 $this->query[$i] = $value;
-                if (!$value) continue;
+                if (! $value) {
+                    continue;
+                }
 
                 // RELATION FILTER: user.name / user.profile.country.name
                 if (str_contains($column, '.')) {
@@ -332,7 +490,7 @@ class DataTable extends Component
             }
 
             // Apply sorting when filtering is active
-            if (!empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
+            if (! empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
                 $query->orderBy($this->sortField, $this->sortDirection);
             } elseif ($this->defaultSortField) {
                 $query->orderBy($this->defaultSortField, $this->defaultSortDirection);
@@ -363,7 +521,7 @@ class DataTable extends Component
     public function placeholder()
     {
         $template = config('livewire-datatable.template', 'tailwind');
-        $viewName = match($template) {
+        $viewName = match ($template) {
             'bootstrap' => 'livewire-datatable::placeholders.templates.bootstrap.datatable',
             'tailwind' => 'livewire-datatable::placeholders.templates.tailwind.datatable',
             default => 'livewire-datatable::placeholders.templates.tailwind.datatable',
@@ -375,7 +533,7 @@ class DataTable extends Component
     public function render()
     {
         $template = config('livewire-datatable.template', 'tailwind');
-        $viewName = match($template) {
+        $viewName = match ($template) {
             'bootstrap' => 'livewire-datatable::templates.bootstrap.datatable',
             'tailwind' => 'livewire-datatable::templates.tailwind.datatable',
             default => 'livewire-datatable::templates.tailwind.datatable',

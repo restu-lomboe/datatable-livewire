@@ -32,6 +32,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Default Sort Configuration](#default-sort-configuration)
   - [Advanced Dynamic Filtering](#advanced-dynamic-filtering)
 - [Exporting Data](#-exporting-data)
+  - [Custom Export (Column Selection)](#custom-export-column-selection)
 - [Customization](#-customization)
   - [Template System](#template-system)
   - [Theme Configuration](#theme-configuration)
@@ -51,7 +52,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 | 📊 **Column Sorting**         | Sort by any column, including relationship data                 |
 | 🔤 **Advanced Filtering**     | Multi-column filtering with intuitive UI                        |
 | 📄 **Pagination**             | Fully customizable pagination with per-page options             |
-| 📤 **Data Export**            | Export to Excel and PDF while respecting filters                |
+| 📤 **Data Export**            | Export to Excel and PDF with custom column selection and PDF options |
 | 🎨 **Dynamic Styling**        | All CSS classes configurable from config file                   |
 | 🌙 **Dark Mode**              | Automatic dark mode support with Tailwind                       |
 | 📱 **Responsive Design**      | Mobile-friendly on all screen sizes                             |
@@ -699,6 +700,8 @@ Export your DataTable data to Excel and PDF formats.
 ### Export Features
 
 - Export to Excel (`.xlsx`) and PDF
+- Custom column selection via interactive modal
+- Per-export paper size (A4, Letter, Legal) and orientation (Portrait, Landscape)
 - Exports all records (respects pagination)
 - Respects active search filters
 - Maintains data formatting (dates, currency, etc.)
@@ -737,6 +740,60 @@ Export your DataTable data to Excel and PDF formats.
     ],
 ],
 ```
+
+### Custom Export (Column Selection)
+
+Choose exactly which columns to export and configure PDF output settings per-export.
+
+#### How to Use
+
+1. Click the **Export** dropdown in the table controls
+2. Select **Custom Export** from the dropdown
+3. A modal opens showing all available columns grouped by table
+4. Select/deselect columns using checkboxes or the **Select All** / **Deselect All** buttons
+5. Choose export type: **Excel** or **PDF**
+6. For PDF: optionally choose **Paper Size** (A4, Letter, Legal) and **Orientation** (Portrait, Landscape)
+7. Click **Export** — file downloads automatically
+
+#### Smart Column Detection
+
+The custom export modal automatically lists columns from:
+- The main table's `$columns` definition
+- All eager-loaded relationships (`$with` on the model)
+
+Internal fields are excluded automatically: `id`, `updated_at`, `deleted_at`, `password`, `remember_token`.
+
+#### Configuration
+
+All custom export modal elements are themeable via `config/livewire-datatable.php`:
+
+```php
+'theme' => [
+    'custom_export_modal' => 'relative max-w-3xl w-full mx-4 bg-white dark:bg-gray-800 rounded-sm shadow-xl',
+    'custom_export_header' => 'flex items-center justify-between px-6 py-4 border-b',
+    'custom_export_title' => 'text-lg font-semibold text-gray-900 dark:text-white',
+    'custom_export_close' => 'inline-flex items-center text-sm font-medium text-gray-800 cursor-pointer',
+    'custom_export_body' => 'px-6 py-4 max-h-96 overflow-y-auto',
+    'custom_export_select_all' => 'flex gap-3 mb-4',
+    'custom_export_select_all_btn' => 'text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer',
+    'custom_export_deselect_all_btn' => 'text-sm font-medium text-gray-600 hover:text-gray-800 cursor-pointer',
+    'custom_export_columns' => 'space-y-4',
+    'custom_export_group' => '',
+    'custom_export_group_title' => 'text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2',
+    'custom_export_group_columns' => 'grid grid-cols-2 sm:grid-cols-3 gap-2',
+    'custom_export_label' => 'inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer',
+    'custom_export_checkbox' => 'rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500',
+    'custom_export_footer' => 'flex items-center justify-between px-6 py-4 border-t',
+    'custom_export_type_wrapper' => 'flex items-center gap-2',
+    'custom_export_type_label' => 'text-sm text-gray-600',
+    'custom_export_type_select' => 'py-1.5 px-3 block border border-gray-300 rounded-sm text-sm w-25',
+    'custom_export_actions' => 'flex items-center gap-2',
+    'custom_export_cancel' => 'py-2 px-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-sm',
+    'custom_export_submit' => 'py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 disabled:opacity-50',
+],
+```
+
+All keys have dark mode variants included by default.
 
 ## 🎨 Customization
 

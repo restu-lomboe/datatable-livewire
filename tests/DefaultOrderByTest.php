@@ -2,8 +2,8 @@
 
 namespace Developerawam\LivewireDatatable\Tests;
 
-use PHPUnit\Framework\TestCase;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
+use PHPUnit\Framework\TestCase;
 
 class DefaultOrderByTest extends TestCase
 {
@@ -49,7 +49,7 @@ class DefaultOrderByTest extends TestCase
         // When explicit sort is provided, it should override default
         $result = $dataSource->getData([
             'sort_field' => 'title',
-            'sort_direction' => 'asc'
+            'sort_direction' => 'asc',
         ]);
 
         // Should sort by title asc instead of created_at desc

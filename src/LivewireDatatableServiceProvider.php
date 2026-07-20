@@ -2,10 +2,13 @@
 
 namespace Developerawam\LivewireDatatable;
 
-use Illuminate\Support\ServiceProvider;
-use Maatwebsite\Excel\ExcelServiceProvider;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\ServiceProvider as PDFServiceProvider;
+use Developerawam\LivewireDatatable\Components\DataTable;
+use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Maatwebsite\Excel\ExcelServiceProvider;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LivewireDatatableServiceProvider extends ServiceProvider
 {
@@ -27,11 +30,11 @@ class LivewireDatatableServiceProvider extends ServiceProvider
         }
 
         // Register Excel and PDF facades
-        $this->app->alias('Excel', \Maatwebsite\Excel\Facades\Excel::class);
-        $this->app->alias('PDF', \Barryvdh\DomPDF\Facade\Pdf::class);
+        $this->app->alias('Excel', Excel::class);
+        $this->app->alias('PDF', Pdf::class);
 
         // Register Livewire component
-        Livewire::component('livewire-datatable', \Developerawam\LivewireDatatable\Components\DataTable::class);
+        Livewire::component('livewire-datatable', DataTable::class);
     }
 
     /**

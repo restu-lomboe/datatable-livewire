@@ -24,7 +24,7 @@ trait WithFormatters
                     $options['thousand_sep'] ?? ','
                 );
             case 'currency':
-                return ($options['symbol'] ?? 'Rp ') . number_format(
+                return ($options['symbol'] ?? 'Rp ').number_format(
                     $value,
                     $options['decimals'] ?? 2,
                     $options['decimal_point'] ?? '.',
@@ -54,7 +54,7 @@ trait WithFormatters
             case 'markdown':
                 return Str::markdown($value);
             case 'money':
-                return ($options['symbol'] ?? 'Rp ') . number_format(
+                return ($options['symbol'] ?? 'Rp ').number_format(
                     $value,
                     $options['decimals'] ?? 2,
                     $options['decimal_point'] ?? '.',
@@ -69,7 +69,7 @@ trait WithFormatters
 
     protected function formatDate($value, string $format): string
     {
-        if (!$value) {
+        if (! $value) {
             return '';
         }
 
@@ -87,7 +87,7 @@ trait WithFormatters
             return '-';
         }
 
-        if (!isset($this->formatters[$key])) {
+        if (! isset($this->formatters[$key])) {
             return $value;
         }
 

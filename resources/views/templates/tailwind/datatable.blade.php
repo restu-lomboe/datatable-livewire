@@ -159,6 +159,15 @@
                                             {!! config('livewire-datatable.export.dropdown.' . $type . '_text', 'Export ' . ucfirst($type)) !!}
                                         </button>
                                     @endforeach
+                                    @if ($model)
+                                        <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                                        <button wire:click="showCustomExportPanel" @click="open = false"
+                                            type="button"
+                                            class="{{ config('livewire-datatable.export.dropdown.item_class') }}"
+                                            role="menuitem">
+                                            Custom Export
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -301,4 +310,99 @@
             @endif
         </div>
     </div>
+
+    @if ($showCustomExport)
+        <div wire:transition
+            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 dark:bg-gray-900/70"
+            wire:click.self="closeCustomExport">
+            <div data-class="custom_export_modal" @class([$this->getClass('custom_export_modal')])>
+                <div data-class="custom_export_header" @class([$this->getClass('custom_export_header')])>
+                    <h3 data-class="custom_export_title" @class([$this->getClass('custom_export_title')])>Custom Export</h3>
+                    <button type="button" wire:click="closeCustomExport" data-class="custom_export_close"
+                        @class([$this->getClass('custom_export_close')])>
+                        <svg class="shrink-0 size-5" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="m12 13.4l-4.9 4.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.9-4.9l-4.9-4.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l4.9 4.9l4.9-4.9q.275-.275.7-.275t.7.275t.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div data-class="custom_export_body" @class([$this->getClass('custom_export_body')])>
+                    <div data-class="custom_export_select_all" @class([$this->getClass('custom_export_select_all')])>
+                        <button type="button" wire:click="selectAllExportColumns"
+                            data-class="custom_export_select_all_btn" @class([$this->getClass('custom_export_select_all_btn')])>
+                            Select All
+                        </button>
+                        <button type="button" wire:click="deselectAllExportColumns"
+                            data-class="custom_export_deselect_all_btn" @class([$this->getClass('custom_export_deselect_all_btn')])>
+                            Deselect All
+                        </button>
+                    </div>
+
+                    <div data-class="custom_export_columns" @class([$this->getClass('custom_export_columns')])>
+                        @php $grouped = []; @endphp
+                        @foreach ($this->exportColumns as $key => $label)
+                            @php
+                                $group = str_contains($key, '.') ? Str::before($key, '.') : 'Main Table';
+                                $grouped[$group][] = ['key' => $key, 'label' => $label];
+                            @endphp
+                        @endforeach
+
+                        @foreach ($grouped as $group => $cols)
+                            <div data-class="custom_export_group" @class([$this->getClass('custom_export_group')])>
+                                <p data-class="custom_export_group_title" @class([$this->getClass('custom_export_group_title')])>
+                                    {{ Str::headline($group) }}</p>
+                                <div data-class="custom_export_group_columns" @class([$this->getClass('custom_export_group_columns')])>
+                                    @foreach ($cols as $col)
+                                        <label data-class="custom_export_label" @class([$this->getClass('custom_export_label')])>
+                                            <input type="checkbox"
+                                                wire:click="toggleCustomExportColumn('{{ $col['key'] }}')"
+                                                {{ in_array($col['key'], $customExportColumns) ? 'checked' : '' }}
+                                                data-class="custom_export_checkbox" @class([$this->getClass('custom_export_checkbox')])>
+                                            <span>{{ $col['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div data-class="custom_export_footer" @class([$this->getClass('custom_export_footer')])>
+                    <div data-class="custom_export_type_wrapper" @class([$this->getClass('custom_export_type_wrapper')])>
+                        <label data-class="custom_export_type_label" @class([$this->getClass('custom_export_type_label')])>Export as:</label>
+                        <select wire:model.live="customExportType" name="custom_export_type"
+                            data-class="custom_export_type_select" @class([$this->getClass('custom_export_type_select')])>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                        @if ($customExportType === 'pdf')
+                            <label data-class="custom_export_type_label" @class([$this->getClass('custom_export_type_label'), 'ml-2'])>Size:</label>
+                            <select wire:model="customExportPaperSize" name="custom_export_paper_size"
+                                data-class="custom_export_type_select" @class([$this->getClass('custom_export_type_select')])>
+                                <option value="a4">A4</option>
+                                <option value="letter">Letter</option>
+                                <option value="legal">Legal</option>
+                                <option value="a3">A3</option>
+                                <option value="a5">A5</option>
+                            </select>
+                            <label data-class="custom_export_type_label" @class([$this->getClass('custom_export_type_label'), 'ml-2'])>Orient:</label>
+                            <select wire:model="customExportOrientation" name="custom_export_orientation"
+                                data-class="custom_export_type_select" @class([$this->getClass('custom_export_type_select')])>
+                                <option value="portrait">Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
+                        @endif
+                    </div>
+                    <div data-class="custom_export_actions" @class([$this->getClass('custom_export_actions')])>
+                        <button type="button" wire:click="closeCustomExport" data-class="custom_export_cancel"
+                            @class([$this->getClass('custom_export_cancel')])>Cancel</button>
+                        <button type="button" wire:click="customExport" wire:loading.attr="disabled"
+                            data-class="custom_export_submit" @class([$this->getClass('custom_export_submit')])>Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

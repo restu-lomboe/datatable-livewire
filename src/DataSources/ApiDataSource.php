@@ -2,33 +2,47 @@
 
 namespace Developerawam\LivewireDatatable\DataSources;
 
-use Illuminate\Support\Collection;
 use Illuminate\Http\Client\Factory as Http;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 class ApiDataSource implements DataSourceInterface
 {
     protected $url;
+
     protected $method;
+
     protected $headers;
+
     protected $queryParams;
+
     protected $responseKey;
+
     protected $perPage;
+
     protected $currentPage;
+
     protected $totalKey;
+
     protected $dataKey;
+
     protected $searchParam;
+
     protected $sortParam;
+
     protected $sortDirectionParam;
+
     protected $perPageParam;
+
     protected $pageParam;
+
     protected Http $http;
 
     public function __construct(array $config)
     {
-        $this->http = new Http();
+        $this->http = new Http;
         $this->url = $config['url'];
         $this->method = $config['method'] ?? 'GET';
         $this->headers = $config['headers'] ?? [];
@@ -52,8 +66,8 @@ class ApiDataSource implements DataSourceInterface
             ->withHeaders($this->headers)
             ->{strtolower($this->method)}($this->url, $queryParams);
 
-        if (!$response->successful()) {
-            throw new \RuntimeException('API request failed: ' . $response->body());
+        if (! $response->successful()) {
+            throw new \RuntimeException('API request failed: '.$response->body());
         }
 
         $data = $response->json();
@@ -121,7 +135,7 @@ class ApiDataSource implements DataSourceInterface
                 'sort' => $queryParams[$this->sortParam] ?? null,
                 'direction' => $queryParams[$this->sortDirectionParam] ?? null,
                 'per_page' => $queryParams[$this->perPageParam] ?? null,
-            ]
+            ],
         ];
 
         if ($paginationType === 'simplePaginate') {

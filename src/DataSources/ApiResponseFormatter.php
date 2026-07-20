@@ -23,8 +23,7 @@ class ApiResponseFormatter
     /**
      * Format API response data into a standard structure
      *
-     * @param array $response The raw API response
-     * @return array
+     * @param  array  $response  The raw API response
      */
     public function format(array $response): array
     {
@@ -40,13 +39,11 @@ class ApiResponseFormatter
 
     /**
      * Extract data from the response
-     *
-     * @param array $response
-     * @return Collection
      */
     protected function extractData(array $response): Collection
     {
         $data = Arr::get($response, $this->config['data_key'], []);
+
         return collect($data)->map(function ($item) {
             return is_array($item) ? (object) $item : $item;
         });
@@ -54,9 +51,6 @@ class ApiResponseFormatter
 
     /**
      * Extract metadata from the response
-     *
-     * @param array $response
-     * @return array
      */
     protected function extractMeta(array $response): array
     {
@@ -88,7 +82,6 @@ class ApiResponseFormatter
     /**
      * Create a new formatter instance with the given config
      *
-     * @param array $config
      * @return static
      */
     public static function make(array $config = []): self
