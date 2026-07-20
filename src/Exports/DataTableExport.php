@@ -3,18 +3,22 @@
 namespace Developerawam\LivewireDatatable\Exports;
 
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class DataTableExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
     protected $data;
+
     protected $columns;
+
     protected $formatters;
+
     protected $formatterOptions;
 
     public function __construct(Collection $data, array $columns, ?array $formatters = [], ?array $formatterOptions = [])
@@ -32,7 +36,7 @@ class DataTableExport implements FromCollection, WithHeadings, WithMapping, With
 
     public function headings(): array
     {
-        return array_values(array_filter($this->columns, function($key) {
+        return array_values(array_filter($this->columns, function ($key) {
             return $key !== 'action';
         }, ARRAY_FILTER_USE_KEY));
     }
@@ -67,7 +71,7 @@ class DataTableExport implements FromCollection, WithHeadings, WithMapping, With
                     $options['thousand_sep'] ?? ','
                 ) : $value;
             case 'currency':
-                return is_numeric($value) ? ($options['symbol'] ?? 'Rp ') . number_format(
+                return is_numeric($value) ? ($options['symbol'] ?? 'Rp ').number_format(
                     $value,
                     $options['decimals'] ?? 2,
                     $options['decimal_point'] ?? '.',
@@ -116,6 +120,7 @@ class DataTableExport implements FromCollection, WithHeadings, WithMapping, With
 
             $result[] = $value;
         }
+
         return $result;
     }
 
@@ -129,9 +134,9 @@ class DataTableExport implements FromCollection, WithHeadings, WithMapping, With
             1 => [
                 'font' => ['bold' => true],
                 'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => 'E8E8E8']
-                ]
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'E8E8E8'],
+                ],
             ],
         ];
     }

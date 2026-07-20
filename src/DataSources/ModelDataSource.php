@@ -2,21 +2,29 @@
 
 namespace Developerawam\LivewireDatatable\DataSources;
 
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ModelDataSource implements DataSourceInterface
 {
     protected $model;
+
     protected $scope;
+
     protected $scopeParams;
+
     protected $searchable;
+
     protected $sortable;
+
     protected $perPage;
+
     protected $defaultSortField;
+
     protected $defaultSortDirection;
 
     public function __construct(
@@ -39,11 +47,11 @@ class ModelDataSource implements DataSourceInterface
         $this->defaultSortDirection = $defaultSortDirection;
     }
 
-    public function getData(array $params = []): LengthAwarePaginator|\Illuminate\Pagination\Paginator
+    public function getData(array $params = []): LengthAwarePaginator|Paginator
     {
         $query = $this->model::query();
 
-        if(!empty($this->scopeParams)) {
+        if (! empty($this->scopeParams)) {
             $query = $query->{$this->scope}(...$this->scopeParams);
         } else {
             if ($this->scope) {
@@ -51,11 +59,11 @@ class ModelDataSource implements DataSourceInterface
             }
         }
 
-        if (!empty($params['search']) && !empty($this->searchable)) {
+        if (! empty($params['search']) && ! empty($this->searchable)) {
             $query = $this->applySearch($query, $params['search']);
         }
 
-        if (!empty($params['sort_field']) && in_array($params['sort_field'], $this->sortable)) {
+        if (! empty($params['sort_field']) && in_array($params['sort_field'], $this->sortable)) {
             $query = $this->applySort($query, $params['sort_field'], $params['sort_direction'] ?? 'asc');
         } elseif ($this->defaultSortField) {
             // Apply default sort if no sort field is specified
@@ -74,6 +82,7 @@ class ModelDataSource implements DataSourceInterface
             if ($paginationType === 'simplePaginate') {
                 $paginator = $query->simplePaginate($total, ['*'], 'page', 1);
                 $paginator->total = $total;
+
                 return $paginator;
             }
 
@@ -132,11 +141,11 @@ class ModelDataSource implements DataSourceInterface
                         if (count($relations) > 1) {
                             $this->applyNestedRelation($q, array_slice($relations, 1), $relationField, $searchTerm);
                         } else {
-                            $q->where($relationField, 'like', '%' . $searchTerm . '%');
+                            $q->where($relationField, 'like', '%'.$searchTerm.'%');
                         }
                     });
                 } else {
-                    $query->orWhere($field, 'like', '%' . $searchTerm . '%');
+                    $query->orWhere($field, 'like', '%'.$searchTerm.'%');
                 }
             }
         });
@@ -145,7 +154,8 @@ class ModelDataSource implements DataSourceInterface
     protected function applyNestedRelation($query, array $relations, string $field, string $searchTerm): void
     {
         if (empty($relations)) {
-            $query->where($field, 'like', '%' . $searchTerm . '%');
+            $query->where($field, 'like', '%'.$searchTerm.'%');
+
             return;
         }
 
@@ -159,7 +169,7 @@ class ModelDataSource implements DataSourceInterface
     {
         // Handle "no" column - sort by primary key (id) instead
         if ($field === 'no') {
-            $modelInstance = new $this->model();
+            $modelInstance = new $this->model;
             $field = $modelInstance->getKeyName(); // Usually 'id'
         }
 
@@ -175,7 +185,7 @@ class ModelDataSource implements DataSourceInterface
         $parts = explode('.', $field);
         $column = array_pop($parts);
 
-        $modelInstance = new $this->model();
+        $modelInstance = new $this->model;
         $baseTable = $modelInstance->getTable();
 
         foreach ($parts as $relationName) {
@@ -185,7 +195,7 @@ class ModelDataSource implements DataSourceInterface
             if ($relationInstance instanceof BelongsTo) {
                 $foreign = $relationInstance->getForeignKeyName();
                 $ownerKey = $relationInstance->getOwnerKeyName();
-                $query->leftJoin($relatedTable, $baseTable . '.' . $foreign, '=', $relatedTable . '.' . $ownerKey);
+                $query->leftJoin($relatedTable, $baseTable.'.'.$foreign, '=', $relatedTable.'.'.$ownerKey);
             } else {
                 $foreign = $relationInstance->getQualifiedForeignKeyName();
                 $local = $relationInstance->getQualifiedParentKeyName();
@@ -197,10 +207,10 @@ class ModelDataSource implements DataSourceInterface
         }
 
         // Select only the base model columns to avoid duplicates and ensure distinct results
-        $query->select($this->model::query()->getModel()->getTable() . '.*');
+        $query->select($this->model::query()->getModel()->getTable().'.*');
         $query->distinct();
 
-        return $query->orderBy($relatedTable . '.' . $column, $direction);
+        return $query->orderBy($relatedTable.'.'.$column, $direction);
     }
 
     public static function make(string $model, ?string $scope = null, array $searchable = [], array $sortable = [], int $perPage = 10): self

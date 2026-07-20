@@ -139,6 +139,15 @@
                                                 </button>
                                             </li>
                                         @endforeach
+                                        @if ($model)
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button wire:click="showCustomExportPanel" type="button"
+                                                    data-class="export_item" @class([$this->getClass('export_item')])>
+                                                    <i @class(['bi', 'bi-gear', 'me-2'])></i>Custom Export
+                                                </button>
+                                            </li>
+                                        @endif
                                     </ul>
                                 </div>
                             @endif
@@ -272,4 +281,81 @@
             @endif
         </div>
     </div>
+
+    @if ($showCustomExport)
+        <div class="modal-backdrop fade show"></div>
+        <div class="modal d-block" tabindex="-1" wire:click.self="closeCustomExport">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border shadow">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Custom Export</h5>
+                        <button type="button" class="btn-close" wire:click="closeCustomExport"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3 d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" wire:click="selectAllExportColumns">Select All</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="deselectAllExportColumns">Deselect All</button>
+                        </div>
+
+                        @php $grouped = []; @endphp
+                        @foreach ($this->exportColumns as $key => $label)
+                            @php
+                                $group = str_contains($key, '.') ? Str::before($key, '.') : 'Main Table';
+                                $grouped[$group][] = ['key' => $key, 'label' => $label];
+                            @endphp
+                        @endforeach
+
+                        @foreach ($grouped as $group => $cols)
+                            <div class="mb-3">
+                                <h6 class="text-muted text-uppercase small fw-bold mb-2">{{ Str::headline($group) }}</h6>
+                                <div class="row g-2">
+                                    @foreach ($cols as $col)
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input"
+                                                    id="ce-{{ Str::slug($col['key']) }}"
+                                                    wire:click="toggleCustomExportColumn('{{ $col['key'] }}')"
+                                                    {{ in_array($col['key'], $customExportColumns) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="ce-{{ Str::slug($col['key']) }}">
+                                                    {{ $col['label'] }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <label class="form-label mb-0 text-nowrap">Export as:</label>
+                            <select wire:model.live="customExportType" class="form-select form-select-sm w-auto">
+                                <option value="excel">Excel</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                            @if ($customExportType === 'pdf')
+                                <label class="form-label mb-0 text-nowrap ms-2">Size:</label>
+                                <select wire:model="customExportPaperSize" class="form-select form-select-sm w-auto">
+                                    <option value="a4">A4</option>
+                                    <option value="letter">Letter</option>
+                                    <option value="legal">Legal</option>
+                                    <option value="a3">A3</option>
+                                    <option value="a5">A5</option>
+                                </select>
+                                <label class="form-label mb-0 text-nowrap ms-2">Orient:</label>
+                                <select wire:model="customExportOrientation" class="form-select form-select-sm w-auto">
+                                    <option value="portrait">Portrait</option>
+                                    <option value="landscape">Landscape</option>
+                                </select>
+                            @endif
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-secondary" wire:click="closeCustomExport">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-primary" wire:click="customExport">Export</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

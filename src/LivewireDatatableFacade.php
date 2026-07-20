@@ -2,10 +2,11 @@
 
 namespace Developerawam\LivewireDatatable;
 
+use Developerawam\LivewireDatatable\Skeleton\SkeletonClass;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Developerawam\LivewireDatatable\Skeleton\SkeletonClass
+ * @see SkeletonClass
  */
 class LivewireDatatableFacade extends Facade
 {

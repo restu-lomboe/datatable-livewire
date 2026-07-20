@@ -2,10 +2,11 @@
 
 namespace Developerawam\LivewireDatatable\Traits;
 
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Developerawam\LivewireDatatable\Exports\DataTableExport;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 trait WithExport
 {
@@ -15,103 +16,109 @@ trait WithExport
         $this->exportTypes = config('livewire-datatable.export.types', ['excel', 'pdf']);
     }
 
-    public function export(string $type)
+    public function export(string $type, ?array $selectedColumns = null, ?string $paperSize = null, ?string $orientation = null)
     {
         $this->ensureDataSourceInitialized();
 
-        // Get all data based on whether filtering is active
+        $columns = $selectedColumns ?? $this->columns;
+
         if ($this->filterDataSearch) {
-            // Export filtered data
             $query = $this->model::query();
             foreach ($this->filterBy as $i => $column) {
                 $value = trim($this->query[$i]) ?? null;
-                if (!$value) continue;
+                if (! $value) {
+                    continue;
+                }
 
-                // RELATION FILTER: user.name / user.profile.country.name
                 if (str_contains($column, '.')) {
                     $parts = explode('.', $column);
-                    $field = array_pop($parts);   // last part = column name
+                    $field = array_pop($parts);
                     $relationPath = implode('.', $parts);
 
                     $query->whereHas($relationPath, function ($q) use ($field, $value) {
                         $q->where($field, 'LIKE', "%{$value}%");
                     });
-                }
-                // NORMAL COLUMN FILTER
-                else {
+                } else {
                     $query->where($column, 'LIKE', "%{$value}%");
                 }
             }
 
-            // Apply sorting when filtering is active
-            if (!empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
+            if (! empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
                 $query->orderBy($this->sortField, $this->sortDirection);
             } elseif ($this->defaultSortField) {
                 $query->orderBy($this->defaultSortField, $this->defaultSortDirection);
             }
 
             $data = $query->get();
-
-            $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
-            $filename .= '-filtered-' . now()->format('Y-m-d-H-i-s');
         } else {
-            // Export searched data
             $params = [
                 'search' => $this->search,
                 'sort_field' => $this->sortField,
                 'sort_direction' => $this->sortDirection,
-                'per_page' => 'all' // This will get all records
+                'per_page' => 'all',
             ];
 
-            // Get all data
             $data = $this->dataSource->getData($params)->items();
-
-            $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
-            if (!empty($this->search)) {
-                $filename .= '-search-' . Str::slug($this->search);
-            }
-            $filename .= '-' . now()->format('Y-m-d-H-i-s');
         }
+
+        $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
+        if ($this->filterDataSearch) {
+            $filename .= '-filtered';
+        }
+        if (! empty($this->search)) {
+            $filename .= '-search-'.Str::slug($this->search);
+        }
+        if ($selectedColumns) {
+            $filename .= '-custom';
+        }
+        $filename .= '-'.now()->format('Y-m-d-H-i-s');
 
         switch ($type) {
             case 'excel':
-                return $this->exportToExcel($data, $filename);
+                return $this->exportToExcel(collect($data), $filename, $columns);
             case 'pdf':
-                return $this->exportToPdf($data, $filename);
+                return $this->exportToPdf(collect($data), $filename, $columns, $paperSize, $orientation);
             default:
                 throw new \InvalidArgumentException("Export type '{$type}' not supported");
         }
     }
 
-    protected function exportToExcel(array|object $data, string $filename)
+    protected function exportToExcel(Collection $data, string $filename, array $columns)
     {
         return Excel::download(
             new DataTableExport(
-                collect($data),
-                $this->columns,
+                $data,
+                $columns,
                 $this->formatters,
                 $this->formatterOptions
             ),
-            $filename . '.xlsx'
+            $filename.'.xlsx'
         );
     }
 
-    protected function exportToPdf(array|object $data, string $filename)
+    protected function exportToPdf(Collection $data, string $filename, array $columns, ?string $paperSize = null, ?string $orientation = null)
     {
         $html = view('livewire-datatable::exports.pdf', [
             'data' => $data,
-            'columns' => $this->columns,
+            'columns' => $columns,
             'formatters' => $this->formatters,
-            'formatterOptions' => $this->formatterOptions
+            'formatterOptions' => $this->formatterOptions,
         ])->render();
 
-        return response()->streamDownload(function () use ($html) {
-            $pdf = PDF::loadHtml($html)
-                ->setPaper(
-                    config('livewire-datatable.export.paper_size', 'a4'),
-                    config('livewire-datatable.export.orientation', 'portrait')
-                );
+        return response()->streamDownload(function () use ($html, $paperSize, $orientation) {
+            $pdf = Pdf::loadHtml($html);
+            $pdf->setPaper(
+                $paperSize ?? config('livewire-datatable.export.paper_size', 'a4'),
+                $orientation ?? config('livewire-datatable.export.orientation', 'portrait')
+            );
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'isFontSubsettingEnabled' => true,
+                'defaultFont' => 'serif',
+                'dpi' => 96,
+            ]);
             echo $pdf->output();
-        }, $filename . '.pdf');
+        }, $filename.'.pdf');
     }
 }

@@ -9,10 +9,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### ✨ Improvements
+### ✨ New Features
 
-- **Laravel v13 Support**: Package now supports Laravel 13.0 while maintaining backward compatibility with Laravel 12.0
-- **Orchestra Testbench v10 Support**: Updated test dependencies to support testbench v10 for Laravel 13
+- **Custom Export with Column Selection**:
+  - Interactive modal to choose which columns to export
+  - Select All / Deselect All controls for quick selection
+  - Columns grouped by their source table (main table + relations)
+  - Smart column detection — excludes internal fields (`id`, `password`, `remember_token`, timestamps, soft deletes)
+  - Per-export paper size (A4, Letter, Legal) and orientation (Portrait, Landscape)
+  - Export to Excel or PDF with custom column selection
+  - Dark mode support for the entire modal UI
+  - Works across all template systems (Tailwind, Bootstrap)
+  - Configurable theme classes for all modal elements
+
+- **Per-Export Paper Size & Orientation**:
+  - PDF exports now accept `$paperSize` and `$orientation` parameters
+  - Falls back to config defaults when not specified
+  - Dynamic PDF font sizing (`140 / columnCount`) and cell padding (`80 / columnCount`)
+  - `word-break: break-word` prevents content overflow in PDF cells
+
+- **Enhanced Export API**:
+  - `export(string $type, ?array $selectedColumns, ?string $paperSize, ?string $orientation)` — supports passing selected columns, paper size, and orientation
+  - `customExport()` action for Livewire modal integration
+  - `#[Computed] exportColumns` property — lists all exportable columns with labels
+  - `showCustomExportPanel()` / `closeCustomExport()` actions for modal management
+  - `toggleCustomExportColumn()`, `selectAllExportColumns()`, `deselectAllExportColumns()` for column selection
+
+### 🔧 Improvements
+
+- Default export (Excel/PDF buttons) remains fully backward compatible
+- Existing export respects filters and search as before
+- DOMPDF options: `isHtml5ParserEnabled`, `isFontSubsettingEnabled`, `defaultFont => serif`, `dpi => 96` for better PDF rendering
+- `@page { margin: 10mm; }` for consistent PDF margins
+
+### 🎨 UI/UX
+
+- Custom Export option added to export dropdown with visual separator
+- Modal with checkboxes organized by table groups
+- Livewire live model binding for instant UI updates
+- Disabled submit button when no columns selected
+- Smooth dark mode adaptation for all modal elements
+
+### 📚 Documentation
+
+- Added custom export feature documentation with usage examples
+- Configuration reference for all custom export theme classes
+- PDF export customization guide (paper size, orientation, dynamic sizing)
 
 ---
 
