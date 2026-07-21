@@ -96,7 +96,7 @@ module.exports = {
   content: [
     "./resources/**/*.blade.php",
     "./resources/**/*.js",
-    "./vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php",
+    "./vendor/developerawam/livewire-datatable/resources/views/*.blade.php",
   ],
 };
 ```
@@ -108,7 +108,7 @@ Use the `@source` directive in your `resources/css/app.css`:
 ```css
 @import "tailwindcss";
 
-@source '../../vendor/developerawam/livewire-datatable/resources/views/**/*.blade.php';
+@source '../../vendor/developerawam/livewire-datatable/resources/views/*.blade.php';
 ```
 
 This allows Tailwind CSS v4+ to automatically scan and generate styles for the datatable components.
