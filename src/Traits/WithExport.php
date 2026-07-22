@@ -22,24 +22,66 @@ trait WithExport
 
         $columns = $selectedColumns ?? $this->columns;
 
-        if ($this->filterDataSearch) {
+        if ($this->filterDataSearch || $this->dateFilterEnabled) {
             $query = $this->model::query();
-            foreach ($this->filterBy as $i => $column) {
-                $value = trim($this->query[$i]) ?? null;
-                if (! $value) {
-                    continue;
-                }
 
+            if (! empty($this->scopeParams)) {
+                $query = $query->{$this->scope}(...$this->scopeParams);
+            } elseif ($this->scope) {
+                $query = $query->{$this->scope}();
+            }
+
+            if ($this->filterDataSearch) {
+                foreach ($this->filterBy as $i => $column) {
+                    $value = trim($this->query[$i]) ?? null;
+                    if (! $value) {
+                        continue;
+                    }
+
+                    if (str_contains($column, '.')) {
+                        $parts = explode('.', $column);
+                        $field = array_pop($parts);
+                        $relationPath = implode('.', $parts);
+
+                        $query->whereHas($relationPath, function ($q) use ($field, $value) {
+                            $q->where($field, 'LIKE', "%{$value}%");
+                        });
+                    } else {
+                        $query->where($column, 'LIKE', "%{$value}%");
+                    }
+                }
+            }
+
+            if (! $this->filterDataSearch && ! empty($this->search)) {
+                $query->where(function ($q) {
+                    foreach ($this->searchable as $field) {
+                        if (str_contains($field, '.')) {
+                            $parts = explode('.', $field);
+                            $relationField = array_pop($parts);
+                            $relations = $parts;
+                            $q->orWhereHas($relations[0], function ($subQ) use ($relations, $relationField) {
+                                if (count($relations) > 1) {
+                                    $subQ->whereHas(implode('.', array_slice($relations, 1)), fn ($sq) => $sq->where($relationField, 'like', '%'.$this->search.'%'));
+                                } else {
+                                    $subQ->where($relationField, 'like', '%'.$this->search.'%');
+                                }
+                            });
+                        } else {
+                            $q->orWhere($field, 'like', '%'.$this->search.'%');
+                        }
+                    }
+                });
+            }
+
+            if ($this->dateFilterEnabled && $this->dateFilterColumn) {
+                $column = $this->dateFilterColumn;
                 if (str_contains($column, '.')) {
                     $parts = explode('.', $column);
                     $field = array_pop($parts);
                     $relationPath = implode('.', $parts);
-
-                    $query->whereHas($relationPath, function ($q) use ($field, $value) {
-                        $q->where($field, 'LIKE', "%{$value}%");
-                    });
+                    $query->whereHas($relationPath, fn ($q) => $this->applyDateRangeQuery($q, $field));
                 } else {
-                    $query->where($column, 'LIKE', "%{$value}%");
+                    $this->applyDateRangeQuery($query, $column);
                 }
             }
 
@@ -64,6 +106,9 @@ trait WithExport
         $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
         if ($this->filterDataSearch) {
             $filename .= '-filtered';
+        }
+        if ($this->dateFilterEnabled) {
+            $filename .= '-date-filtered';
         }
         if (! empty($this->search)) {
             $filename .= '-search-'.Str::slug($this->search);

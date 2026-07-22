@@ -108,11 +108,29 @@
                     <!-- Controls Right Side -->
                     <div data-class="controls_col" @class([$this->getClass('controls_col')])>
                         <div data-class="controls_flex" @class([$this->getClass('controls_flex')])>
+
+                            @if ($dateFilterEnabled && $dateFilterColumn)
+                                <div data-class="date_filter_badge" @class([$this->getClass('date_filter_badge')])>
+                                    <span>{{ $this->dateFilterableColumns[$dateFilterColumn] ?? $dateFilterColumn }}:
+                                        {{ $dateFilterStart ?: '...' }} &mdash; {{ $dateFilterEnd ?: '...' }}</span>
+                                    <button type="button" wire:click="resetDateFilter"
+                                        data-class="date_filter_badge_remove" @class([$this->getClass('date_filter_badge_remove')])></button>
+                                </div>
+                            @endif
+
                             <!-- Filter Button -->
                             @if ($model !== null && $showFiterButton)
                                 <button type="button" wire:click="showFilter" data-class="filter_button"
                                     @class([$this->getClass('filter_button')]) title="Open advanced filters">
                                     <i class="bi bi-funnel"></i>
+                                </button>
+                            @endif
+
+                            <!-- Date Filter Button -->
+                            @if ($model !== null && count($this->dateFilterableColumns) > 0)
+                                <button type="button" wire:click="showDateFilterPanel" data-class="date_filter_button"
+                                    @class([$this->getClass('date_filter_button')]) title="Date Filter">
+                                    <i @class(['bi', 'bi-calendar3'])></i>
                                 </button>
                             @endif
 
@@ -169,6 +187,62 @@
                     </div>
                 </div>
             </div>
+
+            @if ($showDateFilter)
+                <div data-class="date_filter_modal_backdrop" @class([$this->getClass('date_filter_modal_backdrop')])></div>
+                <div data-class="date_filter_modal_wrapper" @class([$this->getClass('date_filter_modal_wrapper')]) tabindex="-1"
+                    wire:click.self="closeDateFilterPanel">
+                    <div data-class="date_filter_modal_dialog" @class([$this->getClass('date_filter_modal_dialog')])>
+                        <div data-class="date_filter_modal_content" @class([$this->getClass('date_filter_modal_content')])>
+                            <div data-class="date_filter_header" @class([$this->getClass('date_filter_header')])>
+                                <h5 data-class="date_filter_title" @class([$this->getClass('date_filter_title')])>Date Filter</h5>
+                                <button type="button" wire:click="closeDateFilterPanel"
+                                    data-class="date_filter_close" @class([$this->getClass('date_filter_close')])></button>
+                            </div>
+                            <div data-class="date_filter_body" @class([$this->getClass('date_filter_body')])>
+                                <div class="mb-3">
+                                    <label data-class="date_filter_column_label"
+                                        @class([$this->getClass('date_filter_column_label')])>Column</label>
+                                    <select wire:model.live="dateFilterColumn" data-class="date_filter_column_select"
+                                        @class([$this->getClass('date_filter_column_select')])>
+                                        <option value="">Choose column...</option>
+                                        @foreach ($this->dateFilterableColumns as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @if ($dateFilterColumn)
+                                    <div data-class="date_filter_date_row" @class([$this->getClass('date_filter_date_row')])>
+                                        <div data-class="date_filter_date_group" @class([$this->getClass('date_filter_date_group')])>
+                                            <label data-class="date_filter_column_label"
+                                                @class([$this->getClass('date_filter_column_label')])>Start</label>
+                                            <input type="date" wire:model.live.debounce.300ms="dateFilterStart"
+                                                data-class="date_filter_date_input" @class([$this->getClass('date_filter_date_input')])>
+                                        </div>
+                                        <span data-class="date_filter_date_separator"
+                                            @class([$this->getClass('date_filter_date_separator')])>to</span>
+                                        <div data-class="date_filter_date_group" @class([$this->getClass('date_filter_date_group')])>
+                                            <label data-class="date_filter_column_label"
+                                                @class([$this->getClass('date_filter_column_label')])>End</label>
+                                            <input type="date" wire:model.live.debounce.300ms="dateFilterEnd"
+                                                data-class="date_filter_date_input" @class([$this->getClass('date_filter_date_input')])>
+                                            @error('dateFilterEnd')
+                                                <small class="text-danger mt-1 d-block">{{ $message }}</small>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div data-class="date_filter_footer" @class([$this->getClass('date_filter_footer')])>
+                                <button type="button" wire:loading.attr="disabled" wire:click="resetDateFilter"
+                                    data-class="date_filter_reset" @class([$this->getClass('date_filter_reset')])>Reset</button>
+                                <button type="button" wire:loading.attr="disabled" wire:click="applyDateFilter"
+                                    data-class="date_filter_apply" @class([$this->getClass('date_filter_apply')])>Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Table -->
             <div data-class="table_responsive" @class([$this->getClass('table_responsive')])>
@@ -320,7 +394,8 @@
                                         {{ Str::headline($group) }}</h6>
                                     <div data-class="custom_export_group_columns" @class([$this->getClass('custom_export_group_columns')])>
                                         @foreach ($cols as $col)
-                                            <div data-class="custom_export_checkbox_col" @class([$this->getClass('custom_export_checkbox_col')])>
+                                            <div data-class="custom_export_checkbox_col"
+                                                @class([$this->getClass('custom_export_checkbox_col')])>
                                                 <div data-class="custom_export_checkbox_wrapper"
                                                     @class([$this->getClass('custom_export_checkbox_wrapper')])>
                                                     <input type="checkbox" data-class="custom_export_checkbox"
@@ -370,8 +445,8 @@
                                 @endif
                             </div>
                             <div data-class="custom_export_actions" @class([$this->getClass('custom_export_actions')])>
-                                <button type="button" data-class="custom_export_cancel" @class([$this->getClass('custom_export_cancel')])
-                                    wire:click="closeCustomExport">Cancel</button>
+                                <button type="button" data-class="custom_export_cancel"
+                                    @class([$this->getClass('custom_export_cancel')]) wire:click="closeCustomExport">Cancel</button>
                                 <button type="button" wire:loading.attr="disabled" data-class="custom_export_submit"
                                     @class([$this->getClass('custom_export_submit')]) wire:click="customExport">Export</button>
                             </div>

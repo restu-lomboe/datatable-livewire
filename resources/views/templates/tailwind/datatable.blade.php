@@ -118,6 +118,14 @@
 
                 </div>
                 <div data-class="controls_layout_bottom" @class([$this->getClass('controls_layout_bottom')])>
+                    @if ($dateFilterEnabled && $dateFilterColumn)
+                        <div data-class="date_filter_badge" @class([$this->getClass('date_filter_badge')])>
+                            <span>{{ $this->dateFilterableColumns[$dateFilterColumn] ?? $dateFilterColumn }}:
+                                {{ $dateFilterStart ?: '...' }} &mdash; {{ $dateFilterEnd ?: '...' }}</span>
+                            <button type="button" wire:click="resetDateFilter" data-class="date_filter_badge_remove"
+                                @class([$this->getClass('date_filter_badge_remove')])>&times;</button>
+                        </div>
+                    @endif
                     @if ($model !== null && $showFiterButton)
                         <button type="button" wire:click="showFilter" data-class="filter_button"
                             @class([$this->getClass('filter_button')]) title="filter">
@@ -128,8 +136,20 @@
                             </svg>
                         </button>
                     @endif
+                    @if ($model !== null && count($this->dateFilterableColumns) > 0)
+                        <button type="button" wire:click="showDateFilterPanel" data-class="date_filter_button"
+                            @class([$this->getClass('date_filter_button')]) title="Date Filter">
+                            <svg data-class="date_filter_button_icon" @class([$this->getClass('date_filter_button_icon')])
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M9 1v2h6V1h2v2h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h1V1h2m4 3H7v1h6V4m-8 5v8h10V9H5Z" />
+                            </svg>
+                        </button>
+                    @endif
                     @if ($enableExport && in_array(config('livewire-datatable.export.dropdown.position', 'top'), ['top', 'both']))
-                        <div data-class="export_dropdown_wrapper" @class([$this->getClass('export_dropdown_wrapper')]) x-data="{ open: false }">
+                        <div data-class="export_dropdown_wrapper" @class([$this->getClass('export_dropdown_wrapper')])
+                            x-data="{ open: false }">
                             <button @click="open = !open" @keydown.escape.window="open = false"
                                 @click.outside="open = false" type="button"
                                 class="{{ config('livewire-datatable.export.dropdown.trigger_class') }}">
@@ -188,6 +208,66 @@
                         </label>
                     </div>
                 </div>
+
+                @if ($showDateFilter)
+                    <div wire:transition
+                        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 dark:bg-gray-900/70"
+                        wire:click.self="closeDateFilterPanel">
+                        <div data-class="date_filter_modal" @class([$this->getClass('date_filter_modal')])>
+                            <div data-class="date_filter_header" @class([$this->getClass('date_filter_header')])>
+                                <h3 data-class="date_filter_title" @class([$this->getClass('date_filter_title')])>Date Range Filter</h3>
+                                <button type="button" wire:click="closeDateFilterPanel"
+                                    data-class="date_filter_close" @class([$this->getClass('date_filter_close')])>
+                                    <svg class="size-5" xmlns="http://www.w3.org/2000/svg" width="24"
+                                        height="24" viewBox="0 0 24 24">
+                                        <path fill="currentColor"
+                                            d="m12 13.4l-4.9 4.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.9-4.9l-4.9-4.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l4.9 4.9l4.9-4.9q.275-.275.7-.275t.7.275t.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div data-class="date_filter_body" @class([$this->getClass('date_filter_body')])>
+                                <div>
+                                    <label data-class="date_filter_column_label"
+                                        @class([$this->getClass('date_filter_column_label')])>Column</label>
+                                    <select wire:model.live="dateFilterColumn" data-class="date_filter_column_select"
+                                        @class([$this->getClass('date_filter_column_select')])>
+                                        <option value="">Choose column...</option>
+                                        @foreach ($this->dateFilterableColumns as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @if ($dateFilterColumn)
+                                    <div data-class="date_filter_date_row" @class([$this->getClass('date_filter_date_row')])>
+                                        <div data-class="date_filter_date_group" @class([$this->getClass('date_filter_date_group')])>
+                                            <label data-class="date_filter_column_label"
+                                                @class([$this->getClass('date_filter_column_label')])>Start</label>
+                                            <input type="date" wire:model.live.debounce.300ms="dateFilterStart"
+                                                data-class="date_filter_date_input" @class([$this->getClass('date_filter_date_input')])>
+                                        </div>
+                                        <span data-class="date_filter_date_separator"
+                                            @class([$this->getClass('date_filter_date_separator')])>to</span>
+                                        <div data-class="date_filter_date_group" @class([$this->getClass('date_filter_date_group')])>
+                                            <label data-class="date_filter_column_label"
+                                                @class([$this->getClass('date_filter_column_label')])>End</label>
+                                            <input type="date" wire:model.live.debounce.300ms="dateFilterEnd"
+                                                data-class="date_filter_date_input" @class([$this->getClass('date_filter_date_input')])>
+                                            @error('dateFilterEnd')
+                                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div data-class="date_filter_footer" @class([$this->getClass('date_filter_footer')])>
+                                <button type="button" wire:loading.attr="disabled" wire:click="resetDateFilter"
+                                    data-class="date_filter_reset" @class([$this->getClass('date_filter_reset')])>Reset</button>
+                                <button type="button" wire:loading.attr="disabled" wire:click="applyDateFilter"
+                                    data-class="date_filter_apply" @class([$this->getClass('date_filter_apply')])>Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
             <div data-class="table_wrapper" @class([$this->getClass('table_wrapper')])>
                 <table data-class="table" @class([$this->getClass('table')])>
