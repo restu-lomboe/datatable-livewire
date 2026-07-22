@@ -89,6 +89,16 @@ class DataTable extends Component
 
     public $disabledAddFilterButton = false;
 
+    public $showDateFilter = false;
+
+    public $dateFilterColumn = '';
+
+    public $dateFilterStart = '';
+
+    public $dateFilterEnd = '';
+
+    public $dateFilterEnabled = false;
+
     protected function ensureDataSourceInitialized(): void
     {
         if (! $this->dataSource) {
@@ -438,6 +448,139 @@ class DataTable extends Component
         $this->query = array_values($this->query);
     }
 
+    #[Computed]
+    protected function dateFilterableColumns(): array
+    {
+        if (! $this->model) {
+            return [];
+        }
+
+        $columns = [];
+        $model = new $this->model;
+        $table = $model->getTable();
+
+        foreach (Schema::getColumnListing($table) as $column) {
+            $type = Schema::getColumnType($table, $column);
+            if (in_array($type, ['date', 'datetime', 'timestamp'])) {
+                $columns[$column] = Str::headline($column);
+            }
+        }
+
+        foreach (array_keys($model->getEagerLoads()) as $relationPath) {
+            $relationColumns = $this->getDateFilterRelationColumns($model, $relationPath);
+            foreach ($relationColumns as $key => $label) {
+                $columns[$key] = $label;
+            }
+        }
+
+        return $columns;
+    }
+
+    protected function getDateFilterRelationColumns($model, string $relationPath): array
+    {
+        $parts = explode('.', $relationPath);
+        $relationName = array_shift($parts);
+
+        if (! method_exists($model, $relationName)) {
+            return [];
+        }
+
+        $relation = $model->{$relationName}();
+        $relatedModel = $relation->getRelated();
+        $relatedTable = $relatedModel->getTable();
+
+        $columns = collect(Schema::getColumnListing($relatedTable))
+            ->filter(fn ($col) => in_array(Schema::getColumnType($relatedTable, $col), ['date', 'datetime', 'timestamp']));
+
+        $result = [];
+        foreach ($columns as $col) {
+            $key = "{$relationPath}.{$col}";
+            $label = Str::headline(str_replace('.', ' ', "{$relationPath} {$col}"));
+            $result[$key] = $label;
+        }
+
+        if (! empty($parts)) {
+            $nestedPath = implode('.', $parts);
+            $nestedFields = $this->getDateFilterRelationColumns($relatedModel, $nestedPath);
+            foreach ($nestedFields as $nestedKey => $nestedLabel) {
+                $result["{$relationName}.{$nestedKey}"] = $nestedLabel;
+            }
+        }
+
+        return $result;
+    }
+
+    public function showDateFilterPanel(): void
+    {
+        $this->showDateFilter = true;
+    }
+
+    public function closeDateFilterPanel(): void
+    {
+        $this->showDateFilter = false;
+    }
+
+    public function updatedDateFilterEnd($value): void
+    {
+        if ($this->dateFilterStart && $value && $value < $this->dateFilterStart) {
+            $this->addError('dateFilterEnd', 'End date must be greater than or equal to start date.');
+        } elseif ($this->dateFilterStart && $value) {
+            $this->resetValidation('dateFilterEnd');
+        }
+    }
+
+    public function updatedDateFilterStart(): void
+    {
+        if ($this->dateFilterEnd && $this->dateFilterStart && $this->dateFilterEnd < $this->dateFilterStart) {
+            $this->addError('dateFilterEnd', 'End date must be greater than or equal to start date.');
+        } elseif ($this->getErrorBag()->has('dateFilterEnd')) {
+            $this->resetValidation('dateFilterEnd');
+        }
+    }
+
+    public function applyDateFilter(): void
+    {
+        $this->validate([
+            'dateFilterColumn' => 'required|string',
+            'dateFilterStart' => 'nullable|date',
+            'dateFilterEnd' => ['nullable', 'date', function ($attribute, $value, $fail) {
+                if ($this->dateFilterStart && $value && $value < $this->dateFilterStart) {
+                    $fail('End date must be greater than or equal to start date.');
+                }
+            }],
+        ]);
+
+        if (! $this->dateFilterStart && ! $this->dateFilterEnd) {
+            return;
+        }
+
+        $this->dateFilterEnabled = true;
+        $this->showDateFilter = false;
+        $this->resetPage();
+    }
+
+    public function resetDateFilter(): void
+    {
+        $this->dateFilterEnabled = false;
+        $this->dateFilterColumn = '';
+        $this->dateFilterStart = '';
+        $this->dateFilterEnd = '';
+        $this->resetValidation(['dateFilterStart', 'dateFilterEnd']);
+        $this->resetPage();
+    }
+
+    protected function applyDateRangeQuery($query, string $column): void
+    {
+        if ($this->dateFilterStart && $this->dateFilterEnd) {
+            $query->whereDate($column, '>=', $this->dateFilterStart)
+                ->whereDate($column, '<=', $this->dateFilterEnd);
+        } elseif ($this->dateFilterStart) {
+            $query->whereDate($column, '>=', $this->dateFilterStart);
+        } elseif ($this->dateFilterEnd) {
+            $query->whereDate($column, '<=', $this->dateFilterEnd);
+        }
+    }
+
     protected function initializeDataSource(): void
     {
         if ($this->model) {
@@ -450,8 +593,9 @@ class DataTable extends Component
     #[Computed]
     protected function getQuery()
     {
-        // check if filterBy not empty
-        if ($this->filterDataSearch) {
+        $useManualQuery = $this->filterDataSearch || $this->dateFilterEnabled;
+
+        if ($useManualQuery) {
             $query = $this->model::query();
 
             // Apply scope if it exists
@@ -463,33 +607,62 @@ class DataTable extends Component
                 }
             }
 
-            foreach ($this->filterBy as $i => $column) {
+            // Apply advanced filters (if active)
+            if ($this->filterDataSearch) {
+                foreach ($this->filterBy as $i => $column) {
+                    $value = trim($this->query[$i]) ?? null;
+                    $this->query[$i] = $value;
+                    if (! $value) {
+                        continue;
+                    }
 
-                $value = trim($this->query[$i]) ?? null;
-                $this->query[$i] = $value;
-                if (! $value) {
-                    continue;
-                }
-
-                // RELATION FILTER: user.name / user.profile.country.name
-                if (str_contains($column, '.')) {
-
-                    $parts = explode('.', $column);
-                    $field = array_pop($parts);   // last part = column name
-                    $relationPath = implode('.', $parts);
-
-                    $query->whereHas($relationPath, function ($q) use ($field, $value) {
-                        $q->where($field, 'LIKE', "%{$value}%");
-                    });
-
-                }
-                // NORMAL COLUMN FILTER
-                else {
-                    $query->where($column, 'LIKE', "%{$value}%");
+                    if (str_contains($column, '.')) {
+                        $parts = explode('.', $column);
+                        $field = array_pop($parts);
+                        $relationPath = implode('.', $parts);
+                        $query->whereHas($relationPath, fn ($q) => $q->where($field, 'LIKE', "%{$value}%"));
+                    } else {
+                        $query->where($column, 'LIKE', "%{$value}%");
+                    }
                 }
             }
 
-            // Apply sorting when filtering is active
+            // Apply search when date filter is active but advanced filter is not
+            if (! $this->filterDataSearch && ! empty($this->search)) {
+                $query->where(function ($q) {
+                    foreach ($this->searchable as $field) {
+                        if (str_contains($field, '.')) {
+                            $parts = explode('.', $field);
+                            $relationField = array_pop($parts);
+                            $relations = $parts;
+                            $q->orWhereHas($relations[0], function ($subQ) use ($relations, $relationField) {
+                                if (count($relations) > 1) {
+                                    $subQ->whereHas(implode('.', array_slice($relations, 1)), fn ($sq) => $sq->where($relationField, 'like', '%'.$this->search.'%'));
+                                } else {
+                                    $subQ->where($relationField, 'like', '%'.$this->search.'%');
+                                }
+                            });
+                        } else {
+                            $q->orWhere($field, 'like', '%'.$this->search.'%');
+                        }
+                    }
+                });
+            }
+
+            // Apply date filter
+            if ($this->dateFilterEnabled && $this->dateFilterColumn) {
+                $column = $this->dateFilterColumn;
+                if (str_contains($column, '.')) {
+                    $parts = explode('.', $column);
+                    $field = array_pop($parts);
+                    $relationPath = implode('.', $parts);
+                    $query->whereHas($relationPath, fn ($q) => $this->applyDateRangeQuery($q, $field));
+                } else {
+                    $this->applyDateRangeQuery($query, $column);
+                }
+            }
+
+            // Apply sorting
             if (! empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
                 $query->orderBy($this->sortField, $this->sortDirection);
             } elseif ($this->defaultSortField) {
@@ -498,7 +671,6 @@ class DataTable extends Component
 
             $result = $query->paginate($this->perPage, ['*'], 'page', $this->page);
         } else {
-
             $this->ensureDataSourceInitialized();
             $this->search = trim($this->search);
             $result = $this->dataSource->getData([

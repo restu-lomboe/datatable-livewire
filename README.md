@@ -31,6 +31,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Custom Cell Templates](#custom-cell-templates)
   - [Default Sort Configuration](#default-sort-configuration)
   - [Advanced Dynamic Filtering](#advanced-dynamic-filtering)
+  - [Date Range Filter](#date-range-filter)
 - [Exporting Data](#-exporting-data)
   - [Custom Export (Column Selection)](#custom-export-column-selection)
 - [Customization](#-customization)
@@ -51,6 +52,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
 | 🔍 **Smart Search**           | Live search with intelligent debouncing across multiple columns |
 | 📊 **Column Sorting**         | Sort by any column, including relationship data                 |
 | 🔤 **Advanced Filtering**     | Multi-column filtering with intuitive UI                        |
+| 📅 **Date Range Filter**      | Dedicated date range filter with auto-detected date columns     |
 | 📄 **Pagination**             | Fully customizable pagination with per-page options             |
 | 📤 **Data Export**            | Export to Excel and PDF with custom column selection and PDF options |
 | 🎨 **Dynamic Styling**        | All CSS classes configurable from config file                   |
@@ -576,6 +578,92 @@ All filter elements have configurable CSS classes:
 ]
 ```
 
+### Date Range Filter
+
+Filter your data by date ranges with a dedicated modal for date/datetime/timestamp columns.
+
+#### How It Works
+
+1. Click the **calendar icon** button in the table controls toolbar
+2. A modal opens with:
+   - **Column selector** — auto-populated with all date/datetime/timestamp columns from the main table and relationships
+   - **Start date** and **End date** inputs
+3. Select a column, pick your date range, and click **Apply**
+4. An active filter badge appears showing the current date range
+5. Click the **&times;** on the badge to reset the filter
+
+#### Features
+
+- **Auto-detection**: Scans database schema for `date`, `datetime`, and `timestamp` column types
+- **Relationship support**: Date columns on related models are automatically detected (e.g., `orders.created_at`)
+- **Real-time validation**: End date must be >= start date; shows inline error messages
+- **Export integration**: Active date filter is applied when exporting to Excel or PDF (filename gets `-date-filtered` suffix)
+- **Compatible with advanced filters**: Works alongside the existing advanced filter system
+
+#### Configuration
+
+```php
+// config/livewire-datatable.php
+'advanced_filter' => true,   // also enables date filter features
+```
+
+#### Theme Classes (Tailwind)
+
+All date filter elements are configurable in `config/livewire-datatable.php` under `theme`:
+
+```php
+'theme' => [
+    'date_filter_button' => 'inline-flex items-center gap-x-2 px-3 py-2 text-sm font-medium rounded-sm border ...',
+    'date_filter_button_icon' => 'size-4',
+    'date_filter_modal' => 'relative max-w-md w-full mx-4 bg-white dark:bg-gray-800 rounded-sm shadow-xl ...',
+    'date_filter_header' => 'flex items-center justify-between px-6 py-4 border-b ...',
+    'date_filter_title' => 'text-lg font-semibold text-gray-900 dark:text-white',
+    'date_filter_close' => 'inline-flex items-center text-sm font-medium ...',
+    'date_filter_body' => 'px-6 py-4 space-y-4',
+    'date_filter_column_label' => 'text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block',
+    'date_filter_column_select' => 'w-full py-1.5 px-3 block border border-gray-300 ...',
+    'date_filter_date_row' => 'flex items-end gap-3',
+    'date_filter_date_group' => 'flex flex-col flex-1',
+    'date_filter_date_input' => 'py-1.5 px-3 block border border-gray-300 ...',
+    'date_filter_date_separator' => 'text-sm text-gray-500 dark:text-gray-400 pb-1.5',
+    'date_filter_footer' => 'flex items-center justify-end gap-2 px-6 py-4 border-t ...',
+    'date_filter_apply' => 'py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-sm ...',
+    'date_filter_reset' => 'py-2 px-4 text-sm font-medium text-gray-700 ...',
+    'date_filter_cancel' => 'py-2 px-4 text-sm font-medium text-gray-700 ...',
+    'date_filter_badge' => 'inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 ...',
+    'date_filter_badge_remove' => 'text-blue-600 hover:text-blue-800 ...',
+]
+```
+
+#### Bootstrap Configuration
+
+```php
+'bootstrap_theme' => [
+    'date_filter_button' => 'btn btn-sm btn-outline-secondary',
+    'date_filter_button_icon' => '',
+    'date_filter_modal_backdrop' => 'modal-backdrop fade show',
+    'date_filter_modal_wrapper' => 'modal d-block',
+    'date_filter_modal_dialog' => 'modal-dialog modal-dialog-centered',
+    'date_filter_modal_content' => 'modal-content border shadow',
+    'date_filter_header' => 'modal-header',
+    'date_filter_title' => 'modal-title',
+    'date_filter_close' => 'btn-close',
+    'date_filter_body' => 'modal-body',
+    'date_filter_column_label' => 'form-label small text-secondary mb-1',
+    'date_filter_column_select' => 'form-select',
+    'date_filter_date_row' => 'd-flex align-items-end gap-3',
+    'date_filter_date_group' => 'd-flex flex-column flex-fill',
+    'date_filter_date_input' => 'form-control',
+    'date_filter_date_separator' => 'text-secondary pb-1 small',
+    'date_filter_footer' => 'modal-footer',
+    'date_filter_apply' => 'btn btn-sm btn-primary',
+    'date_filter_reset' => 'btn btn-sm btn-outline-secondary',
+    'date_filter_cancel' => 'btn btn-sm btn-secondary',
+    'date_filter_badge' => 'badge bg-primary bg-opacity-10 text-primary d-inline-flex ...',
+    'date_filter_badge_remove' => 'btn-close btn-close-sm',
+]
+```
+
 ### Row Numbering ("no" Column)
 
 The "no" column provides sequential row numbering that works intelligently with sorting and pagination.
@@ -704,6 +792,7 @@ Export your DataTable data to Excel and PDF formats.
 - Per-export paper size (A4, Letter, Legal) and orientation (Portrait, Landscape)
 - Exports all records (respects pagination)
 - Respects active search filters
+- Respects active date range filter
 - Maintains data formatting (dates, currency, etc.)
 - Automatically excludes action columns
 - Responsive UI with dark mode support

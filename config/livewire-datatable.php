@@ -153,6 +153,27 @@ return [
         // Pagination
         'pagination_wrapper' => 'p-4 bg-white dark:bg-gray-800',
 
+        // Date filter
+        'date_filter_button' => 'inline-flex items-center gap-x-2 px-3 py-2 text-sm font-medium rounded-sm border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
+        'date_filter_button_icon' => 'size-4',
+        'date_filter_modal' => 'relative max-w-md w-full mx-4 bg-white dark:bg-gray-800 rounded-sm shadow-xl border border-gray-200 dark:border-gray-700',
+        'date_filter_header' => 'flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700',
+        'date_filter_title' => 'text-lg font-semibold text-gray-900 dark:text-white',
+        'date_filter_close' => 'inline-flex items-center text-sm font-medium text-gray-800 dark:text-white cursor-pointer hover:text-gray-500 dark:hover:text-gray-300',
+        'date_filter_body' => 'px-6 py-4 space-y-4',
+        'date_filter_column_label' => 'text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block',
+        'date_filter_column_select' => 'w-full py-1.5 px-3 block border border-gray-300 dark:border-gray-600 rounded-sm text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200',
+        'date_filter_date_row' => 'flex items-end gap-3',
+        'date_filter_date_group' => 'flex flex-col flex-1',
+        'date_filter_date_input' => 'py-1.5 px-3 block border border-gray-300 dark:border-gray-600 rounded-sm text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 w-full',
+        'date_filter_date_separator' => 'text-sm text-gray-500 dark:text-gray-400 pb-1.5',
+        'date_filter_footer' => 'flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700',
+        'date_filter_apply' => 'py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
+        'date_filter_reset' => 'py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer',
+        'date_filter_cancel' => 'py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer',
+        'date_filter_badge' => 'inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-sm dark:bg-blue-900 dark:text-blue-200',
+        'date_filter_badge_remove' => 'text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100 cursor-pointer text-lg leading-none',
+
         // Custom export modal
         'custom_export_modal' => 'relative max-w-3xl w-full mx-4 bg-white dark:bg-gray-800 rounded-sm shadow-xl border border-gray-200 dark:border-gray-700',
         'custom_export_header' => 'flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700',
@@ -268,6 +289,29 @@ return [
         'pagination_info' => 'text-muted',
         'pagination_controls' => 'd-flex gap-2',
 
+        // Date filter
+        'date_filter_button' => 'btn btn-sm btn-outline-secondary',
+        'date_filter_button_icon' => '',
+        'date_filter_modal_backdrop' => 'modal-backdrop fade show',
+        'date_filter_modal_wrapper' => 'modal d-block',
+        'date_filter_modal_dialog' => 'modal-dialog modal-dialog-centered',
+        'date_filter_modal_content' => 'modal-content border shadow',
+        'date_filter_header' => 'modal-header',
+        'date_filter_title' => 'modal-title',
+        'date_filter_close' => 'btn-close',
+        'date_filter_body' => 'modal-body',
+        'date_filter_column_label' => 'form-label small text-secondary mb-1',
+        'date_filter_column_select' => 'form-select',
+        'date_filter_date_row' => 'd-flex align-items-end gap-3',
+        'date_filter_date_group' => 'd-flex flex-column flex-fill',
+        'date_filter_date_input' => 'form-control',
+        'date_filter_date_separator' => 'text-secondary pb-1 small',
+        'date_filter_footer' => 'modal-footer',
+        'date_filter_apply' => 'btn btn-sm btn-primary',
+        'date_filter_reset' => 'btn btn-sm btn-outline-secondary',
+        'date_filter_cancel' => 'btn btn-sm btn-secondary',
+        'date_filter_badge' => 'badge bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center gap-1 text-white',
+        'date_filter_badge_remove' => 'btn-close btn-close-sm',
 
         // Custom Export Modal
         'custom_export_backdrop' => 'modal-backdrop fade show',

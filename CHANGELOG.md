@@ -35,12 +35,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `showCustomExportPanel()` / `closeCustomExport()` actions for modal management
   - `toggleCustomExportColumn()`, `selectAllExportColumns()`, `deselectAllExportColumns()` for column selection
 
+- **Date Range Filter**:
+  - Separate date filter modal for date/datetime/timestamp columns
+  - Auto-detection of date-type columns via schema introspection (`date`, `datetime`, `timestamp`)
+  - Works with both main table columns and relationship columns (dot notation)
+  - Real-time validation — end date must be >= start date
+  - Visual feedback with error messages and input validation
+  - Active filter badge showing current date range
+  - Reset/clear filter with one click
+  - Exports respect active date filter (appended `-date-filtered` suffix in filename)
+  - Compatible with the existing advanced filter system
+  - Fully configurable theme classes for all modal elements
+  - Works across all template systems (Tailwind, Bootstrap)
+
 ### 🔧 Improvements
 
 - Default export (Excel/PDF buttons) remains fully backward compatible
 - Existing export respects filters and search as before
+- Export automatically includes date filter scope when active
 - DOMPDF options: `isHtml5ParserEnabled`, `isFontSubsettingEnabled`, `defaultFont => serif`, `dpi => 96` for better PDF rendering
 - `@page { margin: 10mm; }` for consistent PDF margins
+- Manual query execution when date filter is active for proper SQL `WHERE DATE(...)` clauses
 
 ### 🎨 UI/UX
 
@@ -49,12 +64,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Livewire live model binding for instant UI updates
 - Disabled submit button when no columns selected
 - Smooth dark mode adaptation for all modal elements
+- Date filter button in the table controls toolbar
+- Date filter modal with column selector, start/end date inputs, and apply/reset/cancel actions
+- Active date range displayed as a dismissible badge
+- Real-time validation on date input blur with `wire:model.live.debounce.300ms`
 
 ### 📚 Documentation
 
 - Added custom export feature documentation with usage examples
 - Configuration reference for all custom export theme classes
 - PDF export customization guide (paper size, orientation, dynamic sizing)
+- Added date range filter documentation with usage examples
+- Configuration reference for all date filter theme classes (Tailwind & Bootstrap)
 
 ---
 
@@ -236,34 +257,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Updated pagination examples
 - Added formatter integration examples
 - New examples for customizing exports
-
-## [Unreleased]
-
-### 🚀 Planned for v1.4.0
-
-- Column Filtering (dropdown, select, date range)
-- Server-side Caching for heavy datasets
-- Advanced Column Formatting
-- Bulk Actions Support
-
-### ⚡ Improvements
-
-- Optimize queries on relationship-heavy tables
-- Improve responsiveness for mobile
-- Reduce Tailwind overhead in theme rendering
-
-### 🛠 Developer Experience
-
-- Add more unit tests for custom query & custom methods
-- Better error messages on misconfigured `columns`/`model`
-- Example playground project in repo
-
-### 🔒 Security
-
-- Optional CSRF protection for inline actions
-- Config option to restrict searchable/sortable columns
-
----
 
 ## [v1.0.0] - 2025-08-10
 
