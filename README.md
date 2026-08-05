@@ -288,6 +288,74 @@ For complex formatting, use array syntax:
 | `words`     | Limit by word count      | `words, end`                                    |
 | `markdown`  | Convert markdown to HTML | —                                               |
 | `money`     | Advanced currency        | `symbol, decimals, decimal_point, thousand_sep` |
+| `link`      | Render value as a link   | `route, params, url, text, target, class, title` |
+
+#### Link Formatter
+
+Render a column value as a clickable link, either to a named route (with parameters pulled from other columns) or to a custom/static URL.
+
+##### Route with Column Parameters
+
+```php
+'formatters' => [
+    'name' => [
+        'type' => 'link',
+        'options' => [
+            'route' => 'users.show',       // named route
+            'params' => ['id'],            // column names whose values fill the route params
+            'target' => '_blank',          // optional
+            'text' => 'View Profile',      // optional link label (defaults to the cell value)
+            'class' => 'text-blue-600 hover:underline',
+        ],
+    ],
+],
+```
+
+If the route parameter name differs from the column name, use an associative array:
+
+```php
+'params' => ['user' => 'id', 'slug' => 'slug'],   // route param "user" <- column "id"
+```
+
+##### Custom / Static URL
+
+```php
+'formatters' => [
+    'name' => [
+        'type' => 'link',
+        'options' => [
+            'url' => 'https://www.google.com/',   // static link
+        ],
+    ],
+],
+```
+
+You can also inject column values into a URL using `{column}` placeholders:
+
+```php
+'formatters' => [
+    'name' => [
+        'type' => 'link',
+        'options' => [
+            'url' => '/users/{id}/edit',          // {id} replaced with the row's id
+        ],
+    ],
+],
+```
+
+##### Options Reference
+
+| Option   | Description                                                     |
+| -------- | --------------------------------------------------------------- |
+| `route`  | Named route to link to (e.g. `users.show`)                      |
+| `params` | Route parameters as column names; numeric `['id']` or associative `['user' => 'id']` |
+| `url`    | Custom/static URL, optionally with `{column}` placeholders      |
+| `text`   | Link label (defaults to the cell value)                         |
+| `target` | `_self` (default) or `_blank`                                   |
+| `class`  | CSS classes applied to the anchor                               |
+| `title`  | `title` attribute for the anchor                                |
+
+When exporting to Excel or PDF, link-formatted columns keep their original value (no URL).
 
 ## � Advanced Features
 

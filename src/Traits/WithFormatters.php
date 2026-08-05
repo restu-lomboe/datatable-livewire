@@ -41,7 +41,7 @@ trait WithFormatters
         }
     }
 
-    protected function formatComplexValue($value, array $formatter): string|int|float|bool
+    protected function formatComplexValue($value, array $formatter, $item = null, $key = null): string|int|float|bool
     {
         $type = $formatter['type'] ?? null;
         $options = $formatter['options'] ?? [];
@@ -62,9 +62,101 @@ trait WithFormatters
                 );
             case 'date':
                 return $this->formatDate($value, $options['format'] ?? 'Y-m-d');
+            case 'link':
+                return $this->formatLink($value, $options, $item, $key);
             default:
                 return $value;
         }
+    }
+
+    /**
+     * Build an HTML anchor for the "link" formatter.
+     *
+     * @param  array  $options  Supports:
+     *                          - route: named route to link to (e.g. "users.show")
+     *                          - params: route parameters as column names, either
+     *                          numeric ["id"] or associative ["user" => "id"]
+     *                          - url: custom/static URL, optionally with {column}
+     *                          placeholders (e.g. "/users/{id}/edit")
+     *                          - text: link label (defaults to the cell value)
+     *                          - target: "_self" (default) or "_blank"
+     *                          - class: CSS classes for the anchor
+     *                          - title: title attribute
+     */
+    protected function formatLink($value, array $options, $item = null, $key = null): string
+    {
+        $href = $this->resolveLinkHref($value, $options, $item, $key);
+
+        if (! $href) {
+            return (string) $value;
+        }
+
+        $attributes = 'href="'.e($href).'"';
+
+        if (! empty($options['target']) && $options['target'] !== '_self') {
+            $attributes .= ' target="'.e($options['target']).'"';
+        }
+
+        if (! empty($options['class'])) {
+            $attributes .= ' class="'.e($options['class']).'"';
+        }
+
+        if (! empty($options['title'])) {
+            $attributes .= ' title="'.e($options['title']).'"';
+        }
+
+        $text = $options['text'] ?? $value;
+
+        return '<a '.$attributes.'>'.e($text).'</a>';
+    }
+
+    protected function resolveLinkHref($value, array $options, $item = null, $key = null): ?string
+    {
+        if (! empty($options['route'])) {
+            $routeParams = [];
+
+            foreach ($options['params'] ?? [] as $routeParam => $columnName) {
+                if (is_int($routeParam)) {
+                    $routeParam = $columnName;
+                }
+
+                $routeParams[$routeParam] = $this->resolveLinkParam($value, $columnName, $item, $key);
+            }
+
+            try {
+                return route($options['route'], $routeParams);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        if (! empty($options['url'])) {
+            $url = $options['url'];
+
+            if (preg_match_all('/\{([\w.]+)\}/', $url, $matches)) {
+                foreach ($matches[1] as $placeholder) {
+                    $replacement = $this->resolveLinkParam($value, $placeholder, $item, $key);
+                    $url = str_replace('{'.$placeholder.'}', (string) $replacement, $url);
+                }
+            }
+
+            return $url;
+        }
+
+        return null;
+    }
+
+    protected function resolveLinkParam($value, string $columnName, $item = null, $key = null)
+    {
+        if ($item && ! is_null($resolved = data_get($item, $columnName)) && $resolved !== '') {
+            return $resolved;
+        }
+
+        if ($columnName === $key) {
+            return $value;
+        }
+
+        return $columnName;
     }
 
     protected function formatDate($value, string $format): string
@@ -80,7 +172,7 @@ trait WithFormatters
         }
     }
 
-    public function formatValue($key, $value): string|int|float|bool
+    public function formatValue($key, $value, $item = null): string|int|float|bool
     {
         // Handle null values by returning a dash
         if ($value === null || $value === '') {
@@ -95,7 +187,7 @@ trait WithFormatters
 
         // Handle complex formatter array with type and options
         if (is_array($formatter)) {
-            return $this->formatComplexValue($value, $formatter);
+            return $this->formatComplexValue($value, $formatter, $item, $key);
         }
 
         // Handle simple string formatter

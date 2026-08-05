@@ -35,6 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `showCustomExportPanel()` / `closeCustomExport()` actions for modal management
   - `toggleCustomExportColumn()`, `selectAllExportColumns()`, `deselectAllExportColumns()` for column selection
 
+- **Link Formatter**:
+  - New `link` formatter to render column values as clickable links
+  - Named route support with parameters pulled from other columns (`route` + `params`)
+  - Associative params mapping for route params with different column names
+  - Custom/static URL support (`url`)
+  - URL placeholder injection via `{column}` tokens (e.g. `/users/{id}/edit`)
+  - Configurable link label (`text`), `target`, CSS `class`, and `title`
+  - Escaped output for safety
+  - Works across all template systems; exports (Excel & PDF) keep the original value
+
 - **Date Range Filter**:
   - Separate date filter modal for date/datetime/timestamp columns
   - Auto-detection of date-type columns via schema introspection (`date`, `datetime`, `timestamp`)
@@ -76,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - PDF export customization guide (paper size, orientation, dynamic sizing)
 - Added date range filter documentation with usage examples
 - Configuration reference for all date filter theme classes (Tailwind & Bootstrap)
+- Added link formatter documentation with route, static URL, and placeholder examples
 
 ---
 

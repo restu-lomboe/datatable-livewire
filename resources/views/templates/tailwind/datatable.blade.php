@@ -355,7 +355,7 @@
                                                         {{ $loop->parent->iteration + ($this->getQuery->currentPage() - 1) * $this->getQuery->perPage() }}
                                                     @endif
                                                 @else
-                                                    {!! $this->formatValue($key, data_get($item, $key)) !!}
+                                                    {!! $this->formatValue($key, data_get($item, $key), $item) !!}
                                                 @endif
                                             @endif
                                         </div>
