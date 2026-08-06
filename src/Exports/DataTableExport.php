@@ -89,6 +89,10 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
         $type = $formatter['type'] ?? null;
         $options = $formatter['options'] ?? [];
 
+        if ($type === 'link') {
+            return $value;
+        }
+
         return $this->formatSimpleValue($value, $type, $options);
     }
 
