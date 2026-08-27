@@ -154,6 +154,87 @@ class DataTable extends Component
         }
     }
 
+    protected function getFilterSessionKey(): string
+    {
+        $base = $this->model ?? ($this->apiConfig['url'] ?? 'datatable');
+
+        return 'livewire-datatable:filter:'.md5($base.'|'.json_encode($this->columns).'|'.($this->scope ?? ''));
+    }
+
+    protected function getSearchSessionKey(): string
+    {
+        return $this->getFilterSessionKey().':search';
+    }
+
+    protected function storeFilterSession(): void
+    {
+        if (! config('livewire-datatable.session.enabled', true)) {
+            return;
+        }
+
+        try {
+            session()->put($this->getFilterSessionKey(), [
+                'filterBy' => $this->filterBy,
+                'query' => $this->query,
+                'filterDataSearch' => $this->filterDataSearch,
+                'filter' => $this->filter,
+                'disabledAddFilterButton' => $this->disabledAddFilterButton,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore session not available (e.g. API)
+        }
+    }
+
+    protected function storeSearchSession(): void
+    {
+        if (! config('livewire-datatable.session.enabled', true)) {
+            return;
+        }
+
+        try {
+            session()->put($this->getSearchSessionKey(), $this->search);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    protected function restoreFilterSession(): void
+    {
+        if (! config('livewire-datatable.session.enabled', true)) {
+            return;
+        }
+
+        try {
+            $data = session()->get($this->getFilterSessionKey());
+            if (is_array($data)) {
+                $this->filterBy = $data['filterBy'] ?? $this->filterBy;
+                $this->query = $data['query'] ?? $this->query;
+                $this->filterDataSearch = $data['filterDataSearch'] ?? $this->filterDataSearch;
+                // Do not auto-open panel on restore; keep it closed but filter stays active
+                $this->disabledAddFilterButton = $data['disabledAddFilterButton'] ?? $this->disabledAddFilterButton;
+
+                // Re-evaluate disabled state against current columns
+                if (count($this->filterByColumn) == count($this->query)) {
+                    $this->disabledAddFilterButton = true;
+                }
+            }
+
+            $search = session()->get($this->getSearchSessionKey());
+            if (is_string($search)) {
+                $this->search = $search;
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
+    protected function clearFilterSession(): void
+    {
+        try {
+            session()->forget($this->getFilterSessionKey());
+            session()->forget($this->getSearchSessionKey());
+        } catch (\Throwable $e) {
+        }
+    }
+
     public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = []): void
     {
         if (! $model && ! $apiConfig) {
@@ -208,6 +289,9 @@ class DataTable extends Component
 
         // Initialize the appropriate data source
         $this->initializeDataSource();
+
+        // Restore session-persisted filter/search (so close does not reset)
+        $this->restoreFilterSession();
     }
 
     public function getClass(string $element): string
@@ -405,6 +489,11 @@ class DataTable extends Component
     {
         $this->ensureDataSourceInitialized();
         $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->storeSearchSession();
     }
 
     public function updatingPerPage(): void
@@ -617,22 +706,24 @@ class DataTable extends Component
             $this->query[] = '';
         }
 
+        $this->storeFilterSession();
     }
 
     public function closeFilter(): void
     {
         $this->filter = false;
-        $this->filterDataSearch = false;
+        // Keep filterDataSearch active — filter persists as session (fix: close should not reset)
+        $this->storeFilterSession();
         $this->resetPage();
     }
 
     public function filterData(): void
     {
         $this->filterDataSearch = true;
-        $this->reset('search');
         $this->sortField = $this->defaultSortField;
         $this->sortDirection = $this->defaultSortDirection;
         $this->resetPage();
+        $this->storeFilterSession();
     }
 
     public function addFilter(): void
@@ -646,6 +737,8 @@ class DataTable extends Component
         if (count($this->filterByColumn) == count($this->query)) {
             $this->disabledAddFilterButton = true;
         }
+
+        $this->storeFilterSession();
     }
 
     public function resetFilter(): void
@@ -659,6 +752,7 @@ class DataTable extends Component
         $this->query = [''];
         $this->disabledAddFilterButton = false;
         $this->filterDataSearch = false;
+        $this->clearFilterSession();
     }
 
     public function deleteFilter(int $index): void
@@ -678,6 +772,7 @@ class DataTable extends Component
         // Re-index array to avoid gaps
         $this->filterBy = array_values($this->filterBy);
         $this->query = array_values($this->query);
+        $this->storeFilterSession();
     }
 
     #[Computed]
@@ -899,8 +994,8 @@ class DataTable extends Component
             }
         }
 
-        // Apply search when advanced filter is not active (covers date-filter + search case)
-        if (! $this->filterDataSearch && ! empty($this->search)) {
+        // Apply global search even when advanced filter is active — combinable (session search)
+        if (! empty($this->search)) {
             $search = $this->escapeLike(trim((string) $this->search));
             $query->where(function ($q) use ($search) {
                 foreach ($this->searchable as $field) {

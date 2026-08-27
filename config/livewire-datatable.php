@@ -410,4 +410,18 @@ return [
     |
     */
     'max_all_records' => env('DATATABLE_MAX_ALL', 5000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Persistence
+    |--------------------------------------------------------------------------
+    |
+    | Keep advanced filter & search in Laravel session so closing the
+    | filter panel does not reset it and it survives page reloads.
+    | Disable with DATATABLE_SESSION=false.
+    |
+    */
+    'session' => [
+        'enabled' => env('DATATABLE_SESSION', true),
+    ],
 ];

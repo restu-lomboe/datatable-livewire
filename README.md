@@ -149,6 +149,14 @@ DATATABLE_SCHEMA_CACHE_TTL=3600  # seconds, default 3600 (1 hour). Set 0 to disa
 
 Clear cache after migrations: `php artisan cache:forget livewire-datatable:schema:*` or call `DataTable::clearSchemaCache()`.
 
+### 6. (Optional) Configure Session Search
+
+Advanced filter & global search persist automatically in the Laravel session (per table):
+
+```env
+DATATABLE_SESSION=true  # false = disable, closing the panel will reset again
+```
+
 ## 🚀 Quick Start
 
 Create a fully functional DataTable in under 2 minutes.
@@ -657,6 +665,29 @@ All filter elements have configurable CSS classes:
     'filter_apply_button' => 'py-2 px-3 text-sm font-medium',
 ]
 ```
+
+#### Session Persistence (Close ≠ Reset)
+
+Advanced filter is now **session-based**: closing the panel (`X` / `closeFilter`) **does not reset** the filter. The filter remains active as a Laravel session per `model + columns + scope`, survives page reloads & navigation, and **global `search` + advanced filter are combined with `AND`**.
+
+* `Filter` → Apply → `filterDataSearch=true` stored in `session('livewire-datatable:filter:{md5}')`
+* `Close (X)` → only `filter=false` (panel hidden), `filterDataSearch` stays `true`
+* `Search` → typing in the global search → `session('...:search')` updated, still AND-combined with the filter
+* `Reset` → `clearFilterSession()` (clears `filter` & `search` session)
+
+```php
+// config/livewire-datatable.php
+'session' => [
+    'enabled' => env('DATATABLE_SESSION', true), // false = disable, closing panel resets again
+],
+```
+
+```env
+# .env
+DATATABLE_SESSION=true   # false to disable (fallback to legacy behavior)
+```
+
+Manual clear: `session()->forget('livewire-datatable:filter:...')` — no need for `php artisan cache:clear` (session ≠ cache). The key is hashed from `model|json(columns)|scope`, so each table is isolated.
 
 ### Date Range Filter
 
