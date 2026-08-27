@@ -1,0 +1,91 @@
+name: Auto Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*'
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog from commits
+        id: changelog
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Current tag: $TAG"
+
+          # Cari tag sebelumnya (sorted version)
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            # Jika tidak ada tag sebelumnya, ambil semua commit
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+            RANGE="$PREV_TAG..HEAD"
+            echo "No previous tag, range: $RANGE"
+          else
+            RANGE="$PREV_TAG..HEAD"
+            echo "Previous tag: $PREV_TAG, range: $RANGE"
+          fi
+
+          # Header
+          echo "## $TAG" > /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+          echo "_Published: $(date -u +'%Y-%m-%d %H:%M UTC')_" >> /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+
+          # Commit list (format per commit)
+          echo "### Commits" >> /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+          git log $RANGE --pretty=format:"- %s (%h) by %an (%ad)" --date=short --no-merges >> /tmp/release_body.md || echo "- No commits found" >> /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+
+          # Detail dengan body jika ada
+          echo "### Detail" >> /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+          git log $RANGE --pretty=format:"#### %s%n- Hash: %H%n- Author: %an <%ae>%n- Date: %ad%n%n%b%n---" --date=short --no-merges >> /tmp/release_body.md || true
+
+          # Stats
+          echo "" >> /tmp/release_body.md
+          echo "### Stats" >> /tmp/release_body.md
+          echo "" >> /tmp/release_body.md
+          echo '```' >> /tmp/release_body.md
+          git diff --stat $RANGE >> /tmp/release_body.md || true
+          echo '```' >> /tmp/release_body.md
+
+          cat /tmp/release_body.md
+
+          # Simpan untuk step berikutnya (escape multiline)
+          {
+            echo 'body<<EOF'
+            cat /tmp/release_body.md
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "Release ${{ github.ref_name }} created with commit messages" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/release_body.md >> $GITHUB_STEP_SUMMARY
