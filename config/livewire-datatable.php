@@ -382,4 +382,16 @@ return [
     |
     */
     'advanced_filter' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Cache TTL (seconds)
+    |--------------------------------------------------------------------------
+    |
+    | Cache duration for Schema::getColumnListing / getColumnType lookups.
+    | Reduces repeated information_schema queries to one per table per TTL.
+    | Set to 0 to disable caching (always hit DB).
+    |
+    */
+    'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
 ];

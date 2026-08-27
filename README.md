@@ -40,7 +40,9 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Dynamic CSS Classes](#dynamic-css-classes)
   - [Dark Mode Support](#dark-mode-support)
   - [Pagination Options](#pagination-options)
+  - [Schema Cache](#schema-cache)
 - [API Integration](#-api-integration)
+- [Upgrading](#-upgrading)
 - [Troubleshooting](#-troubleshooting)
 - [Support](#-support)
 
@@ -136,6 +138,16 @@ DATATABLE_TEMPLATE=tailwind    # Default
 # or
 DATATABLE_TEMPLATE=bootstrap
 ```
+
+### 5. (Optional) Configure Schema Cache
+
+For production, schema introspection is cached to avoid repeated `information_schema` queries on every request:
+
+```env
+DATATABLE_SCHEMA_CACHE_TTL=3600  # seconds, default 3600 (1 hour). Set 0 to disable.
+```
+
+Clear cache after migrations: `php artisan cache:forget livewire-datatable:schema:*` or call `DataTable::clearSchemaCache()`.
 
 ## 🚀 Quick Start
 
@@ -1122,6 +1134,43 @@ public $perPage = 25;
 
 Or let users choose with the per-page selector in the UI.
 
+### Schema Cache
+
+Optimize production performance by caching schema introspection (`Schema::getColumnListing` / `getColumnType`).
+
+The datatable introspects the database to auto-detect filterable, exportable, and date-filterable columns (including relations via `$with`). Without caching this triggers 100+ `information_schema` queries per request.
+
+#### How It Works
+
+- Results are cached per-table with `Cache::remember()` (key `livewire-datatable:schema:{table}:columns`)
+- In-memory static cache avoids duplicate lookups within the same request
+- TTL is configurable and defaults to **3600 seconds (1 hour)**
+
+#### Configuration
+
+```php
+// config/livewire-datatable.php
+'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
+```
+
+```env
+# .env
+DATATABLE_SCHEMA_CACHE_TTL=3600  # 0 = disable caching (always hit DB)
+```
+
+#### When to Clear
+
+Clear after migrations that add/rename/drop columns:
+
+```bash
+php artisan cache:forget livewire-datatable:schema:users:columns
+# or programmatically
+\Developerawam\LivewireDatatable\Components\DataTable::clearSchemaCache('users');
+\Developerawam\LivewireDatatable\Components\DataTable::clearSchemaCache(); # future: flush all
+```
+
+> **Tip:** In local development set `DATATABLE_SCHEMA_CACHE_TTL=0` to always reflect fresh schema, in production keep `3600` or higher.
+
 ## 📝 Complete Example
 
 Here's a comprehensive example with multiple features:
@@ -1246,6 +1295,66 @@ Quick reference of all available parameters:
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
 
+## ⬆️ Upgrading
+
+### From < v2.3.1 to v2.3.1+
+
+This version adds schema caching for production performance (`DATATABLE_SCHEMA_CACHE_TTL`).
+
+**If you already published `config/livewire-datatable.php` before v2.3.1:**
+
+Your published config will NOT contain `schema_cache_ttl` — but the package remains **backward compatible**:
+
+* `DataTable.php:177` uses `config('livewire-datatable.schema_cache_ttl', 3600)` with default `3600`
+* `LivewireDatatableServiceProvider.php:43` does `array_merge(packageDefaults, publishedConfig)` via `mergeConfigFrom()`, so the missing key is auto-injected at runtime even with `php artisan config:cache` stale. No error.
+
+To expose the option for tuning, pick one:
+
+**Option A — Manual patch (recommended, preserves your `theme` customizations):**
+
+Add to your published `config/livewire-datatable.php` before the closing `];`:
+
+```php
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Cache TTL (seconds)
+    |--------------------------------------------------------------------------
+    */
+    'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
+```
+
+Add to `.env`:
+
+```env
+DATATABLE_SCHEMA_CACHE_TTL=3600  # 0 = disable (always hit DB, useful for local)
+```
+
+Then:
+
+```bash
+php artisan config:clear
+# or
+php artisan config:cache
+```
+
+**Option B — Republish (overwrites):**
+
+```bash
+cp config/livewire-datatable.php config/livewire-datatable.php.bak
+php artisan vendor:publish --tag=livewire-datatable-config --force
+# re-apply your theme customizations from .bak
+php artisan config:clear
+```
+
+**Verify:**
+
+```bash
+php artisan tinker --execute "echo config('livewire-datatable.schema_cache_ttl');"
+# should output 3600
+```
+
+> After migrations that add/rename columns, clear `php artisan cache:clear` or `DataTable::clearSchemaCache('users')`. On local set `DATATABLE_SCHEMA_CACHE_TTL=0`.
+
 ## ❓ Troubleshooting
 
 ### Common Issues
@@ -1272,6 +1381,10 @@ protected $with = ['department', 'role'];
 
 - Verify export is enabled in config
 - Check that required packages are installed
+
+**Schema changes not showing (new columns missing in filter/export)**
+
+- Schema is cached for `DATATABLE_SCHEMA_CACHE_TTL` seconds (default `3600`). Run `php artisan cache:clear` or `DataTable::clearSchemaCache('table_name')` after migrations, or set `DATATABLE_SCHEMA_CACHE_TTL=0` in local `.env`.
 
 ### Getting Help
 
