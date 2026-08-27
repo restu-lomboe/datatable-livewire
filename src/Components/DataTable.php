@@ -102,6 +102,8 @@ class DataTable extends Component
 
     public $dateFilterEnabled = false;
 
+    public $excludeColumns = [];
+
     protected function ensureDataSourceInitialized(): void
     {
         if (! $this->dataSource) {
@@ -109,7 +111,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc'): void
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = []): void
     {
         if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -139,6 +141,7 @@ class DataTable extends Component
         $this->formatterOptions = $formatterOptions;
         $this->defaultSortField = $defaultSortField;
         $this->defaultSortDirection = $defaultSortDirection;
+        $this->excludeColumns = $excludeColumns;
         $this->sortField = $defaultSortField;
         $this->sortDirection = $defaultSortDirection;
         // By default, all columns are sortable except those in unsortable array
@@ -233,6 +236,37 @@ class DataTable extends Component
         } catch (\Throwable $e) {
             // ignore
         }
+    }
+
+    /**
+     * Determine if a column key should be excluded from export.
+     * Checks: default exact, config exclude_columns (exact), mount excludeColumns (exact), and exclude_patterns (Str::is wildcard).
+     * Only affects export — never hides columns from table display.
+     */
+    protected function isExcludedFromExport(string $column): bool
+    {
+        $defaultExact = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
+        if (in_array($column, $defaultExact, true)) {
+            return true;
+        }
+
+        $configExact = config('livewire-datatable.export.exclude_columns', []);
+        if (in_array($column, $configExact, true)) {
+            return true;
+        }
+
+        if (in_array($column, $this->excludeColumns ?? [], true)) {
+            return true;
+        }
+
+        $patterns = config('livewire-datatable.export.exclude_patterns', ['*_id']);
+        foreach ($patterns as $pattern) {
+            if (Str::is($pattern, $column)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function sortBy(string $field): void
@@ -336,10 +370,8 @@ class DataTable extends Component
         $model = new $this->model;
         $table = $model->getTable();
 
-        $exclude = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
-
         $columns = collect($this->cachedColumnListing($table))
-            ->reject(fn ($c) => in_array($c, $exclude))
+            ->reject(fn ($c) => $this->isExcludedFromExport($c))
             ->mapWithKeys(fn ($c) => [$c => Str::headline($c)])
             ->toArray();
 
@@ -367,15 +399,16 @@ class DataTable extends Component
         $relatedModel = $relation->getRelated();
         $relatedTable = $relatedModel->getTable();
 
-        $exclude = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
-
         $columns = collect($this->cachedColumnListing($relatedTable))
-            ->reject(fn ($c) => in_array($c, $exclude));
+            ->reject(fn ($c) => $this->isExcludedFromExport($c));
 
         $result = [];
 
         foreach ($columns as $col) {
             $key = "{$relationPath}.{$col}";
+            if ($this->isExcludedFromExport($key)) {
+                continue;
+            }
             $label = Str::headline(str_replace('.', ' ', "{$relationPath} {$col}"));
             $result[$key] = $label;
         }

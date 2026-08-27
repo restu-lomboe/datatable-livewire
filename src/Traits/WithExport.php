@@ -24,6 +24,14 @@ trait WithExport
 
         $columns = $selectedColumns ?? $this->columns;
 
+        // Apply export excludes (only for export — table display unaffected)
+        // Merge: defaultExact + config exclude_columns + config exclude_patterns (*_id) + mount excludeColumns
+        if (method_exists($this, 'isExcludedFromExport')) {
+            $columns = collect($columns)
+                ->reject(fn ($label, $key) => $this->isExcludedFromExport($key))
+                ->toArray();
+        }
+
         // Build filename
         $filename = Str::slug(class_basename($this->model ?? 'DataTable'));
         if ($this->filterDataSearch) {

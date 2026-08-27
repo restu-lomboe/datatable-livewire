@@ -50,6 +50,11 @@ return [
             'excel_text' => 'Excel',
             'pdf_text' => 'PDF',
         ],
+        // Columns/patterns to exclude from export (applies to custom export modal & file exports)
+        // - exact column keys (supports dot notation, e.g. 'password', 'user.password', 'secret_token')
+        // - patterns use Str::is() wildcards, e.g. '*_id' hides user_id, post_id, department.user_id
+        'exclude_columns' => [],
+        'exclude_patterns' => ['*_id'],
     ],
 
     /*

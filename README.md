@@ -886,7 +886,30 @@ Export your DataTable data to Excel and PDF formats.
     'types' => ['excel', 'pdf'],
     'orientation' => 'portrait',
     'paper_size' => 'a4',
+    'exclude_columns' => [],       // exact keys, e.g. ['secret_token', 'user.password']
+    'exclude_patterns' => ['*_id'], // wildcard via Str::is(), e.g. hides user_id, department.user_id
 ];
+```
+
+**Exclude behavior (export only, table display unaffected):**
+- Default exact: `id`, `updated_at`, `deleted_at`, `password`, `remember_token` (always excluded)
+- `exclude_columns` (config) + `excludeColumns` mount param: exact match with dot notation (merged)
+- `exclude_patterns` (config, default `['*_id']`): `Str::is()` wildcard — automatically hides all `*_id` columns from custom export modal and file exports
+- Mount param `:excludeColumns="['api_token']"` is merged (not replace) with defaults
+
+```php
+// Mount — only affects export
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="$columns"
+    :excludeColumns="['secret_token', 'department.internal_code']" />
+
+// Component
+return view('livewire.users-table', [
+    'model' => User::class,
+    'columns' => [...],
+    'excludeColumns' => ['secret_token'],
+]);
 ```
 
 ### How to Use
@@ -1294,6 +1317,7 @@ Quick reference of all available parameters:
 | `defaultSortDirection` | string | 'asc' or 'desc'          |
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
+| `excludeColumns`       | array  | Export-only exclude (dot-notation exact, merged with config) |
 
 ## ⬆️ Upgrading
 
