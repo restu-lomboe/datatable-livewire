@@ -37,7 +37,7 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     public function headings(): array
     {
         return array_values(array_filter($this->columns, function ($key) {
-            return $key !== 'action';
+            return ! in_array($key, ['action', 'actions'], true);
         }, ARRAY_FILTER_USE_KEY));
     }
 
@@ -104,8 +104,8 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
         $result = [];
 
         foreach (array_keys($this->columns) as $column) {
-            // Skip action column
-            if ($column === 'action') {
+            // Skip action(s) column
+            if (in_array($column, ['action', 'actions'], true)) {
                 continue;
             }
 

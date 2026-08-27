@@ -1,6 +1,8 @@
 @php
-    $visibleColumns = array_filter($columns, fn ($key) => $key !== 'action', ARRAY_FILTER_USE_KEY);
-    $columnCount = count($visibleColumns);
+    use Illuminate\Support\Str;
+    use Illuminate\Support\Carbon;
+    $visibleColumns = array_filter($columns, fn ($key) => ! in_array($key, ['action', 'actions'], true), ARRAY_FILTER_USE_KEY);
+    $columnCount = max(1, count($visibleColumns));
     $baseFontSize = max(6, min(10, 140 / $columnCount));
     $cellPadding = max(1, min(6, 80 / $columnCount));
 @endphp
@@ -27,14 +29,25 @@
                                     if (isset($formatters[$column])) {
                                         $formatter = $formatters[$column];
                                         $options = $formatterOptions[$column] ?? [];
-
+                                        $formatDate = function ($val, $fmt) {
+                                            if (! $val) return $val;
+                                            try {
+                                                $dt = $val instanceof \DateTimeInterface ? $val : Carbon::parse($val);
+                                                return $dt->format($fmt);
+                                            } catch (\Throwable $e) {
+                                                return $val;
+                                            }
+                                        };
                                         if (is_string($formatter)) {
                                             switch ($formatter) {
                                                 case 'date':
-                                                    $value = $value instanceof \DateTimeInterface ? $value->format($options['format'] ?? 'Y-m-d') : $value;
+                                                    $value = $formatDate($value, $options['format'] ?? 'Y-m-d');
                                                     break;
                                                 case 'datetime':
-                                                    $value = $value instanceof \DateTimeInterface ? $value->format($options['format'] ?? 'Y-m-d H:i:s') : $value;
+                                                    $value = $formatDate($value, $options['format'] ?? 'Y-m-d H:i:s');
+                                                    break;
+                                                case 'time':
+                                                    $value = $formatDate($value, $options['format'] ?? 'H:i:s');
                                                     break;
                                                 case 'number':
                                                     $value = is_numeric($value) ? number_format($value, $options['decimals'] ?? 0, $options['decimal_point'] ?? '.', $options['thousand_sep'] ?? ',') : $value;
@@ -45,12 +58,59 @@
                                                 case 'boolean':
                                                     $value = $value ? ($options['true'] ?? 'Yes') : ($options['false'] ?? 'No');
                                                     break;
+                                                case 'uppercase':
+                                                    $value = Str::upper($value);
+                                                    break;
+                                                case 'lowercase':
+                                                    $value = Str::lower($value);
+                                                    break;
+                                                default:
+                                                    break;
                                             }
                                         } elseif (is_array($formatter)) {
                                             $type = $formatter['type'] ?? null;
                                             $typeOptions = array_merge($options, $formatter['options'] ?? []);
-                                            if (in_array($type, ['date', 'datetime', 'number', 'currency', 'boolean'])) {
-                                                $value = $value instanceof \DateTimeInterface ? $value->format($typeOptions['format'] ?? 'Y-m-d') : $value;
+                                            switch ($type) {
+                                                case 'date':
+                                                    $value = $formatDate($value, $typeOptions['format'] ?? 'Y-m-d');
+                                                    break;
+                                                case 'datetime':
+                                                    $value = $formatDate($value, $typeOptions['format'] ?? 'Y-m-d H:i:s');
+                                                    break;
+                                                case 'time':
+                                                    $value = $formatDate($value, $typeOptions['format'] ?? 'H:i:s');
+                                                    break;
+                                                case 'number':
+                                                    $value = is_numeric($value) ? number_format($value, $typeOptions['decimals'] ?? 0, $typeOptions['decimal_point'] ?? '.', $typeOptions['thousand_sep'] ?? ',') : $value;
+                                                    break;
+                                                case 'currency':
+                                                case 'money':
+                                                    $value = is_numeric($value) ? ($typeOptions['symbol'] ?? 'Rp ') . number_format($value, $typeOptions['decimals'] ?? 2, $typeOptions['decimal_point'] ?? '.', $typeOptions['thousand_sep'] ?? ',') : $value;
+                                                    break;
+                                                case 'boolean':
+                                                    $value = $value ? ($typeOptions['true'] ?? 'Yes') : ($typeOptions['false'] ?? 'No');
+                                                    break;
+                                                case 'limit':
+                                                    $value = Str::limit($value, $typeOptions['length'] ?? 50, $typeOptions['end'] ?? '...');
+                                                    break;
+                                                case 'words':
+                                                    $value = Str::words($value, $typeOptions['words'] ?? 10, $typeOptions['end'] ?? '...');
+                                                    break;
+                                                case 'uppercase':
+                                                    $value = Str::upper($value);
+                                                    break;
+                                                case 'lowercase':
+                                                    $value = Str::lower($value);
+                                                    break;
+                                                case 'markdown':
+                                                    // Strip HTML for PDF clean rendering
+                                                    $value = strip_tags(Str::markdown($value));
+                                                    break;
+                                                case 'link':
+                                                    // PDF keeps original value (no URL)
+                                                    break;
+                                                default:
+                                                    break;
                                             }
                                         }
                                     }

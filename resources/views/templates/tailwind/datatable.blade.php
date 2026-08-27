@@ -202,7 +202,7 @@
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="search" name="search" wire:model.live.debounce.300ms="search"
+                            <input type="search" name="search" wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
                                 placeholder="Search..." data-class="search_input" @class([$this->getClass('search_input')]))
                                 {{ $filterDataSearch ? 'disabled' : '' }}>
                         </label>
@@ -330,11 +330,14 @@
                                 @foreach ($columns as $key => $column)
                                     <td @class([$this->getClass('td')]) wire:key="cell-{{ $key }}">
                                         <div data-class="td_{{ $key }}" @class([$this->getClass("td_{$key}")])>
-                                            @if (isset($customColumns[$key]))
+                                            @if (isset($customColumns[$key]) && view()->exists($customColumns[$key]))
                                                 @include($customColumns[$key], [
                                                     'item' => $item,
                                                     'value' => data_get($item, $key),
                                                 ])
+                                            @elseif (isset($customColumns[$key]))
+                                                {{-- View missing fallback: show raw value escaped --}}
+                                                {{ data_get($item, $key) ?? '-' }}
                                             @else
                                                 @if ($key === 'no')
                                                     @if ($sortField === 'no')

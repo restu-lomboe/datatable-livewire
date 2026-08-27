@@ -39,7 +39,7 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
     public function headings(): array
     {
         return array_values(array_filter($this->columns, function ($key) {
-            return $key !== 'action';
+            return ! in_array($key, ['action', 'actions'], true);
         }, ARRAY_FILTER_USE_KEY));
     }
 
@@ -104,7 +104,7 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
         $result = [];
 
         foreach (array_keys($this->columns) as $column) {
-            if ($column === 'action') {
+            if (in_array($column, ['action', 'actions'], true)) {
                 continue;
             }
 

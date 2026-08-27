@@ -8,11 +8,13 @@ use Developerawam\LivewireDatatable\Traits\WithExport;
 use Developerawam\LivewireDatatable\Traits\WithFormatters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -22,16 +24,22 @@ class DataTable extends Component
 {
     use WithExport, WithFormatters, WithPagination;
 
+    #[Locked]
     public $model;
 
+    #[Locked]
     public $apiConfig;
 
+    #[Locked]
     public $columns = [];
 
+    #[Locked]
     public $searchable = [];
 
+    #[Locked]
     public $sortable = [];
 
+    #[Locked]
     public $unsortable = [];
 
     public $search = '';
@@ -42,22 +50,29 @@ class DataTable extends Component
 
     public $sortDirection = 'desc';
 
+    #[Locked]
     public $defaultSortField = 'created_at';
 
+    #[Locked]
     public $defaultSortDirection = 'desc';
 
     public $pageOptions;
 
     public $theme = [];
 
+    #[Locked]
     public $customColumns = [];
 
+    #[Locked]
     public $formatters = [];
 
+    #[Locked]
     public $formatterOptions = [];
 
+    #[Locked]
     public $scope;
 
+    #[Locked]
     public $scopeParams = [];
 
     public $totals;
@@ -108,6 +123,34 @@ class DataTable extends Component
     {
         if (! $this->dataSource) {
             $this->initializeDataSource();
+        }
+    }
+
+    public function hydrate(): void
+    {
+        $this->validateLockedState();
+    }
+
+    public function boot(): void
+    {
+        // Defense-in-depth: re-validate locked props on every request (hydrate already covers post-mount, boot covers edge cases)
+        if ($this->model) {
+            $this->validateLockedState();
+        }
+    }
+
+    protected function validateLockedState(): void
+    {
+        if ($this->model) {
+            if (! class_exists($this->model)) {
+                throw new \InvalidArgumentException("Model class [{$this->model}] does not exist.");
+            }
+            if (! is_subclass_of($this->model, Model::class)) {
+                throw new \InvalidArgumentException("Model [{$this->model}] must be an Eloquent Model.");
+            }
+            if ($this->scope && ! method_exists($this->model, 'scope'.Str::studly($this->scope))) {
+                throw new \InvalidArgumentException("Scope [{$this->scope}] does not exist on model [{$this->model}].");
+            }
         }
     }
 
@@ -170,6 +213,12 @@ class DataTable extends Component
     public function getClass(string $element): string
     {
         return $this->theme[$element] ?? '';
+    }
+
+    #[Computed]
+    public function searchDebounce(): int
+    {
+        return (int) config('livewire-datatable.search_debounce', 300);
     }
 
     /**
@@ -235,6 +284,75 @@ class DataTable extends Component
             }
         } catch (\Throwable $e) {
             // ignore
+        }
+    }
+
+    protected function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $value);
+    }
+
+    protected function isDateColumn(string $column): bool
+    {
+        if (! $this->model) {
+            return false;
+        }
+
+        try {
+            $model = new $this->model;
+
+            if (str_contains($column, '.')) {
+                $parts = explode('.', $column);
+                $field = array_pop($parts);
+                $current = $model;
+
+                foreach ($parts as $rel) {
+                    if (! method_exists($current, $rel)) {
+                        return false;
+                    }
+                    $relInstance = $current->{$rel}();
+                    $current = $relInstance->getRelated();
+                }
+
+                $table = $current->getTable();
+                $type = $this->cachedColumnType($table, $field);
+            } else {
+                $table = $model->getTable();
+                $type = $this->cachedColumnType($table, $column);
+            }
+
+            return in_array($type, ['date', 'datetime', 'timestamp', 'datetimetz'], true);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    protected function tryParseDate(string $value): ?string
+    {
+        $value = trim($value);
+        if (strlen($value) < 6) {
+            return null;
+        }
+        // Must look like a date (contains separator or month name), not pure number
+        if (! preg_match('/[\/\-\s]/', $value) && ! preg_match('/[a-zA-Z]/', $value)) {
+            return null;
+        }
+        if (preg_match('/^\d+$/', $value)) {
+            return null;
+        }
+
+        try {
+            $dt = Carbon::parse($value);
+            // If input contains a 4-digit year, parsed year must match
+            if (preg_match('/\b(19|20)\d{2}\b/', $value, $m)) {
+                if ((string) $dt->year !== $m[0]) {
+                    return null;
+                }
+            }
+
+            return $dt->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
@@ -731,20 +849,59 @@ class DataTable extends Component
                     continue;
                 }
 
+                // Date-aware: if column is date/datetime/timestamp and value looks like a date, use whereDate
+                if ($this->isDateColumn($column)) {
+                    // Support "Aug 2026" / "August 2026" → filter by month+year
+                    $trimmed = trim($value);
+                    if (preg_match('/^[a-zA-Z]+\s+(19|20)\d{2}$/', $trimmed) || preg_match('/^(19|20)\d{2}[\-\/]\d{1,2}$/', $trimmed)) {
+                        try {
+                            $dt = Carbon::parse($trimmed);
+                            if (str_contains($column, '.')) {
+                                $parts = explode('.', $column);
+                                $field = array_pop($parts);
+                                $relationPath = implode('.', $parts);
+                                $query->whereHas($relationPath, fn ($q) => $q->whereMonth($field, $dt->month)->whereYear($field, $dt->year));
+                            } else {
+                                $query->whereMonth($column, $dt->month)->whereYear($column, $dt->year);
+                            }
+
+                            continue;
+                        } catch (\Throwable $e) {
+                            // fallback to LIKE
+                        }
+                    }
+
+                    $parsed = $this->tryParseDate($value);
+                    if ($parsed) {
+                        if (str_contains($column, '.')) {
+                            $parts = explode('.', $column);
+                            $field = array_pop($parts);
+                            $relationPath = implode('.', $parts);
+                            $query->whereHas($relationPath, fn ($q) => $q->whereDate($field, $parsed));
+                        } else {
+                            $query->whereDate($column, $parsed);
+                        }
+
+                        continue;
+                    }
+                }
+
+                $escaped = $this->escapeLike($value);
+
                 if (str_contains($column, '.')) {
                     $parts = explode('.', $column);
                     $field = array_pop($parts);
                     $relationPath = implode('.', $parts);
-                    $query->whereHas($relationPath, fn ($q) => $q->where($field, 'LIKE', "%{$value}%"));
+                    $query->whereHas($relationPath, fn ($q) => $q->where($field, 'LIKE', "%{$escaped}%"));
                 } else {
-                    $query->where($column, 'LIKE', "%{$value}%");
+                    $query->where($column, 'LIKE', "%{$escaped}%");
                 }
             }
         }
 
         // Apply search when advanced filter is not active (covers date-filter + search case)
         if (! $this->filterDataSearch && ! empty($this->search)) {
-            $search = trim((string) $this->search);
+            $search = $this->escapeLike(trim((string) $this->search));
             $query->where(function ($q) use ($search) {
                 foreach ($this->searchable as $field) {
                     if (str_contains($field, '.')) {
@@ -795,7 +952,18 @@ class DataTable extends Component
 
         if ($useManualQuery) {
             $query = $this->buildFilteredQuery();
-            $result = $query->paginate($this->perPage, ['*'], 'page', $this->page);
+
+            $perPage = $this->perPage;
+            if ($perPage === 'all' || $perPage === -1 || $perPage === '-1') {
+                $total = $query->count();
+                $maxAll = (int) config('livewire-datatable.max_all_records', 5000);
+                if ($maxAll > 0 && $total > $maxAll) {
+                    $total = $maxAll;
+                }
+                $result = $query->paginate($total, ['*'], 'page', 1);
+            } else {
+                $result = $query->paginate($perPage, ['*'], 'page', $this->page);
+            }
         } else {
             $this->ensureDataSourceInitialized();
             $this->search = trim((string) $this->search);

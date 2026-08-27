@@ -74,10 +74,14 @@ class ModelDataSource implements DataSourceInterface
         $perPage = $params['per_page'] ?? $this->perPage;
         $page = $params['page'] ?? 1;
 
-        // Handle 'all' option by getting total count
+        // Handle 'all' option by getting total count (with safety cap)
         if ($perPage === 'all' || $perPage === -1) {
             // For export or show all cases, get total count for pagination
             $total = $query->count();
+            $maxAll = (int) config('livewire-datatable.max_all_records', 5000);
+            if ($maxAll > 0 && $total > $maxAll) {
+                $total = $maxAll;
+            }
 
             if ($paginationType === 'simplePaginate') {
                 $paginator = $query->simplePaginate($total, ['*'], 'page', 1);
@@ -127,25 +131,32 @@ class ModelDataSource implements DataSourceInterface
         return $this->applySort($query, $field, $direction)->get();
     }
 
+    protected function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $value);
+    }
+
     protected function applySearch(Builder $query, string $searchTerm): Builder
     {
-        return $query->where(function ($query) use ($searchTerm) {
+        $escaped = $this->escapeLike($searchTerm);
+
+        return $query->where(function ($query) use ($escaped) {
             foreach ($this->searchable as $field) {
                 if (Str::contains($field, '.')) {
                     $parts = explode('.', $field);
                     $relationField = array_pop($parts); // Ambil field terakhir
                     $relations = $parts; // Sisa adalah chain relations
 
-                    $query->orWhereHas($relations[0], function ($q) use ($relations, $relationField, $searchTerm) {
+                    $query->orWhereHas($relations[0], function ($q) use ($relations, $relationField, $escaped) {
                         // Jika ada nested relation
                         if (count($relations) > 1) {
-                            $this->applyNestedRelation($q, array_slice($relations, 1), $relationField, $searchTerm);
+                            $this->applyNestedRelation($q, array_slice($relations, 1), $relationField, $escaped);
                         } else {
-                            $q->where($relationField, 'like', '%'.$searchTerm.'%');
+                            $q->where($relationField, 'like', '%'.$escaped.'%');
                         }
                     });
                 } else {
-                    $query->orWhere($field, 'like', '%'.$searchTerm.'%');
+                    $query->orWhere($field, 'like', '%'.$escaped.'%');
                 }
             }
         });
@@ -153,6 +164,7 @@ class ModelDataSource implements DataSourceInterface
 
     protected function applyNestedRelation($query, array $relations, string $field, string $searchTerm): void
     {
+        // $searchTerm already escaped
         if (empty($relations)) {
             $query->where($field, 'like', '%'.$searchTerm.'%');
 
@@ -187,19 +199,37 @@ class ModelDataSource implements DataSourceInterface
 
         $modelInstance = new $this->model;
         $baseTable = $modelInstance->getTable();
+        $baseModelTable = $baseTable;
+
+        // Track already joined tables to avoid duplicate joins on repeated sorts
+        $joins = $query->getQuery()->joins;
+        $joinedTables = [];
+        if ($joins) {
+            foreach ($joins as $join) {
+                $joinedTables[] = $join->table;
+            }
+        }
 
         foreach ($parts as $relationName) {
+            // Validate relation exists to avoid BadMethodCallException
+            if (! method_exists($modelInstance, $relationName)) {
+                return $query->orderBy($field, $direction);
+            }
+
             $relationInstance = $modelInstance->$relationName();
             $relatedTable = $relationInstance->getRelated()->getTable();
 
-            if ($relationInstance instanceof BelongsTo) {
-                $foreign = $relationInstance->getForeignKeyName();
-                $ownerKey = $relationInstance->getOwnerKeyName();
-                $query->leftJoin($relatedTable, $baseTable.'.'.$foreign, '=', $relatedTable.'.'.$ownerKey);
-            } else {
-                $foreign = $relationInstance->getQualifiedForeignKeyName();
-                $local = $relationInstance->getQualifiedParentKeyName();
-                $query->leftJoin($relatedTable, $foreign, '=', $local);
+            if (! in_array($relatedTable, $joinedTables, true)) {
+                if ($relationInstance instanceof BelongsTo) {
+                    $foreign = $relationInstance->getForeignKeyName();
+                    $ownerKey = $relationInstance->getOwnerKeyName();
+                    $query->leftJoin($relatedTable, $baseTable.'.'.$foreign, '=', $relatedTable.'.'.$ownerKey);
+                } else {
+                    $foreign = $relationInstance->getQualifiedForeignKeyName();
+                    $local = $relationInstance->getQualifiedParentKeyName();
+                    $query->leftJoin($relatedTable, $foreign, '=', $local);
+                }
+                $joinedTables[] = $relatedTable;
             }
 
             $modelInstance = $relationInstance->getRelated();
@@ -207,7 +237,8 @@ class ModelDataSource implements DataSourceInterface
         }
 
         // Select only the base model columns to avoid duplicates and ensure distinct results
-        $query->select($this->model::query()->getModel()->getTable().'.*');
+        // Use qualified base table to prevent ambiguity after joins
+        $query->select($baseModelTable.'.*');
         $query->distinct();
 
         return $query->orderBy($relatedTable.'.'.$column, $direction);

@@ -399,4 +399,15 @@ return [
     |
     */
     'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Max All Records
+    |--------------------------------------------------------------------------
+    |
+    | Safety limit for per_page="all" to prevent OOM when user selects "All".
+    | Export uses cursor (streaming) and is not limited.
+    |
+    */
+    'max_all_records' => env('DATATABLE_MAX_ALL', 5000),
 ];
