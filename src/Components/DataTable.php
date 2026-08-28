@@ -6,10 +6,15 @@ use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
 use Developerawam\LivewireDatatable\Traits\WithExport;
 use Developerawam\LivewireDatatable\Traits\WithFormatters;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -19,16 +24,22 @@ class DataTable extends Component
 {
     use WithExport, WithFormatters, WithPagination;
 
+    #[Locked]
     public $model;
 
+    #[Locked]
     public $apiConfig;
 
+    #[Locked]
     public $columns = [];
 
+    #[Locked]
     public $searchable = [];
 
+    #[Locked]
     public $sortable = [];
 
+    #[Locked]
     public $unsortable = [];
 
     public $search = '';
@@ -39,22 +50,29 @@ class DataTable extends Component
 
     public $sortDirection = 'desc';
 
+    #[Locked]
     public $defaultSortField = 'created_at';
 
+    #[Locked]
     public $defaultSortDirection = 'desc';
 
     public $pageOptions;
 
     public $theme = [];
 
+    #[Locked]
     public $customColumns = [];
 
+    #[Locked]
     public $formatters = [];
 
+    #[Locked]
     public $formatterOptions = [];
 
+    #[Locked]
     public $scope;
 
+    #[Locked]
     public $scopeParams = [];
 
     public $totals;
@@ -99,6 +117,8 @@ class DataTable extends Component
 
     public $dateFilterEnabled = false;
 
+    public $excludeColumns = [];
+
     protected function ensureDataSourceInitialized(): void
     {
         if (! $this->dataSource) {
@@ -106,10 +126,131 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc'): void
+    public function hydrate(): void
+    {
+        $this->validateLockedState();
+    }
+
+    public function boot(): void
+    {
+        // Defense-in-depth: re-validate locked props on every request (hydrate already covers post-mount, boot covers edge cases)
+        if ($this->model) {
+            $this->validateLockedState();
+        }
+    }
+
+    protected function validateLockedState(): void
+    {
+        if ($this->model) {
+            if (! class_exists($this->model)) {
+                throw new \InvalidArgumentException("Model class [{$this->model}] does not exist.");
+            }
+            if (! is_subclass_of($this->model, Model::class)) {
+                throw new \InvalidArgumentException("Model [{$this->model}] must be an Eloquent Model.");
+            }
+            if ($this->scope && ! method_exists($this->model, 'scope'.Str::studly($this->scope))) {
+                throw new \InvalidArgumentException("Scope [{$this->scope}] does not exist on model [{$this->model}].");
+            }
+        }
+    }
+
+    protected function getFilterSessionKey(): string
+    {
+        $base = $this->model ?? ($this->apiConfig['url'] ?? 'datatable');
+
+        return 'livewire-datatable:filter:'.md5($base.'|'.json_encode($this->columns).'|'.($this->scope ?? ''));
+    }
+
+    protected function getSearchSessionKey(): string
+    {
+        return $this->getFilterSessionKey().':search';
+    }
+
+    protected function storeFilterSession(): void
+    {
+        if (! config('livewire-datatable.session.enabled', true)) {
+            return;
+        }
+
+        try {
+            session()->put($this->getFilterSessionKey(), [
+                'filterBy' => $this->filterBy,
+                'query' => $this->query,
+                'filterDataSearch' => $this->filterDataSearch,
+                'filter' => $this->filter,
+                'disabledAddFilterButton' => $this->disabledAddFilterButton,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore session not available (e.g. API)
+        }
+    }
+
+    protected function storeSearchSession(): void
+    {
+        if (! config('livewire-datatable.session.enabled', true)) {
+            return;
+        }
+
+        try {
+            session()->put($this->getSearchSessionKey(), $this->search);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    protected function restoreFilterSession(): void
+    {
+        if (! config('livewire-datatable.session.enabled', true)) {
+            return;
+        }
+
+        try {
+            $data = session()->get($this->getFilterSessionKey());
+            if (is_array($data)) {
+                $this->filterBy = $data['filterBy'] ?? $this->filterBy;
+                $this->query = $data['query'] ?? $this->query;
+                $this->filterDataSearch = $data['filterDataSearch'] ?? $this->filterDataSearch;
+                // Do not auto-open panel on restore; keep it closed but filter stays active
+                $this->disabledAddFilterButton = $data['disabledAddFilterButton'] ?? $this->disabledAddFilterButton;
+
+                // Re-evaluate disabled state against current columns
+                if (count($this->filterByColumn) == count($this->query)) {
+                    $this->disabledAddFilterButton = true;
+                }
+            }
+
+            $search = session()->get($this->getSearchSessionKey());
+            if (is_string($search)) {
+                $this->search = $search;
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
+    protected function clearFilterSession(): void
+    {
+        try {
+            session()->forget($this->getFilterSessionKey());
+            session()->forget($this->getSearchSessionKey());
+        } catch (\Throwable $e) {
+        }
+    }
+
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = []): void
     {
         if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
+        }
+
+        if ($model) {
+            if (! class_exists($model)) {
+                throw new \InvalidArgumentException("Model class [{$model}] does not exist.");
+            }
+            if (! is_subclass_of($model, Model::class)) {
+                throw new \InvalidArgumentException("Model [{$model}] must be an Eloquent Model.");
+            }
+            if ($scope && ! method_exists($model, 'scope'.Str::studly($scope))) {
+                throw new \InvalidArgumentException("Scope [{$scope}] does not exist on model [{$model}].");
+            }
         }
 
         $this->model = $model;
@@ -124,6 +265,7 @@ class DataTable extends Component
         $this->formatterOptions = $formatterOptions;
         $this->defaultSortField = $defaultSortField;
         $this->defaultSortDirection = $defaultSortDirection;
+        $this->excludeColumns = $excludeColumns;
         $this->sortField = $defaultSortField;
         $this->sortDirection = $defaultSortDirection;
         // By default, all columns are sortable except those in unsortable array
@@ -147,11 +289,186 @@ class DataTable extends Component
 
         // Initialize the appropriate data source
         $this->initializeDataSource();
+
+        // Restore session-persisted filter/search (so close does not reset)
+        $this->restoreFilterSession();
     }
 
     public function getClass(string $element): string
     {
         return $this->theme[$element] ?? '';
+    }
+
+    #[Computed]
+    public function searchDebounce(): int
+    {
+        return (int) config('livewire-datatable.search_debounce', 300);
+    }
+
+    /**
+     * Cached column listing to avoid repeated information_schema queries.
+     */
+    protected function cachedColumnListing(string $table): array
+    {
+        $ttl = (int) config('livewire-datatable.schema_cache_ttl', 3600);
+
+        // Use in-memory static cache per request + persistent cache for cross-request
+        static $memory = [];
+
+        if (isset($memory[$table])) {
+            return $memory[$table];
+        }
+
+        $key = "livewire-datatable:schema:{$table}:columns";
+
+        if ($ttl <= 0) {
+            $columns = Schema::getColumnListing($table);
+
+            return $memory[$table] = $columns;
+        }
+
+        try {
+            $columns = Cache::remember($key, $ttl, fn () => Schema::getColumnListing($table));
+        } catch (\Throwable $e) {
+            $columns = Schema::getColumnListing($table);
+        }
+
+        return $memory[$table] = $columns;
+    }
+
+    protected function cachedColumnType(string $table, string $column): string
+    {
+        $ttl = (int) config('livewire-datatable.schema_cache_ttl', 3600);
+        $key = "livewire-datatable:schema:{$table}:type:{$column}";
+
+        if ($ttl <= 0) {
+            return Schema::getColumnType($table, $column);
+        }
+
+        try {
+            return Cache::remember($key, $ttl, fn () => Schema::getColumnType($table, $column));
+        } catch (\Throwable $e) {
+            return Schema::getColumnType($table, $column);
+        }
+    }
+
+    public static function clearSchemaCache(?string $table = null): void
+    {
+        if ($table) {
+            Cache::forget("livewire-datatable:schema:{$table}:columns");
+
+            // Column types are wildcard; clear via pattern is driver-dependent, so just forget listing
+            return;
+        }
+
+        // Best-effort: clear all datatable schema keys if cache supports tags/pattern
+        try {
+            if (method_exists(Cache::getStore(), 'flush')) {
+                // Do not flush entire cache; only forget known tables from models is safer
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
+    protected function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $value);
+    }
+
+    protected function isDateColumn(string $column): bool
+    {
+        if (! $this->model) {
+            return false;
+        }
+
+        try {
+            $model = new $this->model;
+
+            if (str_contains($column, '.')) {
+                $parts = explode('.', $column);
+                $field = array_pop($parts);
+                $current = $model;
+
+                foreach ($parts as $rel) {
+                    if (! method_exists($current, $rel)) {
+                        return false;
+                    }
+                    $relInstance = $current->{$rel}();
+                    $current = $relInstance->getRelated();
+                }
+
+                $table = $current->getTable();
+                $type = $this->cachedColumnType($table, $field);
+            } else {
+                $table = $model->getTable();
+                $type = $this->cachedColumnType($table, $column);
+            }
+
+            return in_array($type, ['date', 'datetime', 'timestamp', 'datetimetz'], true);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    protected function tryParseDate(string $value): ?string
+    {
+        $value = trim($value);
+        if (strlen($value) < 6) {
+            return null;
+        }
+        // Must look like a date (contains separator or month name), not pure number
+        if (! preg_match('/[\/\-\s]/', $value) && ! preg_match('/[a-zA-Z]/', $value)) {
+            return null;
+        }
+        if (preg_match('/^\d+$/', $value)) {
+            return null;
+        }
+
+        try {
+            $dt = Carbon::parse($value);
+            // If input contains a 4-digit year, parsed year must match
+            if (preg_match('/\b(19|20)\d{2}\b/', $value, $m)) {
+                if ((string) $dt->year !== $m[0]) {
+                    return null;
+                }
+            }
+
+            return $dt->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Determine if a column key should be excluded from export.
+     * Checks: default exact, config exclude_columns (exact), mount excludeColumns (exact), and exclude_patterns (Str::is wildcard).
+     * Only affects export — never hides columns from table display.
+     */
+    protected function isExcludedFromExport(string $column): bool
+    {
+        $defaultExact = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
+        if (in_array($column, $defaultExact, true)) {
+            return true;
+        }
+
+        $configExact = config('livewire-datatable.export.exclude_columns', []);
+        if (in_array($column, $configExact, true)) {
+            return true;
+        }
+
+        if (in_array($column, $this->excludeColumns ?? [], true)) {
+            return true;
+        }
+
+        $patterns = config('livewire-datatable.export.exclude_patterns', ['*_id']);
+        foreach ($patterns as $pattern) {
+            if (Str::is($pattern, $column)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function sortBy(string $field): void
@@ -172,6 +489,11 @@ class DataTable extends Component
     {
         $this->ensureDataSourceInitialized();
         $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->storeSearchSession();
     }
 
     public function updatingPerPage(): void
@@ -255,10 +577,8 @@ class DataTable extends Component
         $model = new $this->model;
         $table = $model->getTable();
 
-        $exclude = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
-
-        $columns = collect(Schema::getColumnListing($table))
-            ->reject(fn ($c) => in_array($c, $exclude))
+        $columns = collect($this->cachedColumnListing($table))
+            ->reject(fn ($c) => $this->isExcludedFromExport($c))
             ->mapWithKeys(fn ($c) => [$c => Str::headline($c)])
             ->toArray();
 
@@ -286,15 +606,16 @@ class DataTable extends Component
         $relatedModel = $relation->getRelated();
         $relatedTable = $relatedModel->getTable();
 
-        $exclude = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
-
-        $columns = collect(Schema::getColumnListing($relatedTable))
-            ->reject(fn ($c) => in_array($c, $exclude));
+        $columns = collect($this->cachedColumnListing($relatedTable))
+            ->reject(fn ($c) => $this->isExcludedFromExport($c));
 
         $result = [];
 
         foreach ($columns as $col) {
             $key = "{$relationPath}.{$col}";
+            if ($this->isExcludedFromExport($key)) {
+                continue;
+            }
             $label = Str::headline(str_replace('.', ' ', "{$relationPath} {$col}"));
             $result[$key] = $label;
         }
@@ -318,7 +639,7 @@ class DataTable extends Component
         $table = $model->getTable();
 
         // MAIN TABLE COLUMNS
-        $columns = collect(Schema::getColumnListing($table))
+        $columns = collect($this->cachedColumnListing($table))
             ->reject(fn ($c) => in_array($c, ['id', 'created_at', 'updated_at']))
             ->mapWithKeys(fn ($c) => [$c => Str::headline($c)])
             ->toArray();
@@ -350,7 +671,7 @@ class DataTable extends Component
         $relatedTable = $relatedModel->getTable();
 
         // Get columns for this table
-        $columns = collect(Schema::getColumnListing($relatedTable))
+        $columns = collect($this->cachedColumnListing($relatedTable))
             ->reject(fn ($c) => in_array($c, ['id', 'password', 'email_verified_at', 'remember_token', 'created_at', 'updated_at']));
 
         $result = [];
@@ -385,22 +706,24 @@ class DataTable extends Component
             $this->query[] = '';
         }
 
+        $this->storeFilterSession();
     }
 
     public function closeFilter(): void
     {
         $this->filter = false;
-        $this->filterDataSearch = false;
+        // Keep filterDataSearch active — filter persists as session (fix: close should not reset)
+        $this->storeFilterSession();
         $this->resetPage();
     }
 
     public function filterData(): void
     {
         $this->filterDataSearch = true;
-        $this->reset('search');
         $this->sortField = $this->defaultSortField;
         $this->sortDirection = $this->defaultSortDirection;
         $this->resetPage();
+        $this->storeFilterSession();
     }
 
     public function addFilter(): void
@@ -414,6 +737,8 @@ class DataTable extends Component
         if (count($this->filterByColumn) == count($this->query)) {
             $this->disabledAddFilterButton = true;
         }
+
+        $this->storeFilterSession();
     }
 
     public function resetFilter(): void
@@ -427,6 +752,7 @@ class DataTable extends Component
         $this->query = [''];
         $this->disabledAddFilterButton = false;
         $this->filterDataSearch = false;
+        $this->clearFilterSession();
     }
 
     public function deleteFilter(int $index): void
@@ -446,6 +772,7 @@ class DataTable extends Component
         // Re-index array to avoid gaps
         $this->filterBy = array_values($this->filterBy);
         $this->query = array_values($this->query);
+        $this->storeFilterSession();
     }
 
     #[Computed]
@@ -459,8 +786,8 @@ class DataTable extends Component
         $model = new $this->model;
         $table = $model->getTable();
 
-        foreach (Schema::getColumnListing($table) as $column) {
-            $type = Schema::getColumnType($table, $column);
+        foreach ($this->cachedColumnListing($table) as $column) {
+            $type = $this->cachedColumnType($table, $column);
             if (in_array($type, ['date', 'datetime', 'timestamp'])) {
                 $columns[$column] = Str::headline($column);
             }
@@ -489,8 +816,8 @@ class DataTable extends Component
         $relatedModel = $relation->getRelated();
         $relatedTable = $relatedModel->getTable();
 
-        $columns = collect(Schema::getColumnListing($relatedTable))
-            ->filter(fn ($col) => in_array(Schema::getColumnType($relatedTable, $col), ['date', 'datetime', 'timestamp']));
+        $columns = collect($this->cachedColumnListing($relatedTable))
+            ->filter(fn ($col) => in_array($this->cachedColumnType($relatedTable, $col), ['date', 'datetime', 'timestamp']));
 
         $result = [];
         foreach ($columns as $col) {
@@ -571,6 +898,8 @@ class DataTable extends Component
 
     protected function applyDateRangeQuery($query, string $column): void
     {
+        // Use whereDate to keep behavior consistent for date/datetime/timestamp,
+        // but handle time boundaries correctly for datetime columns
         if ($this->dateFilterStart && $this->dateFilterEnd) {
             $query->whereDate($column, '>=', $this->dateFilterStart)
                 ->whereDate($column, '<=', $this->dateFilterEnd);
@@ -590,89 +919,149 @@ class DataTable extends Component
         }
     }
 
+    /**
+     * Build base filtered query — single source of truth for listing & export.
+     * Used by getQuery() and WithExport::export() to avoid duplication.
+     */
+    public function buildFilteredQuery(): Builder
+    {
+        $query = $this->model::query();
+
+        // Apply scope if exists
+        if (! empty($this->scopeParams)) {
+            $query = $query->{$this->scope}(...$this->scopeParams);
+        } elseif ($this->scope) {
+            $query = $query->{$this->scope}();
+        }
+
+        // Apply advanced filters (if active)
+        if ($this->filterDataSearch) {
+            foreach ($this->filterBy as $i => $column) {
+                $value = trim((string) ($this->query[$i] ?? '')) ?: null;
+                // Normalize stored query value
+                $this->query[$i] = $value ?? '';
+                if (! $value) {
+                    continue;
+                }
+
+                // Date-aware: if column is date/datetime/timestamp and value looks like a date, use whereDate
+                if ($this->isDateColumn($column)) {
+                    // Support "Aug 2026" / "August 2026" → filter by month+year
+                    $trimmed = trim($value);
+                    if (preg_match('/^[a-zA-Z]+\s+(19|20)\d{2}$/', $trimmed) || preg_match('/^(19|20)\d{2}[\-\/]\d{1,2}$/', $trimmed)) {
+                        try {
+                            $dt = Carbon::parse($trimmed);
+                            if (str_contains($column, '.')) {
+                                $parts = explode('.', $column);
+                                $field = array_pop($parts);
+                                $relationPath = implode('.', $parts);
+                                $query->whereHas($relationPath, fn ($q) => $q->whereMonth($field, $dt->month)->whereYear($field, $dt->year));
+                            } else {
+                                $query->whereMonth($column, $dt->month)->whereYear($column, $dt->year);
+                            }
+
+                            continue;
+                        } catch (\Throwable $e) {
+                            // fallback to LIKE
+                        }
+                    }
+
+                    $parsed = $this->tryParseDate($value);
+                    if ($parsed) {
+                        if (str_contains($column, '.')) {
+                            $parts = explode('.', $column);
+                            $field = array_pop($parts);
+                            $relationPath = implode('.', $parts);
+                            $query->whereHas($relationPath, fn ($q) => $q->whereDate($field, $parsed));
+                        } else {
+                            $query->whereDate($column, $parsed);
+                        }
+
+                        continue;
+                    }
+                }
+
+                $escaped = $this->escapeLike($value);
+
+                if (str_contains($column, '.')) {
+                    $parts = explode('.', $column);
+                    $field = array_pop($parts);
+                    $relationPath = implode('.', $parts);
+                    $query->whereHas($relationPath, fn ($q) => $q->where($field, 'LIKE', "%{$escaped}%"));
+                } else {
+                    $query->where($column, 'LIKE', "%{$escaped}%");
+                }
+            }
+        }
+
+        // Apply global search even when advanced filter is active — combinable (session search)
+        if (! empty($this->search)) {
+            $search = $this->escapeLike(trim((string) $this->search));
+            $query->where(function ($q) use ($search) {
+                foreach ($this->searchable as $field) {
+                    if (str_contains($field, '.')) {
+                        $parts = explode('.', $field);
+                        $relationField = array_pop($parts);
+                        $relations = $parts;
+                        $q->orWhereHas($relations[0], function ($subQ) use ($relations, $relationField, $search) {
+                            if (count($relations) > 1) {
+                                $subQ->whereHas(implode('.', array_slice($relations, 1)), fn ($sq) => $sq->where($relationField, 'like', '%'.$search.'%'));
+                            } else {
+                                $subQ->where($relationField, 'like', '%'.$search.'%');
+                            }
+                        });
+                    } else {
+                        $q->orWhere($field, 'like', '%'.$search.'%');
+                    }
+                }
+            });
+        }
+
+        // Apply date filter
+        if ($this->dateFilterEnabled && $this->dateFilterColumn) {
+            $column = $this->dateFilterColumn;
+            if (str_contains($column, '.')) {
+                $parts = explode('.', $column);
+                $field = array_pop($parts);
+                $relationPath = implode('.', $parts);
+                $query->whereHas($relationPath, fn ($q) => $this->applyDateRangeQuery($q, $field));
+            } else {
+                $this->applyDateRangeQuery($query, $column);
+            }
+        }
+
+        // Apply sorting
+        if (! empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
+            $query->orderBy($this->sortField, $this->sortDirection);
+        } elseif ($this->defaultSortField) {
+            $query->orderBy($this->defaultSortField, $this->defaultSortDirection);
+        }
+
+        return $query;
+    }
+
     #[Computed]
     protected function getQuery()
     {
         $useManualQuery = $this->filterDataSearch || $this->dateFilterEnabled;
 
         if ($useManualQuery) {
-            $query = $this->model::query();
+            $query = $this->buildFilteredQuery();
 
-            // Apply scope if it exists
-            if (! empty($this->scopeParams)) {
-                $query = $query->{$this->scope}(...$this->scopeParams);
+            $perPage = $this->perPage;
+            if ($perPage === 'all' || $perPage === -1 || $perPage === '-1') {
+                $total = $query->count();
+                $maxAll = (int) config('livewire-datatable.max_all_records', 5000);
+                if ($maxAll > 0 && $total > $maxAll) {
+                    $total = $maxAll;
+                }
+                $result = $query->paginate($total, ['*'], 'page', 1);
             } else {
-                if ($this->scope) {
-                    $query = $query->{$this->scope}();
-                }
+                $result = $query->paginate($perPage, ['*'], 'page', $this->page);
             }
-
-            // Apply advanced filters (if active)
-            if ($this->filterDataSearch) {
-                foreach ($this->filterBy as $i => $column) {
-                    $value = trim($this->query[$i]) ?? null;
-                    $this->query[$i] = $value;
-                    if (! $value) {
-                        continue;
-                    }
-
-                    if (str_contains($column, '.')) {
-                        $parts = explode('.', $column);
-                        $field = array_pop($parts);
-                        $relationPath = implode('.', $parts);
-                        $query->whereHas($relationPath, fn ($q) => $q->where($field, 'LIKE', "%{$value}%"));
-                    } else {
-                        $query->where($column, 'LIKE', "%{$value}%");
-                    }
-                }
-            }
-
-            // Apply search when date filter is active but advanced filter is not
-            if (! $this->filterDataSearch && ! empty($this->search)) {
-                $query->where(function ($q) {
-                    foreach ($this->searchable as $field) {
-                        if (str_contains($field, '.')) {
-                            $parts = explode('.', $field);
-                            $relationField = array_pop($parts);
-                            $relations = $parts;
-                            $q->orWhereHas($relations[0], function ($subQ) use ($relations, $relationField) {
-                                if (count($relations) > 1) {
-                                    $subQ->whereHas(implode('.', array_slice($relations, 1)), fn ($sq) => $sq->where($relationField, 'like', '%'.$this->search.'%'));
-                                } else {
-                                    $subQ->where($relationField, 'like', '%'.$this->search.'%');
-                                }
-                            });
-                        } else {
-                            $q->orWhere($field, 'like', '%'.$this->search.'%');
-                        }
-                    }
-                });
-            }
-
-            // Apply date filter
-            if ($this->dateFilterEnabled && $this->dateFilterColumn) {
-                $column = $this->dateFilterColumn;
-                if (str_contains($column, '.')) {
-                    $parts = explode('.', $column);
-                    $field = array_pop($parts);
-                    $relationPath = implode('.', $parts);
-                    $query->whereHas($relationPath, fn ($q) => $this->applyDateRangeQuery($q, $field));
-                } else {
-                    $this->applyDateRangeQuery($query, $column);
-                }
-            }
-
-            // Apply sorting
-            if (! empty($this->sortField) && in_array($this->sortField, $this->sortable)) {
-                $query->orderBy($this->sortField, $this->sortDirection);
-            } elseif ($this->defaultSortField) {
-                $query->orderBy($this->defaultSortField, $this->defaultSortDirection);
-            }
-
-            $result = $query->paginate($this->perPage, ['*'], 'page', $this->page);
         } else {
             $this->ensureDataSourceInitialized();
-            $this->search = trim($this->search);
+            $this->search = trim((string) $this->search);
             $result = $this->dataSource->getData([
                 'search' => $this->search,
                 'sort_field' => $this->sortField,

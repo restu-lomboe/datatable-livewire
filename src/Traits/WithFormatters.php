@@ -180,22 +180,31 @@ trait WithFormatters
         }
 
         if (! isset($this->formatters[$key])) {
-            return $value;
+            return e($value);
         }
 
         $formatter = $this->formatters[$key];
 
         // Handle complex formatter array with type and options
         if (is_array($formatter)) {
-            return $this->formatComplexValue($value, $formatter, $item, $key);
+            $result = $this->formatComplexValue($value, $formatter, $item, $key);
+            $type = $formatter['type'] ?? null;
+            // Only link & markdown intentionally return HTML; others must be escaped
+            if (in_array($type, ['link', 'markdown'], true)) {
+                return $result;
+            }
+
+            return e($result);
         }
 
         // Handle simple string formatter
         if (is_string($formatter)) {
-            return $this->formatSimpleValue($value, $formatter, $this->getFormatterOptions($key));
+            $result = $this->formatSimpleValue($value, $formatter, $this->getFormatterOptions($key));
+
+            return e($result);
         }
 
-        return $value;
+        return e($value);
     }
 
     protected function getFormatterOptions($key): array

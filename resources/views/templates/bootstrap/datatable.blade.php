@@ -179,7 +179,7 @@
                                         <i @class(['bi', 'bi-search', 'text-secondary'])></i>
                                     </span>
                                     <input type="search" data-class="search_input" @class([$this->getClass('search_input')])
-                                        wire:model.live.debounce.300ms="search" placeholder="Search records..."
+                                        wire:model.live.debounce.{{ $this->searchDebounce }}ms="search" placeholder="Search records..."
                                         {{ $filterDataSearch ? 'disabled' : '' }}>
                                 </div>
                             </div>
@@ -290,11 +290,13 @@
                                     <td data-class="td" @class([$this->getClass('td')])
                                         wire:key="cell-{{ $key }}">
                                         <div data-class="td_{{ $key }}" @class([$this->getClass("td_{$key}")])>
-                                            @if (isset($customColumns[$key]))
+                                            @if (isset($customColumns[$key]) && view()->exists($customColumns[$key]))
                                                 @include($customColumns[$key], [
                                                     'item' => $item,
                                                     'value' => data_get($item, $key),
                                                 ])
+                                            @elseif (isset($customColumns[$key]))
+                                                {{ data_get($item, $key) ?? '-' }}
                                             @else
                                                 @if ($key === 'no')
                                                     @if ($sortField === 'no')

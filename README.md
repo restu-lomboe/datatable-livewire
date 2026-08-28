@@ -40,7 +40,9 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Dynamic CSS Classes](#dynamic-css-classes)
   - [Dark Mode Support](#dark-mode-support)
   - [Pagination Options](#pagination-options)
+  - [Schema Cache](#schema-cache)
 - [API Integration](#-api-integration)
+- [Upgrading](#-upgrading)
 - [Troubleshooting](#-troubleshooting)
 - [Support](#-support)
 
@@ -135,6 +137,24 @@ Choose your CSS framework template in `.env`:
 DATATABLE_TEMPLATE=tailwind    # Default
 # or
 DATATABLE_TEMPLATE=bootstrap
+```
+
+### 5. (Optional) Configure Schema Cache
+
+For production, schema introspection is cached to avoid repeated `information_schema` queries on every request:
+
+```env
+DATATABLE_SCHEMA_CACHE_TTL=3600  # seconds, default 3600 (1 hour). Set 0 to disable.
+```
+
+Clear cache after migrations: `php artisan cache:forget livewire-datatable:schema:*` or call `DataTable::clearSchemaCache()`.
+
+### 6. (Optional) Configure Session Search
+
+Advanced filter & global search persist automatically in the Laravel session (per table):
+
+```env
+DATATABLE_SESSION=true  # false = disable, closing the panel will reset again
 ```
 
 ## 🚀 Quick Start
@@ -646,6 +666,29 @@ All filter elements have configurable CSS classes:
 ]
 ```
 
+#### Session Persistence (Close ≠ Reset)
+
+Advanced filter is now **session-based**: closing the panel (`X` / `closeFilter`) **does not reset** the filter. The filter remains active as a Laravel session per `model + columns + scope`, survives page reloads & navigation, and **global `search` + advanced filter are combined with `AND`**.
+
+* `Filter` → Apply → `filterDataSearch=true` stored in `session('livewire-datatable:filter:{md5}')`
+* `Close (X)` → only `filter=false` (panel hidden), `filterDataSearch` stays `true`
+* `Search` → typing in the global search → `session('...:search')` updated, still AND-combined with the filter
+* `Reset` → `clearFilterSession()` (clears `filter` & `search` session)
+
+```php
+// config/livewire-datatable.php
+'session' => [
+    'enabled' => env('DATATABLE_SESSION', true), // false = disable, closing panel resets again
+],
+```
+
+```env
+# .env
+DATATABLE_SESSION=true   # false to disable (fallback to legacy behavior)
+```
+
+Manual clear: `session()->forget('livewire-datatable:filter:...')` — no need for `php artisan cache:clear` (session ≠ cache). The key is hashed from `model|json(columns)|scope`, so each table is isolated.
+
 ### Date Range Filter
 
 Filter your data by date ranges with a dedicated modal for date/datetime/timestamp columns.
@@ -874,7 +917,30 @@ Export your DataTable data to Excel and PDF formats.
     'types' => ['excel', 'pdf'],
     'orientation' => 'portrait',
     'paper_size' => 'a4',
+    'exclude_columns' => [],       // exact keys, e.g. ['secret_token', 'user.password']
+    'exclude_patterns' => ['*_id'], // wildcard via Str::is(), e.g. hides user_id, department.user_id
 ];
+```
+
+**Exclude behavior (export only, table display unaffected):**
+- Default exact: `id`, `updated_at`, `deleted_at`, `password`, `remember_token` (always excluded)
+- `exclude_columns` (config) + `excludeColumns` mount param: exact match with dot notation (merged)
+- `exclude_patterns` (config, default `['*_id']`): `Str::is()` wildcard — automatically hides all `*_id` columns from custom export modal and file exports
+- Mount param `:excludeColumns="['api_token']"` is merged (not replace) with defaults
+
+```php
+// Mount — only affects export
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="$columns"
+    :excludeColumns="['secret_token', 'department.internal_code']" />
+
+// Component
+return view('livewire.users-table', [
+    'model' => User::class,
+    'columns' => [...],
+    'excludeColumns' => ['secret_token'],
+]);
 ```
 
 ### How to Use
@@ -1122,6 +1188,43 @@ public $perPage = 25;
 
 Or let users choose with the per-page selector in the UI.
 
+### Schema Cache
+
+Optimize production performance by caching schema introspection (`Schema::getColumnListing` / `getColumnType`).
+
+The datatable introspects the database to auto-detect filterable, exportable, and date-filterable columns (including relations via `$with`). Without caching this triggers 100+ `information_schema` queries per request.
+
+#### How It Works
+
+- Results are cached per-table with `Cache::remember()` (key `livewire-datatable:schema:{table}:columns`)
+- In-memory static cache avoids duplicate lookups within the same request
+- TTL is configurable and defaults to **3600 seconds (1 hour)**
+
+#### Configuration
+
+```php
+// config/livewire-datatable.php
+'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
+```
+
+```env
+# .env
+DATATABLE_SCHEMA_CACHE_TTL=3600  # 0 = disable caching (always hit DB)
+```
+
+#### When to Clear
+
+Clear after migrations that add/rename/drop columns:
+
+```bash
+php artisan cache:forget livewire-datatable:schema:users:columns
+# or programmatically
+\Developerawam\LivewireDatatable\Components\DataTable::clearSchemaCache('users');
+\Developerawam\LivewireDatatable\Components\DataTable::clearSchemaCache(); # future: flush all
+```
+
+> **Tip:** In local development set `DATATABLE_SCHEMA_CACHE_TTL=0` to always reflect fresh schema, in production keep `3600` or higher.
+
 ## 📝 Complete Example
 
 Here's a comprehensive example with multiple features:
@@ -1245,6 +1348,67 @@ Quick reference of all available parameters:
 | `defaultSortDirection` | string | 'asc' or 'desc'          |
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
+| `excludeColumns`       | array  | Export-only exclude (dot-notation exact, merged with config) |
+
+## ⬆️ Upgrading
+
+### From < v2.3.1 to v2.3.1+
+
+This version adds schema caching for production performance (`DATATABLE_SCHEMA_CACHE_TTL`).
+
+**If you already published `config/livewire-datatable.php` before v2.3.1:**
+
+Your published config will NOT contain `schema_cache_ttl` — but the package remains **backward compatible**:
+
+* `DataTable.php:177` uses `config('livewire-datatable.schema_cache_ttl', 3600)` with default `3600`
+* `LivewireDatatableServiceProvider.php:43` does `array_merge(packageDefaults, publishedConfig)` via `mergeConfigFrom()`, so the missing key is auto-injected at runtime even with `php artisan config:cache` stale. No error.
+
+To expose the option for tuning, pick one:
+
+**Option A — Manual patch (recommended, preserves your `theme` customizations):**
+
+Add to your published `config/livewire-datatable.php` before the closing `];`:
+
+```php
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Cache TTL (seconds)
+    |--------------------------------------------------------------------------
+    */
+    'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
+```
+
+Add to `.env`:
+
+```env
+DATATABLE_SCHEMA_CACHE_TTL=3600  # 0 = disable (always hit DB, useful for local)
+```
+
+Then:
+
+```bash
+php artisan config:clear
+# or
+php artisan config:cache
+```
+
+**Option B — Republish (overwrites):**
+
+```bash
+cp config/livewire-datatable.php config/livewire-datatable.php.bak
+php artisan vendor:publish --tag=livewire-datatable-config --force
+# re-apply your theme customizations from .bak
+php artisan config:clear
+```
+
+**Verify:**
+
+```bash
+php artisan tinker --execute "echo config('livewire-datatable.schema_cache_ttl');"
+# should output 3600
+```
+
+> After migrations that add/rename columns, clear `php artisan cache:clear` or `DataTable::clearSchemaCache('users')`. On local set `DATATABLE_SCHEMA_CACHE_TTL=0`.
 
 ## ❓ Troubleshooting
 
@@ -1272,6 +1436,10 @@ protected $with = ['department', 'role'];
 
 - Verify export is enabled in config
 - Check that required packages are installed
+
+**Schema changes not showing (new columns missing in filter/export)**
+
+- Schema is cached for `DATATABLE_SCHEMA_CACHE_TTL` seconds (default `3600`). Run `php artisan cache:clear` or `DataTable::clearSchemaCache('table_name')` after migrations, or set `DATATABLE_SCHEMA_CACHE_TTL=0` in local `.env`.
 
 ### Getting Help
 

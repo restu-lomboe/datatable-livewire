@@ -2,8 +2,8 @@
 
 namespace Developerawam\LivewireDatatable\Exports;
 
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -11,27 +11,29 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
+class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
-    protected $data;
+    protected Builder $query;
 
-    protected $columns;
+    protected array $columns;
 
-    protected $formatters;
+    protected array $formatters;
 
-    protected $formatterOptions;
+    protected array $formatterOptions;
 
-    public function __construct(Collection $data, array $columns, ?array $formatters = [], ?array $formatterOptions = [])
+    protected int $currentRow = 0;
+
+    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [])
     {
-        $this->data = $data;
+        $this->query = $query;
         $this->columns = $columns;
         $this->formatters = $formatters;
         $this->formatterOptions = $formatterOptions;
     }
 
-    public function collection()
+    public function query()
     {
-        return $this->data;
+        return $this->query;
     }
 
     public function headings(): array
@@ -96,15 +98,12 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
         return $this->formatSimpleValue($value, $type, $options);
     }
 
-    protected $currentRow = 0;
-
     public function map($row): array
     {
         $this->currentRow++;
         $result = [];
 
         foreach (array_keys($this->columns) as $column) {
-            // Skip action(s) column
             if (in_array($column, ['action', 'actions'], true)) {
                 continue;
             }
@@ -114,7 +113,6 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
             } else {
                 $value = data_get($row, $column);
 
-                // Apply formatter if exists
                 if (isset($this->formatters[$column])) {
                     $formatter = $this->formatters[$column];
                     $options = $this->formatterOptions[$column] ?? [];
@@ -128,13 +126,9 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
         return $result;
     }
 
-    /**
-     * Style the Excel sheet
-     */
     public function styles(Worksheet $sheet)
     {
         return [
-            // Style the first row (header)
             1 => [
                 'font' => ['bold' => true],
                 'fill' => [

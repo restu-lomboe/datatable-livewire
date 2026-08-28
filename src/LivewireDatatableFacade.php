@@ -2,20 +2,18 @@
 
 namespace Developerawam\LivewireDatatable;
 
-use Developerawam\LivewireDatatable\Skeleton\SkeletonClass;
+use Developerawam\LivewireDatatable\Components\DataTable;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see SkeletonClass
+ * @see DataTable
  */
 class LivewireDatatableFacade extends Facade
 {
     /**
      * Get the registered name of the component.
-     *
-     * @return string
      */
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
         return 'livewire-datatable';
     }

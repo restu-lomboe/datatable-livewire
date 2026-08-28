@@ -25,8 +25,15 @@ class LivewireDatatableServiceProvider extends ServiceProvider
             ], 'livewire-datatable-views');
 
             $this->publishes([
-                __DIR__.'/../config/config.php' => config_path('livewire-datatable.php'),
+                __DIR__.'/../config/livewire-datatable.php' => config_path('livewire-datatable.php'),
             ], 'livewire-datatable-config');
+
+            // Backward compat: keep old config/config.php publishable if present
+            if (file_exists(__DIR__.'/../config/config.php')) {
+                $this->publishes([
+                    __DIR__.'/../config/config.php' => config_path('livewire-datatable.php'),
+                ], 'livewire-datatable-config-legacy');
+            }
         }
 
         // Register Excel and PDF facades
@@ -42,8 +49,26 @@ class LivewireDatatableServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Automatically apply the package configuration
-        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'livewire-datatable');
+        // Canonical config file
+        $configPath = __DIR__.'/../config/livewire-datatable.php';
+
+        // Fallback to legacy path for BC
+        if (! file_exists($configPath) && file_exists(__DIR__.'/../config/config.php')) {
+            $configPath = __DIR__.'/../config/config.php';
+        }
+
+        $this->mergeConfigFrom($configPath, 'livewire-datatable');
+
+        // Facade accessor binding (keeps LivewireDatatable facade working)
+        $this->app->singleton('livewire-datatable', function () {
+            return new class
+            {
+                public function version(): string
+                {
+                    return '2.3.1';
+                }
+            };
+        });
 
         // Register Excel Service Provider
         $this->app->register(ExcelServiceProvider::class);

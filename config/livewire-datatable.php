@@ -50,6 +50,11 @@ return [
             'excel_text' => 'Excel',
             'pdf_text' => 'PDF',
         ],
+        // Columns/patterns to exclude from export (applies to custom export modal & file exports)
+        // - exact column keys (supports dot notation, e.g. 'password', 'user.password', 'secret_token')
+        // - patterns use Str::is() wildcards, e.g. '*_id' hides user_id, post_id, department.user_id
+        'exclude_columns' => [],
+        'exclude_patterns' => ['*_id'],
     ],
 
     /*
@@ -382,4 +387,41 @@ return [
     |
     */
     'advanced_filter' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Cache TTL (seconds)
+    |--------------------------------------------------------------------------
+    |
+    | Cache duration for Schema::getColumnListing / getColumnType lookups.
+    | Reduces repeated information_schema queries to one per table per TTL.
+    | Set to 0 to disable caching (always hit DB).
+    |
+    */
+    'schema_cache_ttl' => env('DATATABLE_SCHEMA_CACHE_TTL', 3600),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Max All Records
+    |--------------------------------------------------------------------------
+    |
+    | Safety limit for per_page="all" to prevent OOM when user selects "All".
+    | Export uses cursor (streaming) and is not limited.
+    |
+    */
+    'max_all_records' => env('DATATABLE_MAX_ALL', 5000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Persistence
+    |--------------------------------------------------------------------------
+    |
+    | Keep advanced filter & search in Laravel session so closing the
+    | filter panel does not reset it and it survives page reloads.
+    | Disable with DATATABLE_SESSION=false.
+    |
+    */
+    'session' => [
+        'enabled' => env('DATATABLE_SESSION', true),
+    ],
 ];
