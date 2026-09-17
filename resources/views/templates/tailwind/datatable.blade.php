@@ -208,7 +208,8 @@
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="search" name="search" wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
+                            <input type="search" name="search"
+                                wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
                                 placeholder="Search..." data-class="search_input" @class([$this->getClass('search_input')]))
                                 {{ $filterDataSearch ? 'disabled' : '' }}>
                         </label>
@@ -394,7 +395,7 @@
 
             @if ($this->getQuery->hasPages())
                 <div data-class="pagination_wrapper" @class([$this->getClass('pagination_wrapper')])>
-                    {{ $this->getQuery->links() }}
+                    {{ $this->getQuery->onEachSide(1)->links() }}
                 </div>
             @endif
         </div>

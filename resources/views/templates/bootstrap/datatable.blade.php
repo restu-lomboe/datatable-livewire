@@ -185,8 +185,8 @@
                                         <i @class(['bi', 'bi-search', 'text-secondary'])></i>
                                     </span>
                                     <input type="search" data-class="search_input" @class([$this->getClass('search_input')])
-                                        wire:model.live.debounce.{{ $this->searchDebounce }}ms="search" placeholder="Search records..."
-                                        {{ $filterDataSearch ? 'disabled' : '' }}>
+                                        wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
+                                        placeholder="Search records..." {{ $filterDataSearch ? 'disabled' : '' }}>
                                 </div>
                             </div>
                         </div>
@@ -358,7 +358,7 @@
                             records
                         </small>
                         <div data-class="pagination_controls" @class([$this->getClass('pagination_controls')])>
-                            {{ $this->getQuery->links() }}
+                            {{ $this->getQuery->onEachSide(1)->links() }}
                         </div>
                     </div>
                 </nav>
