@@ -64,6 +64,11 @@
                                                 case 'lowercase':
                                                     $value = Str::lower($value);
                                                     break;
+                                                case 'strip':
+                                                case 'html':
+                                                case 'plain':
+                                                    $value = strip_tags((string) $value, $options['allowed'] ?? '');
+                                                    break;
                                                 default:
                                                     break;
                                             }
@@ -101,6 +106,11 @@
                                                     break;
                                                 case 'lowercase':
                                                     $value = Str::lower($value);
+                                                    break;
+                                                case 'strip':
+                                                case 'html':
+                                                case 'plain':
+                                                    $value = strip_tags((string) $value, $typeOptions['allowed'] ?? '');
                                                     break;
                                                 case 'markdown':
                                                     // Strip HTML for PDF clean rendering

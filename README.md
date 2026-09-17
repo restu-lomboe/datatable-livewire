@@ -333,6 +333,7 @@ For complex formatting, use array syntax:
 | `markdown`  | Convert markdown to HTML | —                                               |
 | `money`     | Advanced currency        | `symbol, decimals, decimal_point, thousand_sep` |
 | `link`      | Render value as a link   | `route, params, url, text, target, class, title` |
+| `strip` / `html` / `plain` | Strip HTML tags → plain string | `allowed: '<p><br>'` (optional) |
 
 #### Link Formatter
 
@@ -400,6 +401,30 @@ You can also inject column values into a URL using `{column}` placeholders:
 | `title`  | `title` attribute for the anchor                                |
 
 When exporting to Excel or PDF, link-formatted columns keep their original value (no URL).
+
+#### Strip / HTML to String Formatter
+
+Convert HTML content to plain string by stripping tags (replaces `{!! !!}` raw HTML with safe text):
+
+```php
+// Simple — strip all tags
+'formatters' => [
+    'description' => 'strip', // <b>Hello</b> → Hello
+]
+
+// Advanced — allow specific tags
+'formatters' => [
+    'content' => [
+        'type' => 'strip',
+        'options' => ['allowed' => '<p><br><b>']
+    ],
+]
+
+// Aliases: 'strip', 'html', 'plain' all work the same
+'formatters' => [
+    'bio' => 'html', // <p>Hi</p> → Hi
+]
+```
 
 ## � Advanced Features
 
