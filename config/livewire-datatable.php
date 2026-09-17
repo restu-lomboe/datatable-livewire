@@ -55,6 +55,11 @@ return [
         // - patterns use Str::is() wildcards, e.g. '*_id' hides user_id, post_id, department.user_id
         'exclude_columns' => [],
         'exclude_patterns' => ['*_id'],
+
+        // Chunk / batch sizes for large exports (100k+ rows)
+        // Excel uses FromQuery + cursor chunk; PDF uses cursor batch streaming (single file)
+        'chunk_size' => env('DATATABLE_EXCEL_CHUNK', 1000),
+        'pdf_chunk_size' => env('DATATABLE_PDF_CHUNK', 2000),
     ],
 
     /*

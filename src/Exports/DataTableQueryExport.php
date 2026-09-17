@@ -21,14 +21,22 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
 
     protected array $formatterOptions;
 
+    protected int $chunkSize;
+
     protected int $currentRow = 0;
 
-    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [])
+    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [], int $chunkSize = 1000)
     {
         $this->query = $query;
         $this->columns = $columns;
         $this->formatters = $formatters;
         $this->formatterOptions = $formatterOptions;
+        $this->chunkSize = $chunkSize;
+    }
+
+    public function chunkSize(): int
+    {
+        return $this->chunkSize;
     }
 
     public function query()
