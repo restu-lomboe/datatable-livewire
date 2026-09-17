@@ -21,14 +21,22 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
 
     protected array $formatterOptions;
 
+    protected int $chunkSize;
+
     protected int $currentRow = 0;
 
-    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [])
+    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [], int $chunkSize = 1000)
     {
         $this->query = $query;
         $this->columns = $columns;
         $this->formatters = $formatters;
         $this->formatterOptions = $formatterOptions;
+        $this->chunkSize = $chunkSize;
+    }
+
+    public function chunkSize(): int
+    {
+        return $this->chunkSize;
     }
 
     public function query()
@@ -81,6 +89,10 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
                 ) : $value;
             case 'boolean':
                 return $value ? ($options['true'] ?? 'Yes') : ($options['false'] ?? 'No');
+            case 'strip':
+            case 'html':
+            case 'plain':
+                return strip_tags((string) $value, $options['allowed'] ?? '');
             default:
                 return $value;
         }
@@ -93,6 +105,10 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
 
         if ($type === 'link') {
             return $value;
+        }
+
+        if (in_array($type, ['strip', 'html', 'plain'], true)) {
+            return strip_tags((string) $value, $options['allowed'] ?? '');
         }
 
         return $this->formatSimpleValue($value, $type, $options);

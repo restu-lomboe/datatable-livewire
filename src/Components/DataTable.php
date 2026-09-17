@@ -219,8 +219,11 @@ class DataTable extends Component
             }
 
             $search = session()->get($this->getSearchSessionKey());
-            if (is_string($search)) {
+            if (is_string($search) && $this->search === '') {
                 $this->search = $search;
+            } elseif ($this->search !== '' && $this->search !== $search) {
+                // Mount search provided — persist it for session (table-specific search)
+                $this->storeSearchSession();
             }
         } catch (\Throwable $e) {
         }
@@ -235,7 +238,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = []): void
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = ''): void
     {
         if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -266,6 +269,7 @@ class DataTable extends Component
         $this->defaultSortField = $defaultSortField;
         $this->defaultSortDirection = $defaultSortDirection;
         $this->excludeColumns = $excludeColumns;
+        $this->search = $search;
         $this->sortField = $defaultSortField;
         $this->sortDirection = $defaultSortDirection;
         // By default, all columns are sortable except those in unsortable array
@@ -719,6 +723,43 @@ class DataTable extends Component
 
     public function filterData(): void
     {
+        $this->resetValidation();
+
+        $validColumns = array_keys($this->filterByColumn);
+        $hasValid = false;
+
+        foreach ($this->filterBy as $i => $col) {
+            $col = trim((string) $col);
+            $val = trim((string) ($this->query[$i] ?? ''));
+
+            // Ignore completely empty rows (added by addFilter but not filled)
+            if ($col === '' && $val === '') {
+                continue;
+            }
+
+            if ($col === '' && $val !== '') {
+                $this->addError("filterBy.$i", 'Choose must be selected.');
+            } elseif ($col !== '' && $val === '') {
+                $this->addError("query.$i", 'Search value is required.');
+            } else {
+                if (! in_array($col, $validColumns, true)) {
+                    $this->addError("filterBy.$i", 'Choose must be selected.');
+                } else {
+                    $hasValid = true;
+                }
+            }
+        }
+
+        if ($this->getErrorBag()->any()) {
+            return;
+        }
+
+        if (! $hasValid) {
+            $this->addError('filterBy.0', 'Choose must be selected.');
+
+            return;
+        }
+
         $this->filterDataSearch = true;
         $this->sortField = $this->defaultSortField;
         $this->sortDirection = $this->defaultSortDirection;
@@ -937,10 +978,16 @@ class DataTable extends Component
         // Apply advanced filters (if active)
         if ($this->filterDataSearch) {
             foreach ($this->filterBy as $i => $column) {
+                $column = trim((string) $column);
                 $value = trim((string) ($this->query[$i] ?? '')) ?: null;
                 // Normalize stored query value
                 $this->query[$i] = $value ?? '';
+                $this->filterBy[$i] = $column;
                 if (! $value) {
+                    continue;
+                }
+                // Defensive: skip empty column to avoid SQL error (validation should catch)
+                if ($column === '') {
                     continue;
                 }
 

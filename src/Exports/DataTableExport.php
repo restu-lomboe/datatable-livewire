@@ -79,6 +79,10 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
                 ) : $value;
             case 'boolean':
                 return $value ? ($options['true'] ?? 'Yes') : ($options['false'] ?? 'No');
+            case 'strip':
+            case 'html':
+            case 'plain':
+                return strip_tags((string) $value, $options['allowed'] ?? '');
             default:
                 return $value;
         }
@@ -91,6 +95,10 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
 
         if ($type === 'link') {
             return $value;
+        }
+
+        if (in_array($type, ['strip', 'html', 'plain'], true)) {
+            return strip_tags((string) $value, $options['allowed'] ?? '');
         }
 
         return $this->formatSimpleValue($value, $type, $options);

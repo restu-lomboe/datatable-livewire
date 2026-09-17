@@ -239,6 +239,30 @@ Make columns searchable:
 'searchable' => ['name', 'email', 'department.name']
 ```
 
+#### Initial Search via Mount
+
+Set an initial table search directly from mount — this populates the search input and filters the table immediately (search-only, not advanced filter):
+
+```php
+// In Livewire component
+return view('livewire.users-table', [
+    'model' => User::class,
+    'columns' => [...],
+    'searchable' => ['name', 'email'],
+    'search' => 'john', // auto-applied to table search
+]);
+```
+
+```blade
+<livewire:livewire-datatable
+    :model="$model"
+    :columns="$columns"
+    :searchable="$searchable"
+    :search="'john'" />
+```
+
+The `search` mount param is table-specific (not advanced filter) and is session-persisted per table (`DATATABLE_SESSION=true`). Clearing the input clears the filter.
+
 ### Sorting
 
 Control which columns can be sorted:
@@ -309,6 +333,7 @@ For complex formatting, use array syntax:
 | `markdown`  | Convert markdown to HTML | —                                               |
 | `money`     | Advanced currency        | `symbol, decimals, decimal_point, thousand_sep` |
 | `link`      | Render value as a link   | `route, params, url, text, target, class, title` |
+| `strip` / `html` / `plain` | Strip HTML tags → plain string | `allowed: '<p><br>'` (optional) |
 
 #### Link Formatter
 
@@ -376,6 +401,30 @@ You can also inject column values into a URL using `{column}` placeholders:
 | `title`  | `title` attribute for the anchor                                |
 
 When exporting to Excel or PDF, link-formatted columns keep their original value (no URL).
+
+#### Strip / HTML to String Formatter
+
+Convert HTML content to plain string by stripping tags (replaces `{!! !!}` raw HTML with safe text):
+
+```php
+// Simple — strip all tags
+'formatters' => [
+    'description' => 'strip', // <b>Hello</b> → Hello
+]
+
+// Advanced — allow specific tags
+'formatters' => [
+    'content' => [
+        'type' => 'strip',
+        'options' => ['allowed' => '<p><br><b>']
+    ],
+]
+
+// Aliases: 'strip', 'html', 'plain' all work the same
+'formatters' => [
+    'bio' => 'html', // <p>Hi</p> → Hi
+]
+```
 
 ## � Advanced Features
 
@@ -1346,6 +1395,7 @@ Quick reference of all available parameters:
 | `scopeParams`          | array  | Query scope parameters   |
 | `defaultSortField`     | string | Initial sort field       |
 | `defaultSortDirection` | string | 'asc' or 'desc'          |
+| `search`               | string | Initial table search (mount only, auto-applied) |
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
 | `excludeColumns`       | array  | Export-only exclude (dot-notation exact, merged with config) |

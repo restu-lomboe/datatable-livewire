@@ -36,6 +36,10 @@ trait WithFormatters
                 return Str::upper($value);
             case 'lowercase':
                 return Str::lower($value);
+            case 'strip':
+            case 'html':
+            case 'plain':
+                return strip_tags((string) $value, $options['allowed'] ?? '');
             default:
                 return $value;
         }
@@ -64,6 +68,10 @@ trait WithFormatters
                 return $this->formatDate($value, $options['format'] ?? 'Y-m-d');
             case 'link':
                 return $this->formatLink($value, $options, $item, $key);
+            case 'strip':
+            case 'html':
+            case 'plain':
+                return strip_tags((string) $value, $options['allowed'] ?? '');
             default:
                 return $value;
         }

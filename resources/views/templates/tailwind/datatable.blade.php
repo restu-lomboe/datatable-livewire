@@ -18,24 +18,24 @@
                     <span data-class="filter_label" @class([$this->getClass('filter_label')])>Filter list by: </span>
                     <div data-class="filter_list" @class([$this->getClass('filter_list')])>
                         <div data-class="filter_items" @class([$this->getClass('filter_items')])>
-                            @foreach ($filterBy as $key => $item)
+                            @foreach ($filterBy as $index => $filterValue)
                                 <div data-class="filter_item" @class([$this->getClass('filter_item')])>
                                     <div data-class="filter_input_wrapper" @class([$this->getClass('filter_input_wrapper')])>
                                         <input type="text" id="hs-inline-leading-select-label" name="inline-add-on"
-                                            wire:model="query.{{ $key }}" data-class="filter_input"
+                                            wire:model="query.{{ $index }}" data-class="filter_input"
                                             @class([$this->getClass('filter_input')]) placeholder="Search...">
                                         <div data-class="filter_select_wrapper" @class([$this->getClass('filter_select_wrapper')])>
                                             <label for="hs-inline-leading-select-country"
                                                 data-class="filter_select_label"
                                                 @class([$this->getClass('filter_select_label')])>Country</label>
-                                            <select wire:model="filterBy.{{ $key }}"
+                                            <select wire:model="filterBy.{{ $index }}"
                                                 id="hs-inline-leading-select-country"
                                                 name="hs-inline-leading-select-country" data-class="filter_select"
                                                 @class([$this->getClass('filter_select')])>
                                                 <option disabled value="">Choose</option>
-                                                @foreach ($this->filterByColumn as $key => $item)
-                                                    <option value="{{ $key }}">
-                                                        {{ $item }}</option>
+                                                @foreach ($this->filterByColumn as $colKey => $colLabel)
+                                                    <option value="{{ $colKey }}">
+                                                        {{ $colLabel }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -55,6 +55,12 @@
                                         </div>
                                     @endif
                                 </div>
+                                @error('filterBy.' . $index)
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                @error('query.' . $index)
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                             @endforeach
                         </div>
                     </div>
@@ -202,7 +208,8 @@
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input type="search" name="search" wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
+                            <input type="search" name="search"
+                                wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
                                 placeholder="Search..." data-class="search_input" @class([$this->getClass('search_input')]))
                                 {{ $filterDataSearch ? 'disabled' : '' }}>
                         </label>
@@ -388,7 +395,7 @@
 
             @if ($this->getQuery->hasPages())
                 <div data-class="pagination_wrapper" @class([$this->getClass('pagination_wrapper')])>
-                    {{ $this->getQuery->links() }}
+                    {{ $this->getQuery->onEachSide(1)->links() }}
                 </div>
             @endif
         </div>

@@ -24,19 +24,19 @@
                     </div>
                     <div data-class="filter_content" @class([$this->getClass('filter_content')])>
                         <div data-class="filter_items" @class([$this->getClass('filter_items')])>
-                            @foreach ($filterBy as $key => $item)
+                            @foreach ($filterBy as $index => $filterValue)
                                 <div data-class="filter_item" @class([$this->getClass('filter_item'), 'row g-2 align-items-center'])>
                                     <div class="{{ $loop->first ? 'col-12' : 'col-11' }}">
                                         <div data-class="filter_input_group" @class([$this->getClass('filter_input_group')])>
                                             <select data-class="filter_select" @class([$this->getClass('filter_select'), 'pe-4'])
-                                                wire:model="filterBy.{{ $key }}">
+                                                wire:model="filterBy.{{ $index }}">
                                                 <option disabled value="">Select field</option>
                                                 @foreach ($this->filterByColumn as $colKey => $colLabel)
                                                     <option value="{{ $colKey }}">{{ $colLabel }}</option>
                                                 @endforeach
                                             </select>
                                             <input type="text" data-class="filter_input"
-                                                @class([$this->getClass('filter_input')]) wire:model="query.{{ $key }}"
+                                                @class([$this->getClass('filter_input')]) wire:model="query.{{ $index }}"
                                                 placeholder="Value...">
                                         </div>
                                     </div>
@@ -50,6 +50,12 @@
                                         </div>
                                     @endif
                                 </div>
+                                @error('filterBy.' . $index)
+                                    <small class="text-danger d-block">{{ $message }}</small>
+                                @enderror
+                                @error('query.' . $index)
+                                    <small class="text-danger d-block">{{ $message }}</small>
+                                @enderror
                             @endforeach
                         </div>
                         <hr @class(['my-3'])>
@@ -179,8 +185,8 @@
                                         <i @class(['bi', 'bi-search', 'text-secondary'])></i>
                                     </span>
                                     <input type="search" data-class="search_input" @class([$this->getClass('search_input')])
-                                        wire:model.live.debounce.{{ $this->searchDebounce }}ms="search" placeholder="Search records..."
-                                        {{ $filterDataSearch ? 'disabled' : '' }}>
+                                        wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
+                                        placeholder="Search records..." {{ $filterDataSearch ? 'disabled' : '' }}>
                                 </div>
                             </div>
                         </div>
@@ -352,7 +358,7 @@
                             records
                         </small>
                         <div data-class="pagination_controls" @class([$this->getClass('pagination_controls')])>
-                            {{ $this->getQuery->links() }}
+                            {{ $this->getQuery->onEachSide(1)->links() }}
                         </div>
                     </div>
                 </nav>

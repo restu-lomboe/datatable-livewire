@@ -92,12 +92,20 @@ trait WithExport
 
     protected function exportToExcelQuery(Builder $query, string $filename, array $columns)
     {
+        // Large export tuning: allow 100k+ rows via chunk (configurable)
+        $chunkSize = (int) config('livewire-datatable.export.chunk_size', 1000);
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        @ini_set('max_execution_time', '600');
+
+        // Ensure stable ordering for chunked cursor (already in buildFilteredQuery)
         return Excel::download(
             new DataTableQueryExport(
                 $query,
                 $columns,
                 $this->formatters,
-                $this->formatterOptions
+                $this->formatterOptions,
+                $chunkSize
             ),
             $filename.'.xlsx'
         );
@@ -131,8 +139,14 @@ trait WithExport
 
     protected function exportToPdfQuery(Builder $query, string $filename, array $columns, ?string $paperSize = null, ?string $orientation = null)
     {
-        // Use cursor for memory-safe iteration; view handles LazyCollection
-        $data = $query->cursor();
+        // Single PDF streaming with batch (configurable, default 2000 rows per DB chunk)
+        $pdfChunkSize = (int) config('livewire-datatable.export.pdf_chunk_size', 2000);
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        @ini_set('max_execution_time', '600');
+
+        // Use lazy() for chunked DB fetching (memory-safe for 100k+ rows) — single PDF file
+        $data = $query->lazy($pdfChunkSize);
 
         $html = view('livewire-datatable::exports.pdf', [
             'data' => $data,
