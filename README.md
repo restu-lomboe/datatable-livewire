@@ -239,6 +239,30 @@ Make columns searchable:
 'searchable' => ['name', 'email', 'department.name']
 ```
 
+#### Initial Search via Mount
+
+Set an initial table search directly from mount — this populates the search input and filters the table immediately (search-only, not advanced filter):
+
+```php
+// In Livewire component
+return view('livewire.users-table', [
+    'model' => User::class,
+    'columns' => [...],
+    'searchable' => ['name', 'email'],
+    'search' => 'john', // auto-applied to table search
+]);
+```
+
+```blade
+<livewire:livewire-datatable
+    :model="$model"
+    :columns="$columns"
+    :searchable="$searchable"
+    :search="'john'" />
+```
+
+The `search` mount param is table-specific (not advanced filter) and is session-persisted per table (`DATATABLE_SESSION=true`). Clearing the input clears the filter.
+
 ### Sorting
 
 Control which columns can be sorted:
@@ -1346,6 +1370,7 @@ Quick reference of all available parameters:
 | `scopeParams`          | array  | Query scope parameters   |
 | `defaultSortField`     | string | Initial sort field       |
 | `defaultSortDirection` | string | 'asc' or 'desc'          |
+| `search`               | string | Initial table search (mount only, auto-applied) |
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
 | `excludeColumns`       | array  | Export-only exclude (dot-notation exact, merged with config) |
