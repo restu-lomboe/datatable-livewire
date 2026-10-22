@@ -210,7 +210,7 @@
                             </span>
                             <input type="search" name="search"
                                 wire:model.live.debounce.{{ $this->searchDebounce }}ms="search"
-                                placeholder="Search..." data-class="search_input" @class([$this->getClass('search_input')]))
+                                placeholder="Search..." data-class="search_input" @class([$this->getClass('search_input')])
                                 {{ $filterDataSearch ? 'disabled' : '' }}>
                         </label>
                     </div>
@@ -276,13 +276,56 @@
                     </div>
                 @endif
             </div>
+            @if ($this->hasSelection())
+                <div data-class="selection_banner" @class([$this->getClass('selection_banner')])>
+                    <div data-class="selection_banner_text" @class([$this->getClass('selection_banner_text')])>
+                        @if ($selectAllMatching)
+                            All {{ $this->getSelectionCount() }} matching rows selected
+                            @if (count($excludedKeys) > 0)
+                                ({{ count($excludedKeys) }} excluded)
+                            @endif
+                        @else
+                            {{ $this->getSelectionCount() }} selected
+                        @endif
+                    </div>
+                    <div data-class="selection_banner_actions" @class([$this->getClass('selection_banner_actions')])>
+                        @if ($this->canSelectAllMatching())
+                            <button type="button" wire:click="selectAllMatching"
+                                data-class="selection_select_all" @class([$this->getClass('selection_select_all')])>
+                                Select all {{ $this->getTotalCount() }} matching
+                            </button>
+                        @endif
+                        @if (config('livewire-datatable.selection.dispatch', 'change') === 'manual')
+                            <button type="button" wire:click="notifySelection"
+                                data-class="selection_apply" @class([$this->getClass('selection_apply')])>
+                                Apply selection
+                            </button>
+                        @endif
+                        <button type="button" wire:click="clearSelection"
+                            data-class="selection_clear" @class([$this->getClass('selection_clear')])>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            @endif
             <div data-class="table_wrapper" @class([$this->getClass('table_wrapper')])>
                 <table data-class="table" @class([$this->getClass('table')])>
                     <thead data-class="thead" @class([$this->getClass('thead')])>
                         <tr data-class="thead_row" @class([$this->getClass('thead_row')])>
                             @foreach ($columns as $key => $column)
-                                <th scope="col" data-class="th" @class([$this->getClass('th')])>
-                                    @if (in_array($key, $sortable))
+                                <th scope="col" data-class="th" @class([
+                                    $this->getClass('th'),
+                                    $this->isCheckboxColumn($key) ? $this->getClass('selection_th') : '',
+                                ])>
+                                    @if ($this->isCheckboxColumn($key))
+                                        <input type="checkbox" wire:click="toggleSelectPage" wire:loading.attr="disabled"
+                                            wire:key="selection-page-{{ $this->isPageSelected() ? 'all' : ($this->isPageIndeterminate() ? 'mixed' : 'none') }}"
+                                            @checked($this->isPageSelected())
+                                            x-init="$el.indeterminate = @js($this->isPageIndeterminate())"
+                                            aria-label="{{ $column ?: 'Select all rows on this page' }}"
+                                            data-class="selection_header_checkbox"
+                                            @class([$this->getClass('selection_header_checkbox')])>
+                                    @elseif (in_array($key, $sortable))
                                         <button wire:click="sortBy('{{ $key }}')"
                                             wire:key="sort-{{ $key }}" data-class="th_sort_button"
                                             @class([$this->getClass('th_sort_button')])>
@@ -332,10 +375,16 @@
                     </thead>
                     <tbody wire:loading.class="blur" @class([$this->getClass('tbody')])>
                         @forelse($this->getQuery as $index => $item)
-                            <tr @class([$this->getClass('tr')]) wire:key="row-{{ $item->id ?? $index }}"
+                            <tr @class([
+                                $this->getClass('tr'),
+                                $this->isRowSelected($this->getRowKeyValue($item)) ? $this->getClass('tr_selected') : '',
+                            ]) wire:key="row-{{ $item->id ?? $index }}"
                                 id="row-{{ $item->id ?? $index }}">
                                 @foreach ($columns as $key => $column)
-                                    <td @class([$this->getClass('td')]) wire:key="cell-{{ $key }}">
+                                    <td @class([
+                                        $this->getClass('td'),
+                                        $this->isCheckboxColumn($key) ? $this->getClass('selection_td') : '',
+                                    ]) wire:key="cell-{{ $key }}">
                                         <div data-class="td_{{ $key }}" @class([$this->getClass("td_{$key}")])>
                                             @if (isset($customColumns[$key]) && view()->exists($customColumns[$key]))
                                                 @include($customColumns[$key], [

@@ -6,6 +6,7 @@ use Developerawam\LivewireDatatable\DataSources\ApiDataSource;
 use Developerawam\LivewireDatatable\DataSources\ModelDataSource;
 use Developerawam\LivewireDatatable\Traits\WithExport;
 use Developerawam\LivewireDatatable\Traits\WithFormatters;
+use Developerawam\LivewireDatatable\Traits\WithRowSelection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -22,7 +23,7 @@ use Livewire\WithPagination;
 #[Lazy]
 class DataTable extends Component
 {
-    use WithExport, WithFormatters, WithPagination;
+    use WithExport, WithFormatters, WithPagination, WithRowSelection;
 
     #[Locked]
     public $model;
@@ -238,7 +239,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = ''): void
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = '', $rowKey = null): void
     {
         if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -272,8 +273,14 @@ class DataTable extends Component
         $this->search = $search;
         $this->sortField = $defaultSortField;
         $this->sortDirection = $defaultSortDirection;
+        $this->resolveRowKey($rowKey);
         // By default, all columns are sortable except those in unsortable array
         $this->sortable = array_values(array_diff(array_keys($columns), $unsortable));
+
+        if ($checkboxColumn = $this->getCheckboxColumnKey()) {
+            $this->sortable = array_values(array_diff($this->sortable, [$checkboxColumn]));
+            $this->searchable = array_values(array_diff($this->searchable, [$checkboxColumn]));
+        }
 
         // Initialize pagination options from config
         $this->pageOptions = config('livewire-datatable.per_page_options', [10, 25, 50, 100]);
@@ -451,6 +458,10 @@ class DataTable extends Component
      */
     protected function isExcludedFromExport(string $column): bool
     {
+        if ($this->isCheckboxFormatter($column)) {
+            return true;
+        }
+
         $defaultExact = ['id', 'updated_at', 'deleted_at', 'password', 'remember_token'];
         if (in_array($column, $defaultExact, true)) {
             return true;
@@ -498,6 +509,7 @@ class DataTable extends Component
     public function updatedSearch(): void
     {
         $this->storeSearchSession();
+        $this->clearSelectionOnQueryChange();
     }
 
     public function updatingPerPage(): void
@@ -764,6 +776,7 @@ class DataTable extends Component
         $this->sortField = $this->defaultSortField;
         $this->sortDirection = $this->defaultSortDirection;
         $this->resetPage();
+        $this->clearSelectionOnQueryChange();
         $this->storeFilterSession();
     }
 
@@ -793,6 +806,7 @@ class DataTable extends Component
         $this->query = [''];
         $this->disabledAddFilterButton = false;
         $this->filterDataSearch = false;
+        $this->clearSelectionOnQueryChange();
         $this->clearFilterSession();
     }
 
@@ -813,6 +827,12 @@ class DataTable extends Component
         // Re-index array to avoid gaps
         $this->filterBy = array_values($this->filterBy);
         $this->query = array_values($this->query);
+
+        if ($this->filterDataSearch) {
+            $this->resetPage();
+            $this->clearSelectionOnQueryChange();
+        }
+
         $this->storeFilterSession();
     }
 
@@ -925,6 +945,7 @@ class DataTable extends Component
         $this->dateFilterEnabled = true;
         $this->showDateFilter = false;
         $this->resetPage();
+        $this->clearSelectionOnQueryChange();
     }
 
     public function resetDateFilter(): void
@@ -935,6 +956,7 @@ class DataTable extends Component
         $this->dateFilterEnd = '';
         $this->resetValidation(['dateFilterStart', 'dateFilterEnd']);
         $this->resetPage();
+        $this->clearSelectionOnQueryChange();
     }
 
     protected function applyDateRangeQuery($query, string $column): void
@@ -961,11 +983,15 @@ class DataTable extends Component
     }
 
     /**
-     * Build base filtered query — single source of truth for listing & export.
-     * Used by getQuery() and WithExport::export() to avoid duplication.
+     * Build the scoped base query without search/filter/sort constraints.
+     * Used for selection payloads so row hydration cannot escape the model scope.
      */
-    public function buildFilteredQuery(): Builder
+    public function buildScopedQuery(): Builder
     {
+        if (! $this->model) {
+            throw new \InvalidArgumentException('A model is required to build a scoped query.');
+        }
+
         $query = $this->model::query();
 
         // Apply scope if exists
@@ -974,6 +1000,17 @@ class DataTable extends Component
         } elseif ($this->scope) {
             $query = $query->{$this->scope}();
         }
+
+        return $query;
+    }
+
+    /**
+     * Build base filtered query — single source of truth for listing & export.
+     * Used by getQuery() and WithExport::export() to avoid duplication.
+     */
+    public function buildFilteredQuery(): Builder
+    {
+        $query = $this->buildScopedQuery();
 
         // Apply advanced filters (if active)
         if ($this->filterDataSearch) {

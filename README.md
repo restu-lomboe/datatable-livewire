@@ -25,6 +25,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Searching](#searching)
   - [Sorting](#sorting)
   - [Value Formatting](#value-formatting)
+  - [Row Selection](#checkbox--row-selection)
 - [Advanced Features](#-advanced-features)
   - [Relationships](#relationships)
   - [Custom Query Scopes](#custom-query-scopes)
@@ -334,6 +335,61 @@ For complex formatting, use array syntax:
 | `money`     | Advanced currency        | `symbol, decimals, decimal_point, thousand_sep` |
 | `link`      | Render value as a link   | `route, params, url, text, target, class, title` |
 | `strip` / `html` / `plain` | Strip HTML tags → plain string | `allowed: '<p><br>'` (optional) |
+
+#### Checkbox / Row Selection
+
+Add a checkbox column by using the `checkbox` formatter. The formatter only renders the input;
+selection state is owned by the component and is never stored in the row data.
+
+```php
+'columns' => [
+    'select' => 'Select',
+    'name' => 'Name',
+    'email' => 'Email',
+],
+'formatters' => [
+    'select' => 'checkbox',
+],
+```
+
+The header checkbox selects the current page. After at least one row is selected, a banner offers
+**Select all N matching** for the current search/filter, plus **Clear**. In all-matching mode,
+individually unchecked rows are sent as exclusions instead of enumerating every key.
+
+Listen to the selection event in a parent Livewire component:
+
+```php
+use Livewire\Attributes\On;
+
+#[On('datatable-selection-changed')]
+public function handleSelection(array $selection): void
+{
+    // $selection['keys']        Selected keys (include mode)
+    // $selection['allMatching'] true when every matching row is selected
+    // $selection['except']      Excluded keys (all-matching mode)
+    // $selection['count']       Number of selected rows
+}
+```
+
+By default the event payload contains keys only. Set `selection.payload` to `rows` or `both` to
+include capped row values, or provide `selection.columns` to choose exactly which values are
+exposed. Keys are normalized to strings. The checkbox column is automatically excluded from
+sorting, searching, and exports. In all-matching mode `rows` is empty by design; use `context`
+(search, filter, date) to query the selected records in the parent.
+
+```php
+'selection' => [
+    'row_key' => 'uuid',          // optional; defaults to model key or "id"
+    'payload' => 'both',          // keys, rows, or both
+    'columns' => ['name', 'email'],
+    'max_rows' => 100,
+    'dispatch' => 'change',       // change or manual (Apply selection button)
+    'clear_on_query_change' => true,
+],
+```
+
+For API data sources, selection is keys-only for the current page; **Select all matching** is
+available for model sources because it needs a database query.
 
 #### Link Formatter
 
@@ -1391,6 +1447,7 @@ Quick reference of all available parameters:
 | `unsortable`           | array  | Non-sortable field names |
 | `customColumns`        | array  | Custom template paths    |
 | `formatters`           | array  | Value formatters         |
+| `rowKey`              | string | Stable row identifier (defaults to model key or `id`) |
 | `scope`                | string | Query scope name         |
 | `scopeParams`          | array  | Query scope parameters   |
 | `defaultSortField`     | string | Initial sort field       |

@@ -244,8 +244,15 @@ class ModelDataSource implements DataSourceInterface
         return $query->orderBy($relatedTable.'.'.$column, $direction);
     }
 
-    public static function make(string $model, ?string $scope = null, array $searchable = [], array $sortable = [], int $perPage = 10): self
-    {
-        return new static($model, $scope, $searchable, $sortable, $perPage);
+    public static function make(
+        string $model,
+        ?string $scope = null,
+        array $searchable = [],
+        array $sortable = [],
+        $perPage = 10,
+        ?string $defaultSortField = null,
+        ?string $defaultSortDirection = 'asc'
+    ): self {
+        return new static($model, $scope, [], $searchable, $sortable, $perPage, $defaultSortField, $defaultSortDirection);
     }
 }

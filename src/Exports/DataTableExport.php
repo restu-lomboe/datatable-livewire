@@ -37,8 +37,23 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     public function headings(): array
     {
         return array_values(array_filter($this->columns, function ($key) {
-            return ! in_array($key, ['action', 'actions'], true);
+            return ! $this->isToolColumn($key);
         }, ARRAY_FILTER_USE_KEY));
+    }
+
+    /**
+     * Selection and action columns are UI-only and must not appear in exports.
+     */
+    protected function isToolColumn($column): bool
+    {
+        if (in_array($column, ['action', 'actions'], true)) {
+            return true;
+        }
+
+        $formatter = $this->formatters[$column] ?? null;
+
+        return $formatter === 'checkbox'
+            || (is_array($formatter) && ($formatter['type'] ?? null) === 'checkbox');
     }
 
     protected function formatValue($value, $formatter, $options = [])
@@ -112,8 +127,8 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
         $result = [];
 
         foreach (array_keys($this->columns) as $column) {
-            // Skip action(s) column
-            if (in_array($column, ['action', 'actions'], true)) {
+            // Skip action(s) and selection columns
+            if ($this->isToolColumn($column)) {
                 continue;
             }
 

@@ -96,7 +96,7 @@ trait WithFormatters
         $href = $this->resolveLinkHref($value, $options, $item, $key);
 
         if (! $href) {
-            return (string) $value;
+            return e($value);
         }
 
         $attributes = 'href="'.e($href).'"';
@@ -182,6 +182,11 @@ trait WithFormatters
 
     public function formatValue($key, $value, $item = null): string|int|float|bool
     {
+        // The checkbox column has no underlying value; render the selection control instead.
+        if ($this->isCheckboxFormatter($key) && $this->isCheckboxColumn($key)) {
+            return $this->renderSelectionCheckbox($item, $key);
+        }
+
         // Handle null values by returning a dash
         if ($value === null || $value === '') {
             return '-';
@@ -213,6 +218,14 @@ trait WithFormatters
         }
 
         return e($value);
+    }
+
+    protected function isCheckboxFormatter($key): bool
+    {
+        $formatter = $this->formatters[$key] ?? null;
+
+        return $formatter === 'checkbox'
+            || (is_array($formatter) && ($formatter['type'] ?? null) === 'checkbox');
     }
 
     protected function getFormatterOptions($key): array

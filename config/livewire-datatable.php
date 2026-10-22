@@ -145,7 +145,18 @@ return [
         // Table body
         'tbody' => 'divide-y divide-gray-200 dark:divide-gray-700',
         'tr' => 'hover:bg-gray-50 dark:hover:bg-gray-700/25 transition',
+        'tr_selected' => 'bg-blue-50 dark:bg-blue-900/20',
         'td' => 'px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200',
+        'selection_th' => 'w-12 pr-0',
+        'selection_td' => 'w-12 pr-0',
+        'selection_checkbox' => 'size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800',
+        'selection_header_checkbox' => 'size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800',
+        'selection_banner' => 'flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-blue-50 px-4 py-2 text-sm dark:border-gray-700 dark:bg-blue-900/20',
+        'selection_banner_text' => 'font-medium text-blue-900 dark:text-blue-100',
+        'selection_banner_actions' => 'flex items-center gap-3',
+        'selection_select_all' => 'font-medium text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100',
+        'selection_apply' => 'rounded-sm bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
+        'selection_clear' => 'text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white',
 
         // Column-specific cell styling
         // 'td_id' => 'font-mono text-gray-500 dark:text-gray-400', // Example: ID column styling
@@ -279,7 +290,18 @@ return [
         // Tbody
         'tbody' => 'tbody',
         'tr' => 'border-bottom',
+        'tr_selected' => 'table-active',
         'td' => 'px-4 py-3',
+        'selection_th' => 'text-center',
+        'selection_td' => 'text-center',
+        'selection_checkbox' => 'form-check-input',
+        'selection_header_checkbox' => 'form-check-input',
+        'selection_banner' => 'd-flex flex-wrap justify-content-between align-items-center gap-2 px-4 py-2 border-bottom bg-light',
+        'selection_banner_text' => 'small fw-semibold text-primary',
+        'selection_banner_actions' => 'd-flex align-items-center gap-3',
+        'selection_select_all' => 'btn btn-sm btn-link text-decoration-none p-0',
+        'selection_apply' => 'btn btn-sm btn-primary',
+        'selection_clear' => 'btn btn-sm btn-outline-secondary',
 
         // Column-specific cell styling
         // 'td_id' => 'font-mono text-gray-500 dark:text-gray-400', // Example: ID column styling
@@ -415,6 +437,34 @@ return [
     |
     */
     'max_all_records' => env('DATATABLE_MAX_ALL', 5000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Row Selection
+    |--------------------------------------------------------------------------
+    |
+    | A checkbox column is enabled by adding a formatter with type "checkbox".
+    | Selection state is owned by the component; the formatter only renders
+    | the input. Keys are always validated against the current page.
+    |
+    | payload: "keys" (default), "rows", or "both". "rows" contains only
+    |          displayed columns unless selection.columns is set.
+    | dispatch: "change" dispatches on every change, "manual" requires the
+    |           user to click Apply selection.
+    | row_key: optional column used as the stable row identifier. Defaults to
+    |          the model's primary key, or "id" for API sources.
+    |
+    */
+    'selection' => [
+        'row_key' => env('DATATABLE_ROW_KEY'),
+        'event' => 'datatable-selection-changed',
+        'payload' => 'keys',
+        'columns' => [],
+        'max_rows' => 100,
+        'max_keys' => 5000,
+        'dispatch' => 'change',
+        'clear_on_query_change' => true,
+    ],
 
     /*
     |--------------------------------------------------------------------------
