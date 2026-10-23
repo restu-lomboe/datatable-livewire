@@ -25,6 +25,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Searching](#searching)
   - [Sorting](#sorting)
   - [Value Formatting](#value-formatting)
+  - [Chaining Formatters](#chaining-formatters)
   - [Row Selection](#checkbox--row-selection)
 - [Advanced Features](#-advanced-features)
   - [Relationships](#relationships)
@@ -317,6 +318,38 @@ For complex formatting, use array syntax:
 ]
 ```
 
+#### Chaining Formatters
+
+Combine text formatters from left to right using `and`, `|`, or `->`. Inline arguments are supported
+for `replace` and `capitalize`:
+
+```php
+'formatters' => [
+    'name' => 'capitalize',
+    'slug' => 'replace("_", "-")',
+    'label' => 'replace("_", " ") and capitalize("words")',
+    'code' => 'uppercase|replace("-", "")',
+],
+```
+
+For longer chains, formatter options can also be supplied per column:
+
+```php
+'formatters' => [
+    'label' => 'capitalize and replace',
+],
+'formatterOptions' => [
+    'label' => [
+        'mode' => 'words',
+        'search' => '_',
+        'replace' => ' ',
+    ],
+],
+```
+
+`replace` accepts `search`/`replace` options or positional arguments. `capitalize` uses the first
+letter by default; pass `mode => 'words'` or use `capitalize("words")` to title-case each word.
+
 #### Available Formatters
 
 | Formatter   | Usage                    | Options                                         |
@@ -329,6 +362,8 @@ For complex formatting, use array syntax:
 | `boolean`   | Convert to Yes/No        | `true, false`                                   |
 | `uppercase` | Uppercase text           | —                                               |
 | `lowercase` | Lowercase text           | —                                               |
+| `capitalize` | Capitalize text         | `mode: first` (default) or `words`               |
+| `replace`   | Replace text             | `search, replace` or inline `replace("_", "")`   |
 | `limit`     | Limit string length      | `length, end`                                   |
 | `words`     | Limit by word count      | `words, end`                                    |
 | `markdown`  | Convert markdown to HTML | —                                               |
@@ -418,6 +453,28 @@ If the route parameter name differs from the column name, use an associative arr
 'params' => ['user' => 'id', 'slug' => 'slug'],   // route param "user" <- column "id"
 ```
 
+##### Format the Link Label
+
+Use `text_formatter` (or `text_formats`) to apply a formatter chain to the link text only. The
+original cell value is still used to build the URL, so route parameters and URL placeholders stay
+correct:
+
+```php
+'formatters' => [
+    'name' => [
+        'type' => 'link',
+        'options' => [
+            'route' => 'users.show',
+            'params' => ['id'],
+            'text_formatter' => 'replace("_", " ") and capitalize("words")',
+        ],
+    ],
+],
+```
+
+For example, `john_doe` renders as a link labelled **John Doe** while the URL still uses the raw
+`id`. A literal `text` option takes precedence over `text_formatter`.
+
 ##### Custom / Static URL
 
 ```php
@@ -451,7 +508,8 @@ You can also inject column values into a URL using `{column}` placeholders:
 | `route`  | Named route to link to (e.g. `users.show`)                      |
 | `params` | Route parameters as column names; numeric `['id']` or associative `['user' => 'id']` |
 | `url`    | Custom/static URL, optionally with `{column}` placeholders      |
-| `text`   | Link label (defaults to the cell value)                         |
+| `text`   | Literal link label (defaults to the cell value)                 |
+| `text_formatter` | Formatter chain applied to the link label only (`text_formats` alias) |
 | `target` | `_self` (default) or `_blank`                                   |
 | `class`  | CSS classes applied to the anchor                               |
 | `title`  | `title` attribute for the anchor                                |
