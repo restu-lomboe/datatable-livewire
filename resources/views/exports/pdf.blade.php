@@ -1,7 +1,17 @@
 @php
     use Illuminate\Support\Str;
     use Illuminate\Support\Carbon;
-    $visibleColumns = array_filter($columns, fn ($key) => ! in_array($key, ['action', 'actions'], true), ARRAY_FILTER_USE_KEY);
+    $isToolColumn = function ($key) use ($formatters) {
+        if (in_array($key, ['action', 'actions'], true)) {
+            return true;
+        }
+
+        $formatter = $formatters[$key] ?? null;
+
+        return $formatter === 'checkbox'
+            || (is_array($formatter) && ($formatter['type'] ?? null) === 'checkbox');
+    };
+    $visibleColumns = array_filter($columns, fn ($key) => ! $isToolColumn($key), ARRAY_FILTER_USE_KEY);
     $columnCount = max(1, count($visibleColumns));
     $baseFontSize = max(6, min(10, 140 / $columnCount));
     $cellPadding = max(1, min(6, 80 / $columnCount));

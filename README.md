@@ -25,6 +25,8 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Searching](#searching)
   - [Sorting](#sorting)
   - [Value Formatting](#value-formatting)
+  - [Chaining Formatters](#chaining-formatters)
+  - [Row Selection](#checkbox--row-selection)
 - [Advanced Features](#-advanced-features)
   - [Relationships](#relationships)
   - [Custom Query Scopes](#custom-query-scopes)
@@ -316,6 +318,38 @@ For complex formatting, use array syntax:
 ]
 ```
 
+#### Chaining Formatters
+
+Combine text formatters from left to right using `and`, `|`, or `->`. Inline arguments are supported
+for `replace` and `capitalize`:
+
+```php
+'formatters' => [
+    'name' => 'capitalize',
+    'slug' => 'replace("_", "-")',
+    'label' => 'replace("_", " ") and capitalize("words")',
+    'code' => 'uppercase|replace("-", "")',
+],
+```
+
+For longer chains, formatter options can also be supplied per column:
+
+```php
+'formatters' => [
+    'label' => 'capitalize and replace',
+],
+'formatterOptions' => [
+    'label' => [
+        'mode' => 'words',
+        'search' => '_',
+        'replace' => ' ',
+    ],
+],
+```
+
+`replace` accepts `search`/`replace` options or positional arguments. `capitalize` uses the first
+letter by default; pass `mode => 'words'` or use `capitalize("words")` to title-case each word.
+
 #### Available Formatters
 
 | Formatter   | Usage                    | Options                                         |
@@ -328,12 +362,69 @@ For complex formatting, use array syntax:
 | `boolean`   | Convert to Yes/No        | `true, false`                                   |
 | `uppercase` | Uppercase text           | —                                               |
 | `lowercase` | Lowercase text           | —                                               |
+| `capitalize` | Capitalize text         | `mode: first` (default) or `words`               |
+| `replace`   | Replace text             | `search, replace` or inline `replace("_", "")`   |
 | `limit`     | Limit string length      | `length, end`                                   |
 | `words`     | Limit by word count      | `words, end`                                    |
 | `markdown`  | Convert markdown to HTML | —                                               |
 | `money`     | Advanced currency        | `symbol, decimals, decimal_point, thousand_sep` |
 | `link`      | Render value as a link   | `route, params, url, text, target, class, title` |
 | `strip` / `html` / `plain` | Strip HTML tags → plain string | `allowed: '<p><br>'` (optional) |
+
+#### Checkbox / Row Selection
+
+Add a checkbox column by using the `checkbox` formatter. The formatter only renders the input;
+selection state is owned by the component and is never stored in the row data.
+
+```php
+'columns' => [
+    'select' => 'Select',
+    'name' => 'Name',
+    'email' => 'Email',
+],
+'formatters' => [
+    'select' => 'checkbox',
+],
+```
+
+The header checkbox selects the current page. After at least one row is selected, a banner offers
+**Select all N matching** for the current search/filter, plus **Clear**. In all-matching mode,
+individually unchecked rows are sent as exclusions instead of enumerating every key.
+
+Listen to the selection event in a parent Livewire component:
+
+```php
+use Livewire\Attributes\On;
+
+#[On('datatable-selection-changed')]
+public function handleSelection(array $selection): void
+{
+    // $selection['keys']        Selected keys (include mode)
+    // $selection['allMatching'] true when every matching row is selected
+    // $selection['except']      Excluded keys (all-matching mode)
+    // $selection['count']       Number of selected rows
+}
+```
+
+By default the event payload contains keys only. Set `selection.payload` to `rows` or `both` to
+include capped row values, or provide `selection.columns` to choose exactly which values are
+exposed. Keys are normalized to strings. The checkbox column is automatically excluded from
+sorting, searching, and exports. In all-matching mode `rows` is empty by design; use `context`
+(search, filter, date) to query the selected records in the parent.
+
+```php
+'selection' => [
+    'row_key' => 'uuid',          // optional; defaults to model key or "id"
+    'payload' => 'both',          // keys, rows, or both
+    'columns' => ['name', 'email'],
+    'max_rows' => 100,
+    'dispatch' => 'change',       // change or manual (Apply selection button)
+    'clear_on_query_change' => true,
+],
+```
+
+For API data sources, selection is keys-only for the current page; **Select all matching** is
+available for model sources because it needs a database query.
 
 #### Link Formatter
 
@@ -361,6 +452,28 @@ If the route parameter name differs from the column name, use an associative arr
 ```php
 'params' => ['user' => 'id', 'slug' => 'slug'],   // route param "user" <- column "id"
 ```
+
+##### Format the Link Label
+
+Use `text_formatter` (or `text_formats`) to apply a formatter chain to the link text only. The
+original cell value is still used to build the URL, so route parameters and URL placeholders stay
+correct:
+
+```php
+'formatters' => [
+    'name' => [
+        'type' => 'link',
+        'options' => [
+            'route' => 'users.show',
+            'params' => ['id'],
+            'text_formatter' => 'replace("_", " ") and capitalize("words")',
+        ],
+    ],
+],
+```
+
+For example, `john_doe` renders as a link labelled **John Doe** while the URL still uses the raw
+`id`. A literal `text` option takes precedence over `text_formatter`.
 
 ##### Custom / Static URL
 
@@ -395,7 +508,8 @@ You can also inject column values into a URL using `{column}` placeholders:
 | `route`  | Named route to link to (e.g. `users.show`)                      |
 | `params` | Route parameters as column names; numeric `['id']` or associative `['user' => 'id']` |
 | `url`    | Custom/static URL, optionally with `{column}` placeholders      |
-| `text`   | Link label (defaults to the cell value)                         |
+| `text`   | Literal link label (defaults to the cell value)                 |
+| `text_formatter` | Formatter chain applied to the link label only (`text_formats` alias) |
 | `target` | `_self` (default) or `_blank`                                   |
 | `class`  | CSS classes applied to the anchor                               |
 | `title`  | `title` attribute for the anchor                                |
@@ -1391,6 +1505,7 @@ Quick reference of all available parameters:
 | `unsortable`           | array  | Non-sortable field names |
 | `customColumns`        | array  | Custom template paths    |
 | `formatters`           | array  | Value formatters         |
+| `rowKey`              | string | Stable row identifier (defaults to model key or `id`) |
 | `scope`                | string | Query scope name         |
 | `scopeParams`          | array  | Query scope parameters   |
 | `defaultSortField`     | string | Initial sort field       |
