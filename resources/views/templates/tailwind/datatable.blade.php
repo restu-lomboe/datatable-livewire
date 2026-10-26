@@ -17,20 +17,26 @@
                 <div data-class="filter_content" @class([$this->getClass('filter_content')])>
                     <span data-class="filter_label" @class([$this->getClass('filter_label')])>Filter list by: </span>
                     <div data-class="filter_list" @class([$this->getClass('filter_list')])>
+                        <p data-class="filter_hint" @class([$this->getClass('filter_hint')])>
+                            Separate values with commas. A row matches any of them.
+                        </p>
                         <div data-class="filter_items" @class([$this->getClass('filter_items')])>
                             @foreach ($filterBy as $index => $filterValue)
-                                <div data-class="filter_item" @class([$this->getClass('filter_item')])>
+                                <div wire:key="filter-row-{{ $index }}" data-class="filter_item"
+                                    @class([$this->getClass('filter_item')])>
                                     <div data-class="filter_input_wrapper" @class([$this->getClass('filter_input_wrapper')])>
-                                        <input type="text" id="hs-inline-leading-select-label" name="inline-add-on"
-                                            wire:model="query.{{ $index }}" data-class="filter_input"
-                                            @class([$this->getClass('filter_input')]) placeholder="Search...">
+                                        <input type="text" id="filter-query-{{ $index }}"
+                                            name="filter-query-{{ $index }}" wire:model="query.{{ $index }}"
+                                            wire:keydown.enter.prevent="filterData" data-class="filter_input"
+                                            @class([$this->getClass('filter_input')])
+                                            placeholder="Search... (comma separated)">
                                         <div data-class="filter_select_wrapper" @class([$this->getClass('filter_select_wrapper')])>
-                                            <label for="hs-inline-leading-select-country"
+                                            <label for="filter-column-{{ $index }}"
                                                 data-class="filter_select_label"
-                                                @class([$this->getClass('filter_select_label')])>Country</label>
+                                                @class([$this->getClass('filter_select_label')])>Column</label>
                                             <select wire:model="filterBy.{{ $index }}"
-                                                id="hs-inline-leading-select-country"
-                                                name="hs-inline-leading-select-country" data-class="filter_select"
+                                                id="filter-column-{{ $index }}"
+                                                name="filter-column-{{ $index }}" data-class="filter_select"
                                                 @class([$this->getClass('filter_select')])>
                                                 <option disabled value="">Choose</option>
                                                 @foreach ($this->filterByColumn as $colKey => $colLabel)

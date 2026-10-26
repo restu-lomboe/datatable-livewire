@@ -742,16 +742,16 @@ class DataTable extends Component
 
         foreach ($this->filterBy as $i => $col) {
             $col = trim((string) $col);
-            $val = trim((string) ($this->query[$i] ?? ''));
+            $values = $this->parseFilterValues((string) ($this->query[$i] ?? ''));
 
             // Ignore completely empty rows (added by addFilter but not filled)
-            if ($col === '' && $val === '') {
+            if ($col === '' && $values === []) {
                 continue;
             }
 
-            if ($col === '' && $val !== '') {
+            if ($col === '' && $values !== []) {
                 $this->addError("filterBy.$i", 'Choose must be selected.');
-            } elseif ($col !== '' && $val === '') {
+            } elseif ($col !== '' && $values === []) {
                 $this->addError("query.$i", 'Search value is required.');
             } else {
                 if (! in_array($col, $validColumns, true)) {
@@ -772,6 +772,7 @@ class DataTable extends Component
             return;
         }
 
+        $this->normalizeFilterValues();
         $this->filterDataSearch = true;
         $this->sortField = $this->defaultSortField;
         $this->sortDirection = $this->defaultSortDirection;
@@ -834,6 +835,105 @@ class DataTable extends Component
         }
 
         $this->storeFilterSession();
+    }
+
+    /**
+     * Split a comma-separated filter input into unique, trimmed terms.
+     *
+     * @return array<int, string>
+     */
+    protected function parseFilterValues(string $value): array
+    {
+        if (trim($value) === '') {
+            return [];
+        }
+
+        return collect(explode(',', $value))
+            ->map(fn (string $term): string => trim($term))
+            ->filter(fn (string $term): bool => $term !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function normalizeFilterValues(): void
+    {
+        foreach ($this->filterBy as $i => $column) {
+            $this->filterBy[$i] = trim((string) $column);
+            $this->query[$i] = implode(', ', $this->parseFilterValues((string) ($this->query[$i] ?? '')));
+        }
+    }
+
+    /**
+     * Apply one advanced filter row. Values inside a row are OR-ed; rows are AND-ed.
+     *
+     * @param  array<int, string>  $values
+     */
+    protected function applyAdvancedFilter(Builder $query, string $column, array $values): void
+    {
+        if ($values === []) {
+            return;
+        }
+
+        $field = $column;
+        $relationPath = null;
+
+        if (str_contains($column, '.')) {
+            $parts = explode('.', $column);
+            $field = array_pop($parts);
+            $relationPath = implode('.', $parts);
+        }
+
+        $isDateColumn = $this->isDateColumn($column);
+
+        $apply = function (Builder $target) use ($field, $values, $isDateColumn): void {
+            $target->where(function (Builder $group) use ($field, $values, $isDateColumn): void {
+                foreach (array_values($values) as $index => $value) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+
+                    $group->{$method}(function (Builder $condition) use ($field, $value, $isDateColumn): void {
+                        if ($isDateColumn) {
+                            $this->applyDateSearchCondition($condition, $field, $value);
+                        } else {
+                            $condition->where($field, 'LIKE', '%'.$this->escapeLike($value).'%');
+                        }
+                    });
+                }
+            });
+        };
+
+        if ($relationPath) {
+            $query->whereHas($relationPath, $apply);
+        } else {
+            $apply($query);
+        }
+    }
+
+    protected function applyDateSearchCondition(Builder $query, string $field, string $value): void
+    {
+        $value = trim($value);
+
+        // Support "Aug 2026" / "August 2026" -> filter by month + year
+        if (preg_match('/^[a-zA-Z]+\s+(19|20)\d{2}$/', $value) || preg_match('/^(19|20)\d{2}[\-\/]\d{1,2}$/', $value)) {
+            try {
+                $date = Carbon::parse($value);
+                $query->whereMonth($field, $date->month)->whereYear($field, $date->year);
+
+                return;
+            } catch (\Throwable $e) {
+                // Fall back to a normal date or LIKE filter.
+            }
+        }
+
+        $parsed = $this->tryParseDate($value);
+
+        if ($parsed) {
+            $query->whereDate($field, $parsed);
+
+            return;
+        }
+
+        $query->where($field, 'LIKE', '%'.$this->escapeLike($value).'%');
     }
 
     #[Computed]
@@ -1016,65 +1116,18 @@ class DataTable extends Component
         if ($this->filterDataSearch) {
             foreach ($this->filterBy as $i => $column) {
                 $column = trim((string) $column);
-                $value = trim((string) ($this->query[$i] ?? '')) ?: null;
+                $values = $this->parseFilterValues((string) ($this->query[$i] ?? ''));
+
                 // Normalize stored query value
-                $this->query[$i] = $value ?? '';
+                $this->query[$i] = implode(', ', $values);
                 $this->filterBy[$i] = $column;
-                if (! $value) {
+
+                // Defensive: skip empty column/value to avoid SQL error (validation should catch)
+                if ($values === [] || $column === '') {
                     continue;
                 }
-                // Defensive: skip empty column to avoid SQL error (validation should catch)
-                if ($column === '') {
-                    continue;
-                }
 
-                // Date-aware: if column is date/datetime/timestamp and value looks like a date, use whereDate
-                if ($this->isDateColumn($column)) {
-                    // Support "Aug 2026" / "August 2026" → filter by month+year
-                    $trimmed = trim($value);
-                    if (preg_match('/^[a-zA-Z]+\s+(19|20)\d{2}$/', $trimmed) || preg_match('/^(19|20)\d{2}[\-\/]\d{1,2}$/', $trimmed)) {
-                        try {
-                            $dt = Carbon::parse($trimmed);
-                            if (str_contains($column, '.')) {
-                                $parts = explode('.', $column);
-                                $field = array_pop($parts);
-                                $relationPath = implode('.', $parts);
-                                $query->whereHas($relationPath, fn ($q) => $q->whereMonth($field, $dt->month)->whereYear($field, $dt->year));
-                            } else {
-                                $query->whereMonth($column, $dt->month)->whereYear($column, $dt->year);
-                            }
-
-                            continue;
-                        } catch (\Throwable $e) {
-                            // fallback to LIKE
-                        }
-                    }
-
-                    $parsed = $this->tryParseDate($value);
-                    if ($parsed) {
-                        if (str_contains($column, '.')) {
-                            $parts = explode('.', $column);
-                            $field = array_pop($parts);
-                            $relationPath = implode('.', $parts);
-                            $query->whereHas($relationPath, fn ($q) => $q->whereDate($field, $parsed));
-                        } else {
-                            $query->whereDate($column, $parsed);
-                        }
-
-                        continue;
-                    }
-                }
-
-                $escaped = $this->escapeLike($value);
-
-                if (str_contains($column, '.')) {
-                    $parts = explode('.', $column);
-                    $field = array_pop($parts);
-                    $relationPath = implode('.', $parts);
-                    $query->whereHas($relationPath, fn ($q) => $q->where($field, 'LIKE', "%{$escaped}%"));
-                } else {
-                    $query->where($column, 'LIKE', "%{$escaped}%");
-                }
+                $this->applyAdvancedFilter($query, $column, $values);
             }
         }
 

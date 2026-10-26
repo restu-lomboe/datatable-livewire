@@ -23,9 +23,13 @@
                         </div>
                     </div>
                     <div data-class="filter_content" @class([$this->getClass('filter_content')])>
+                        <small data-class="filter_hint" @class([$this->getClass('filter_hint')])>
+                            Separate values with commas. A row matches any of them.
+                        </small>
                         <div data-class="filter_items" @class([$this->getClass('filter_items')])>
                             @foreach ($filterBy as $index => $filterValue)
-                                <div data-class="filter_item" @class([$this->getClass('filter_item'), 'row g-2 align-items-center'])>
+                                <div wire:key="filter-row-{{ $index }}" data-class="filter_item"
+                                    @class([$this->getClass('filter_item'), 'row g-2 align-items-center'])>
                                     <div class="{{ $loop->first ? 'col-12' : 'col-11' }}">
                                         <div data-class="filter_input_group" @class([$this->getClass('filter_input_group')])>
                                             <select data-class="filter_select" @class([$this->getClass('filter_select'), 'pe-4'])
@@ -37,7 +41,8 @@
                                             </select>
                                             <input type="text" data-class="filter_input"
                                                 @class([$this->getClass('filter_input')]) wire:model="query.{{ $index }}"
-                                                placeholder="Value...">
+                                                wire:keydown.enter.prevent="filterData"
+                                                placeholder="Value... (comma separated)">
                                         </div>
                                     </div>
                                     @if (!$loop->first)

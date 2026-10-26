@@ -809,9 +809,26 @@ Users can:
 
 - Click "Filter.." to add filter conditions
 - Select columns to filter by
-- Enter filter values
+- Enter one or more values; separate multiple values with a comma
 - Add multiple conditions (AND logic)
 - Reset all filters at once
+
+#### Multiple Values in One Column
+
+A single filter row supports multiple search terms separated by commas. Values within the same row
+are combined with **OR**; separate filter rows remain combined with **AND**.
+
+```text
+Column: name
+Value:  john, jane, budi
+```
+
+This matches rows where `name` contains `john`, `jane`, or `budi`. The input is trimmed and
+normalized on apply, so `john, jane` and `john , jane` behave the same. The UI includes a short hint
+and supports pressing **Enter** to apply the filter.
+
+Date columns also accept multiple comma-separated dates or month/year values, for example
+`2026-01-01, Aug 2026`.
 
 #### Customization
 
@@ -821,6 +838,7 @@ All filter elements have configurable CSS classes:
 // config/livewire-datatable.php
 'theme' => [
     'filter_panel' => 'p-4 border-r border-gray-200',
+    'filter_hint' => 'mb-2 text-xs text-gray-400',
     'filter_items' => 'space-y-3',
     'filter_input' => 'py-2.5 px-4 border-gray-200 rounded-lg',
     'filter_add_button' => 'py-2 px-3 text-sm font-medium',
