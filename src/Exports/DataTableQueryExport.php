@@ -10,6 +10,9 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
@@ -39,7 +42,7 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
         return $this->chunkSize;
     }
 
-    public function query()
+    public function query(): QueryBuilder|EloquentBuilder|Relation
     {
         return $this->query;
     }
@@ -157,7 +160,7 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
         return $result;
     }
 
-    public function styles(Worksheet $sheet)
+    public function styles(Worksheet $sheet): ?array
     {
         return [
             1 => [
