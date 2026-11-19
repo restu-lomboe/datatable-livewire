@@ -35,6 +35,7 @@ A powerful and flexible DataTable component for Laravel Livewire that transforms
   - [Advanced Dynamic Filtering](#advanced-dynamic-filtering)
   - [Date Range Filter](#date-range-filter)
 - [Exporting Data](#-exporting-data)
+  - [Conditional Row Highlighting](#conditional-row-highlighting)
   - [Custom Export (Column Selection)](#custom-export-column-selection)
 - [Customization](#-customization)
   - [Template System](#template-system)
@@ -1086,8 +1087,82 @@ Export your DataTable data to Excel and PDF formats.
 - Respects active search filters
 - Respects active date range filter
 - Maintains data formatting (dates, currency, etc.)
+- Converts HTML-rich values to plain text in Excel and PDF exports (tags removed, entities decoded)
+- Conditional row highlighting based on raw row values (Excel and PDF)
 - Automatically excludes action columns
 - Responsive UI with dark mode support
+
+### HTML Content
+
+Values containing HTML (for example from a rich text editor) are converted to plain text during
+Excel and PDF exports. Tags are removed, entities decoded, and block/line-break tags replaced with spaces.
+
+```html
+<p>Hello <strong>World</strong></p>
+```
+
+Exports as:
+
+```text
+Hello World
+```
+
+This applies to both model and API data sources in both export formats.
+
+### Conditional Row Highlighting
+
+Use `exportRowConditions` to define conditions and `exportRowStyles` to define the row background.
+This is export-only, uses raw row values, and applies to both Excel and PDF.
+
+```php
+return view('livewire.users-table', [
+    'exportRowConditions' => [
+        'danger' => [
+            'match' => 'any', // any = OR, all = AND
+            'rules' => [
+                ['column' => 'price', 'operator' => '>', 'value' => 100],
+                ['column' => 'defect', 'operator' => '=', 'value' => 'yes'],
+            ],
+        ],
+    ],
+    'exportRowStyles' => [
+        'danger' => ['background' => '#FFC7CE'],
+    ],
+]);
+```
+
+Use the same parameters on the component:
+
+```blade
+<livewire:livewire-datatable
+    :model="User::class"
+    :columns="$columns"
+    :exportRowConditions="$exportRowConditions"
+    :exportRowStyles="$exportRowStyles" />
+```
+
+For a single rule group, the shorter form also works:
+
+```php
+'exportRowConditions' => [
+    'match' => 'any',
+    'rules' => [
+        ['column' => 'price', 'operator' => '>', 'value' => 100],
+        ['column' => 'defect', 'operator' => '=', 'value' => 'yes'],
+    ],
+],
+'exportRowStyles' => [
+    'background' => '#FFC7CE',
+],
+```
+
+Supported operators: `=`, `!=`, `>`, `>=`, `<`, `<=`, `contains`, `not_contains`,
+`starts_with`, `ends_with`, `in`, `not_in`, `between`, `not_between`, `empty`,
+`not_empty`, `null`, and `not_null`.
+
+Rules in one group are combined with `match` (`any` for OR, `all` for AND). If several
+groups match the same row, the first matching group wins. Colors accept hex values such
+as `#FFC7CE`, `#F00`, or `FFFFC7CE`.
 
 ### Configuration
 
@@ -1100,6 +1175,8 @@ Export your DataTable data to Excel and PDF formats.
     'paper_size' => 'a4',
     'exclude_columns' => [],       // exact keys, e.g. ['secret_token', 'user.password']
     'exclude_patterns' => ['*_id'], // wildcard via Str::is(), e.g. hides user_id, department.user_id
+    'row_conditions' => [],        // export-only conditional row highlighting
+    'row_styles' => [],            // background colors keyed by condition group or flat
 ];
 ```
 
@@ -1532,6 +1609,8 @@ Quick reference of all available parameters:
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
 | `excludeColumns`       | array  | Export-only exclude (dot-notation exact, merged with config) |
+| `exportRowConditions`  | array  | Export-only row highlight conditions |
+| `exportRowStyles`      | array  | Export-only row highlight background colors |
 
 ## ⬆️ Upgrading
 

@@ -1,6 +1,9 @@
 @php
+    use Developerawam\LivewireDatatable\Exports\ExportRowHighlighter;
+    use Developerawam\LivewireDatatable\Exports\HtmlToText;
     use Illuminate\Support\Str;
     use Illuminate\Support\Carbon;
+    $rowHighlighter = new ExportRowHighlighter((array) ($rowConditions ?? []), (array) ($rowStyles ?? []));
     $isToolColumn = function ($key) use ($formatters) {
         if (in_array($key, ['action', 'actions'], true)) {
             return true;
@@ -8,10 +11,9 @@
 
         $formatter = $formatters[$key] ?? null;
 
-        return $formatter === 'checkbox'
-            || (is_array($formatter) && ($formatter['type'] ?? null) === 'checkbox');
+        return $formatter === 'checkbox' || (is_array($formatter) && ($formatter['type'] ?? null) === 'checkbox');
     };
-    $visibleColumns = array_filter($columns, fn ($key) => ! $isToolColumn($key), ARRAY_FILTER_USE_KEY);
+    $visibleColumns = array_filter($columns, fn($key) => !$isToolColumn($key), ARRAY_FILTER_USE_KEY);
     $columnCount = max(1, count($visibleColumns));
     $baseFontSize = max(6, min(10, 140 / $columnCount));
     $cellPadding = max(1, min(6, 80 / $columnCount));
@@ -28,19 +30,24 @@
         </thead>
         <tbody>
             @foreach ($data as $index => $row)
-                <tr>
+                @php
+                    $rowBackground = $rowHighlighter->backgroundColorFor($row);
+                @endphp
+                <tr @if ($rowBackground) style="background-color: {{ $rowBackground }};" @endif>
                     @foreach (array_keys($visibleColumns) as $column)
                         @if ($column === 'no')
                             <td>{{ $index + 1 }}</td>
                         @else
                             <td>
                                 @php
-                                    $value = data_get($row, $column);
+                                    $value = HtmlToText::convert(data_get($row, $column));
                                     if (isset($formatters[$column])) {
                                         $formatter = $formatters[$column];
                                         $options = $formatterOptions[$column] ?? [];
                                         $formatDate = function ($val, $fmt) {
-                                            if (! $val) return $val;
+                                            if (!$val) {
+                                                return $val;
+                                            }
                                             try {
                                                 $dt = $val instanceof \DateTimeInterface ? $val : Carbon::parse($val);
                                                 return $dt->format($fmt);
@@ -60,13 +67,30 @@
                                                     $value = $formatDate($value, $options['format'] ?? 'H:i:s');
                                                     break;
                                                 case 'number':
-                                                    $value = is_numeric($value) ? number_format($value, $options['decimals'] ?? 0, $options['decimal_point'] ?? '.', $options['thousand_sep'] ?? ',') : $value;
+                                                    $value = is_numeric($value)
+                                                        ? number_format(
+                                                            $value,
+                                                            $options['decimals'] ?? 0,
+                                                            $options['decimal_point'] ?? '.',
+                                                            $options['thousand_sep'] ?? ',',
+                                                        )
+                                                        : $value;
                                                     break;
                                                 case 'currency':
-                                                    $value = is_numeric($value) ? ($options['symbol'] ?? 'Rp ') . number_format($value, $options['decimals'] ?? 2, $options['decimal_point'] ?? '.', $options['thousand_sep'] ?? ',') : $value;
+                                                    $value = is_numeric($value)
+                                                        ? ($options['symbol'] ?? 'Rp ') .
+                                                            number_format(
+                                                                $value,
+                                                                $options['decimals'] ?? 2,
+                                                                $options['decimal_point'] ?? '.',
+                                                                $options['thousand_sep'] ?? ',',
+                                                            )
+                                                        : $value;
                                                     break;
                                                 case 'boolean':
-                                                    $value = $value ? ($options['true'] ?? 'Yes') : ($options['false'] ?? 'No');
+                                                    $value = $value
+                                                        ? $options['true'] ?? 'Yes'
+                                                        : $options['false'] ?? 'No';
                                                     break;
                                                 case 'uppercase':
                                                     $value = Str::upper($value);
@@ -90,26 +114,54 @@
                                                     $value = $formatDate($value, $typeOptions['format'] ?? 'Y-m-d');
                                                     break;
                                                 case 'datetime':
-                                                    $value = $formatDate($value, $typeOptions['format'] ?? 'Y-m-d H:i:s');
+                                                    $value = $formatDate(
+                                                        $value,
+                                                        $typeOptions['format'] ?? 'Y-m-d H:i:s',
+                                                    );
                                                     break;
                                                 case 'time':
                                                     $value = $formatDate($value, $typeOptions['format'] ?? 'H:i:s');
                                                     break;
                                                 case 'number':
-                                                    $value = is_numeric($value) ? number_format($value, $typeOptions['decimals'] ?? 0, $typeOptions['decimal_point'] ?? '.', $typeOptions['thousand_sep'] ?? ',') : $value;
+                                                    $value = is_numeric($value)
+                                                        ? number_format(
+                                                            $value,
+                                                            $typeOptions['decimals'] ?? 0,
+                                                            $typeOptions['decimal_point'] ?? '.',
+                                                            $typeOptions['thousand_sep'] ?? ',',
+                                                        )
+                                                        : $value;
                                                     break;
                                                 case 'currency':
                                                 case 'money':
-                                                    $value = is_numeric($value) ? ($typeOptions['symbol'] ?? 'Rp ') . number_format($value, $typeOptions['decimals'] ?? 2, $typeOptions['decimal_point'] ?? '.', $typeOptions['thousand_sep'] ?? ',') : $value;
+                                                    $value = is_numeric($value)
+                                                        ? ($typeOptions['symbol'] ?? 'Rp ') .
+                                                            number_format(
+                                                                $value,
+                                                                $typeOptions['decimals'] ?? 2,
+                                                                $typeOptions['decimal_point'] ?? '.',
+                                                                $typeOptions['thousand_sep'] ?? ',',
+                                                            )
+                                                        : $value;
                                                     break;
                                                 case 'boolean':
-                                                    $value = $value ? ($typeOptions['true'] ?? 'Yes') : ($typeOptions['false'] ?? 'No');
+                                                    $value = $value
+                                                        ? $typeOptions['true'] ?? 'Yes'
+                                                        : $typeOptions['false'] ?? 'No';
                                                     break;
                                                 case 'limit':
-                                                    $value = Str::limit($value, $typeOptions['length'] ?? 50, $typeOptions['end'] ?? '...');
+                                                    $value = Str::limit(
+                                                        $value,
+                                                        $typeOptions['length'] ?? 50,
+                                                        $typeOptions['end'] ?? '...',
+                                                    );
                                                     break;
                                                 case 'words':
-                                                    $value = Str::words($value, $typeOptions['words'] ?? 10, $typeOptions['end'] ?? '...');
+                                                    $value = Str::words(
+                                                        $value,
+                                                        $typeOptions['words'] ?? 10,
+                                                        $typeOptions['end'] ?? '...',
+                                                    );
                                                     break;
                                                 case 'uppercase':
                                                     $value = Str::upper($value);

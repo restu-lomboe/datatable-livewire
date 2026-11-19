@@ -2,7 +2,11 @@
 
 namespace Developerawam\LivewireDatatable\Exports;
 
+use Developerawam\LivewireDatatable\Traits\WithPlainTextExport;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -10,12 +14,11 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Eloquent\Relations\Relation;
 
 class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
+    use WithPlainTextExport;
+
     protected Builder $query;
 
     protected array $columns;
@@ -26,15 +29,23 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
 
     protected int $chunkSize;
 
+    protected ExportRowHighlighter $rowHighlighter;
+
+    /**
+     * @var array<int, string>
+     */
+    protected array $rowBackgrounds = [];
+
     protected int $currentRow = 0;
 
-    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [], int $chunkSize = 1000)
+    public function __construct(Builder $query, array $columns, ?array $formatters = [], ?array $formatterOptions = [], int $chunkSize = 1000, ?array $rowConditions = [], ?array $rowStyles = [])
     {
         $this->query = $query;
         $this->columns = $columns;
         $this->formatters = $formatters;
         $this->formatterOptions = $formatterOptions;
         $this->chunkSize = $chunkSize;
+        $this->rowHighlighter = new ExportRowHighlighter($rowConditions ?? [], $rowStyles ?? []);
     }
 
     public function chunkSize(): int
@@ -135,6 +146,13 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
     public function map($row): array
     {
         $this->currentRow++;
+
+        $background = $this->rowHighlighter->backgroundColorFor($row);
+
+        if ($background !== null) {
+            $this->rowBackgrounds[$this->currentRow + 1] = $background;
+        }
+
         $result = [];
 
         foreach (array_keys($this->columns) as $column) {
@@ -145,7 +163,7 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
             if ($column === 'no') {
                 $value = $this->currentRow;
             } else {
-                $value = data_get($row, $column);
+                $value = $this->toPlainText(data_get($row, $column));
 
                 if (isset($this->formatters[$column])) {
                     $formatter = $this->formatters[$column];
@@ -162,7 +180,7 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
 
     public function styles(Worksheet $sheet): ?array
     {
-        return [
+        $styles = [
             1 => [
                 'font' => ['bold' => true],
                 'fill' => [
@@ -171,5 +189,16 @@ class DataTableQueryExport implements FromQuery, ShouldAutoSize, WithHeadings, W
                 ],
             ],
         ];
+
+        foreach ($this->rowBackgrounds as $row => $background) {
+            $styles[$row] = [
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => ltrim($background, '#')],
+                ],
+            ];
+        }
+
+        return $styles;
     }
 }

@@ -120,6 +120,12 @@ class DataTable extends Component
 
     public $excludeColumns = [];
 
+    #[Locked]
+    public $exportRowConditions = [];
+
+    #[Locked]
+    public $exportRowStyles = [];
+
     protected function ensureDataSourceInitialized(): void
     {
         if (! $this->dataSource) {
@@ -239,7 +245,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = '', $rowKey = null): void
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = '', $rowKey = null, $exportRowConditions = null, $exportRowStyles = null): void
     {
         if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -270,6 +276,8 @@ class DataTable extends Component
         $this->defaultSortField = $defaultSortField;
         $this->defaultSortDirection = $defaultSortDirection;
         $this->excludeColumns = $excludeColumns;
+        $this->exportRowConditions = (array) ($exportRowConditions ?? config('livewire-datatable.export.row_conditions', []));
+        $this->exportRowStyles = (array) ($exportRowStyles ?? config('livewire-datatable.export.row_styles', []));
         $this->search = $search;
         $this->sortField = $defaultSortField;
         $this->sortDirection = $defaultSortDirection;

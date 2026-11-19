@@ -2,6 +2,7 @@
 
 namespace Developerawam\LivewireDatatable\Exports;
 
+use Developerawam\LivewireDatatable\Traits\WithPlainTextExport;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -13,6 +14,8 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
+    use WithPlainTextExport;
+
     protected $data;
 
     protected $columns;
@@ -21,12 +24,20 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
 
     protected $formatterOptions;
 
-    public function __construct(Collection $data, array $columns, ?array $formatters = [], ?array $formatterOptions = [])
+    protected ExportRowHighlighter $rowHighlighter;
+
+    /**
+     * @var array<int, string>
+     */
+    protected array $rowBackgrounds = [];
+
+    public function __construct(Collection $data, array $columns, ?array $formatters = [], ?array $formatterOptions = [], ?array $rowConditions = [], ?array $rowStyles = [])
     {
         $this->data = $data;
         $this->columns = $columns;
         $this->formatters = $formatters;
         $this->formatterOptions = $formatterOptions;
+        $this->rowHighlighter = new ExportRowHighlighter($rowConditions ?? [], $rowStyles ?? []);
     }
 
     public function collection()
@@ -124,6 +135,13 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     public function map($row): array
     {
         $this->currentRow++;
+
+        $background = $this->rowHighlighter->backgroundColorFor($row);
+
+        if ($background !== null) {
+            $this->rowBackgrounds[$this->currentRow + 1] = $background;
+        }
+
         $result = [];
 
         foreach (array_keys($this->columns) as $column) {
@@ -135,7 +153,7 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
             if ($column === 'no') {
                 $value = $this->currentRow;
             } else {
-                $value = data_get($row, $column);
+                $value = $this->toPlainText(data_get($row, $column));
 
                 // Apply formatter if exists
                 if (isset($this->formatters[$column])) {
@@ -156,7 +174,7 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
      */
     public function styles(Worksheet $sheet)
     {
-        return [
+        $styles = [
             // Style the first row (header)
             1 => [
                 'font' => ['bold' => true],
@@ -166,5 +184,16 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
                 ],
             ],
         ];
+
+        foreach ($this->rowBackgrounds as $row => $background) {
+            $styles[$row] = [
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => ltrim($background, '#')],
+                ],
+            ];
+        }
+
+        return $styles;
     }
 }
