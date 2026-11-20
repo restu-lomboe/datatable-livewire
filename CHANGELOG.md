@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `showCustomExportPanel()` / `closeCustomExport()` actions for modal management
   - `toggleCustomExportColumn()`, `selectAllExportColumns()`, `deselectAllExportColumns()` for column selection
 
+- **Per-Component Per Page**:
+  - New `perPage` mount parameter to set the initial rows per page per table
+  - Global default via `config('livewire-datatable.per_page')` / `DATATABLE_PER_PAGE`
+  - Custom per-page values are automatically added to the selector
+
 - **Link Formatter**:
   - New `link` formatter to render column values as clickable links
   - Named route support with parameters pulled from other columns (`route` + `params`)

@@ -1439,12 +1439,23 @@ The `'all'` option allows users to display all records at once.
 
 #### Default Per Page
 
+Set the initial value globally:
+
 ```php
-// Set in component
-public $perPage = 25;
+// config/livewire-datatable.php
+'per_page' => env('DATATABLE_PER_PAGE', 10),
 ```
 
-Or let users choose with the per-page selector in the UI.
+Or override it per component:
+
+```blade
+<livewire:livewire-datatable
+    :model="$model"
+    :columns="$columns"
+    :perPage="25" />
+```
+
+`perPage` accepts a positive integer or `'all'`. If the value is not listed in `per_page_options`, it is automatically added to the selector.
 
 ### Schema Cache
 
@@ -1606,6 +1617,7 @@ Quick reference of all available parameters:
 | `defaultSortField`     | string | Initial sort field       |
 | `defaultSortDirection` | string | 'asc' or 'desc'          |
 | `search`               | string | Initial table search (mount only, auto-applied) |
+| `perPage`              | int\|string | Initial rows per page (defaults to config `per_page`) |
 | `theme`                | array  | CSS class overrides      |
 | `apiConfig`            | array  | API configuration        |
 | `excludeColumns`       | array  | Export-only exclude (dot-notation exact, merged with config) |

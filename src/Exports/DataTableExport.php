@@ -4,6 +4,7 @@ namespace Developerawam\LivewireDatatable\Exports;
 
 use Developerawam\LivewireDatatable\Traits\WithPlainTextExport;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -40,7 +41,7 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
         $this->rowHighlighter = new ExportRowHighlighter($rowConditions ?? [], $rowStyles ?? []);
     }
 
-    public function collection()
+    public function collection(): Enumerable
     {
         return $this->data;
     }
@@ -172,7 +173,7 @@ class DataTableExport implements FromCollection, ShouldAutoSize, WithHeadings, W
     /**
      * Style the Excel sheet
      */
-    public function styles(Worksheet $sheet)
+    public function styles(Worksheet $sheet): ?array
     {
         $styles = [
             // Style the first row (header)

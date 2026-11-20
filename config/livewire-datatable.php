@@ -30,6 +30,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Per Page
+    |--------------------------------------------------------------------------
+    |
+    | Initial number of rows shown per page. Override per component with the
+    | :perPage mount parameter. Use 'all' to show all records.
+    |
+    */
+    'per_page' => env('DATATABLE_PER_PAGE', 10),
+
+    /*
+    |--------------------------------------------------------------------------
     | Export Options
     |--------------------------------------------------------------------------
     |

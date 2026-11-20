@@ -245,7 +245,7 @@ class DataTable extends Component
         }
     }
 
-    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = '', $rowKey = null, $exportRowConditions = null, $exportRowStyles = null): void
+    public function mount($model = null, $apiConfig = null, $scope = null, $columns = [], $scopeParams = [], $searchable = [], $unsortable = [], $theme = [], $customColumns = [], $formatters = [], $formatterOptions = [], $defaultSortField = 'created_at', $defaultSortDirection = 'desc', $excludeColumns = [], $search = '', $rowKey = null, $exportRowConditions = null, $exportRowStyles = null, $perPage = null): void
     {
         if (! $model && ! $apiConfig) {
             throw new \InvalidArgumentException('Either model or apiConfig must be provided');
@@ -291,8 +291,15 @@ class DataTable extends Component
         }
 
         // Initialize pagination options from config
-        $this->pageOptions = config('livewire-datatable.per_page_options', [10, 25, 50, 100]);
-        $this->perPage = $this->pageOptions[0] ?? 10;
+        $this->pageOptions = array_values((array) config('livewire-datatable.per_page_options', [10, 25, 50, 100]));
+
+        if ($this->pageOptions === []) {
+            $this->pageOptions = [10, 25, 50, 100];
+        }
+
+        $defaultPerPage = config('livewire-datatable.per_page') ?? ($this->pageOptions[0] ?? 10);
+        $this->perPage = $this->normalizePerPage($perPage ?? $defaultPerPage, $defaultPerPage);
+        $this->pageOptions = $this->includePerPageOption($this->pageOptions, $this->perPage);
 
         // Load theme from config based on template and merge with any custom theme passed
         $template = config('livewire-datatable.template', 'tailwind');
@@ -311,6 +318,63 @@ class DataTable extends Component
 
         // Restore session-persisted filter/search (so close does not reset)
         $this->restoreFilterSession();
+    }
+
+    /**
+     * Normalize a per-page value to a positive integer or the "all" sentinel.
+     */
+    protected function normalizePerPage(mixed $perPage, mixed $default = 10): int|string
+    {
+        if (is_string($perPage)) {
+            $perPage = trim($perPage);
+        }
+
+        if ($perPage === 'all' || $perPage === -1 || $perPage === '-1') {
+            return 'all';
+        }
+
+        if (is_numeric($perPage) && (int) $perPage > 0) {
+            return (int) $perPage;
+        }
+
+        if (is_string($default)) {
+            $default = trim($default);
+        }
+
+        if ($default === 'all' || $default === -1 || $default === '-1') {
+            return 'all';
+        }
+
+        if (is_numeric($default) && (int) $default > 0) {
+            return (int) $default;
+        }
+
+        return 10;
+    }
+
+    /**
+     * Ensure the active per-page value is available in the selector.
+     *
+     * @param  array<int, int|string>  $options
+     * @return array<int, int|string>
+     */
+    protected function includePerPageOption(array $options, int|string $perPage): array
+    {
+        foreach ($options as $option) {
+            if (is_scalar($option) && (string) $option === (string) $perPage) {
+                return $options;
+            }
+        }
+
+        if ($perPage === 'all') {
+            $options[] = 'all';
+
+            return $options;
+        }
+
+        array_unshift($options, $perPage);
+
+        return $options;
     }
 
     public function getClass(string $element): string
