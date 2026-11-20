@@ -107,7 +107,7 @@
                             <select id="perPage" name="perPage" wire:model.live="perPage" data-class="per_page_select"
                                 @class([$this->getClass('per_page_select')])>
                                 @foreach ($pageOptions as $option)
-                                    <option value="{{ $option }}">
+                                    <option value="{{ $option }}" @selected((string) $perPage === (string) $option)>
                                         {{ $option === 'all' ? 'All' : $option }}
                                     </option>
                                 @endforeach

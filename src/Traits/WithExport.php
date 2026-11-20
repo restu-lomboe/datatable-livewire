@@ -84,7 +84,9 @@ trait WithExport
                 $data,
                 $columns,
                 $this->formatters,
-                $this->formatterOptions
+                $this->formatterOptions,
+                $this->exportRowConditions ?? [],
+                $this->exportRowStyles ?? []
             ),
             $filename.'.xlsx'
         );
@@ -105,7 +107,9 @@ trait WithExport
                 $columns,
                 $this->formatters,
                 $this->formatterOptions,
-                $chunkSize
+                $chunkSize,
+                $this->exportRowConditions ?? [],
+                $this->exportRowStyles ?? []
             ),
             $filename.'.xlsx'
         );
@@ -118,6 +122,8 @@ trait WithExport
             'columns' => $columns,
             'formatters' => $this->formatters,
             'formatterOptions' => $this->formatterOptions,
+            'rowConditions' => $this->exportRowConditions ?? [],
+            'rowStyles' => $this->exportRowStyles ?? [],
         ])->render();
 
         return response()->streamDownload(function () use ($html, $paperSize, $orientation) {
@@ -153,6 +159,8 @@ trait WithExport
             'columns' => $columns,
             'formatters' => $this->formatters,
             'formatterOptions' => $this->formatterOptions,
+            'rowConditions' => $this->exportRowConditions ?? [],
+            'rowStyles' => $this->exportRowStyles ?? [],
         ])->render();
 
         return response()->streamDownload(function () use ($html, $paperSize, $orientation) {

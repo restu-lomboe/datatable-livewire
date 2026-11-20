@@ -30,6 +30,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Per Page
+    |--------------------------------------------------------------------------
+    |
+    | Initial number of rows shown per page. Override per component with the
+    | :perPage mount parameter. Use 'all' to show all records.
+    |
+    */
+    'per_page' => env('DATATABLE_PER_PAGE', 10),
+
+    /*
+    |--------------------------------------------------------------------------
     | Export Options
     |--------------------------------------------------------------------------
     |
@@ -55,6 +66,12 @@ return [
         // - patterns use Str::is() wildcards, e.g. '*_id' hides user_id, post_id, department.user_id
         'exclude_columns' => [],
         'exclude_patterns' => ['*_id'],
+
+        // Conditional row highlighting (export only, Excel and PDF)
+        // Conditions use raw row values before formatters. Add named groups for
+        // multiple colors, or use a flat ['match' => 'any', 'rules' => [...]] array.
+        'row_conditions' => [],
+        'row_styles' => [],
 
         // Chunk / batch sizes for large exports (100k+ rows)
         // Excel uses FromQuery + cursor chunk; PDF uses cursor batch streaming (single file)
